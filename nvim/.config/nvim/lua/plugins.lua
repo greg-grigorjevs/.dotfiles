@@ -3,7 +3,7 @@ return require('packer').startup(function()
   use 'wbthomason/packer.nvim'
 
   -- Themes
-  use { 'luisiacc/gruvbox-baby', commit = "8b47d6bfdb704baa3b5735836bd501579897f9f3"}
+  use { 'luisiacc/gruvbox-baby', commit = "8b47d6bfdb704baa3b5735836bd501579897f9f3" }
   use 'gruvbox-community/gruvbox'
   use 'rebelot/kanagawa.nvim'
   use 'folke/tokyonight.nvim'
@@ -62,13 +62,23 @@ return require('packer').startup(function()
     end,
   }
 
+  -- smooth scrolling
+  --[[ use { ]]
+  --[[   'karb94/neoscroll.nvim', ]]
+  --[[   config = function() ]]
+  --[[     require("neoscroll").setup { ]]
+  --[[       easing_function = "quadratic", ]]
+  --[[     } ]]
+  --[[   end, ]]
+  --[[ } ]]
   use {
-    'karb94/neoscroll.nvim',
+    'declancm/cinnamon.nvim',
     config = function()
-      require("neoscroll").setup {
-        easing_function = "quadratic",
-      }
-    end,
+      require('cinnamon').setup {
+        default_delay = 3,
+        extra_keymaps = true,
+        extended_keymaps = true,
+      } end
   }
 
   use 'JoosepAlviste/nvim-ts-context-commentstring' -- support for jsx commenting
@@ -138,6 +148,8 @@ return require('packer').startup(function()
       require('nvim-lsp-installer').setup()
     end
   }
+  use "williamboman/mason.nvim"
+  use "williamboman/mason-lspconfig.nvim"
   use 'neovim/nvim-lspconfig'
   use 'hrsh7th/cmp-nvim-lsp'
   use 'hrsh7th/cmp-buffer'

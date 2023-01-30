@@ -94,6 +94,15 @@ local mappings = {
     g = { "<cmd>Telescope git_status<cr>", "Git Status" },
     y = { "<cmd>Telescope neoclip star<cr>", "Yank History" },
     r = { "<cmd>Telescope resume<cr>", "Last Search" },
+    o = { "<cmd>Telescope builtin<cr>", "List Telescope Options" },
+    u = { "<cmd>Telescope oldfiles<cr>", "Recently Opened Files" },
+    l = {
+      name = "LSP",
+      s = { "<cmd>Telescope lsp_document_symbols<cr>", "Document Symbols" },
+      S = { "<cmd>Telescope lsp_dynamic_workspace_symbols<cr>", "Workspace Symbols" },
+      r = { "<cmd>Telescope lsp_references<cr>", "LSP References" },
+      d = { "<cmd>Telescope diagnonstics<cr>", "LSP Diagnostics" },
+    },
   },
 
   g = {

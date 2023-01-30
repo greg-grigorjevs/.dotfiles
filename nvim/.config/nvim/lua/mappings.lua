@@ -20,7 +20,8 @@ end
 nmap("<Tab>", ":BufferLineCycleNext<CR>")
 nmap("<S-Tab>", ":BufferLineCyclePrev<CR>")
 nmap("<S-x>", ":bdelete<CR>")
-
+nmap("j", "gj");
+nmap("k", "gk");
 -- file tree
 -- nmap("<leader>e", ":NERDTreeFind<CR>")
 

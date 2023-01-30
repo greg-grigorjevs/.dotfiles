@@ -52,6 +52,7 @@ vim.o.smartindent = true
 vim.o.expandtab = true
 vim.o.tabstop = 2 -- 1 tab = 2 spaces
 vim.o.shiftwidth = 2
+vim.o.undofile = true -- save undo history
 
 -- Bracket colors
 -- hi MatchParen cterm=NONE guibg=NONE ctermbg=NONE gui=NONE
@@ -71,3 +72,6 @@ vim.cmd [[
   let &t_ZH="\e[3m"
   let &t_ZR="\e[23m"
 ]]
+
+-- remember last position
+vim.cmd [[ autocmd BufReadPost * if @% !~# '\.git[\/\\]COMMIT_EDITMSG$' && line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif  ]]

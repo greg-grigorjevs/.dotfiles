@@ -1,4 +1,4 @@
-require('nvim-lsp-installer').setup()
+--[[ require('nvim-lsp-installer').setup() ]]
 local servers = {
   'tsserver',
   'sumneko_lua',
@@ -8,6 +8,10 @@ local servers = {
   'jsonls',
   'html',
 }
+require('mason').setup()
+require('mason-lspconfig').setup({
+  ensure_installed = servers,
+})
 
 local opts = { noremap = true, silent = true }
 vim.keymap.set('n', '<space>ld', vim.diagnostic.open_float, opts)
