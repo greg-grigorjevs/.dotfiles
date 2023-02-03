@@ -3,8 +3,10 @@ return require('packer').startup(function()
   use 'wbthomason/packer.nvim'
 
   -- Themes
-  use { 'luisiacc/gruvbox-baby', commit = "8b47d6bfdb704baa3b5735836bd501579897f9f3" }
-  use 'gruvbox-community/gruvbox'
+  use { 'luisiacc/gruvbox-baby'}
+  use { 'sainnhe/gruvbox-material' }
+  --[[ use 'gruvbox-community/gruvbox' ]]
+  use { 'ellisonleao/gruvbox.nvim' }
   use 'rebelot/kanagawa.nvim'
   use 'folke/tokyonight.nvim'
 

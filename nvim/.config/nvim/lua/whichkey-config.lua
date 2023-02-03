@@ -96,6 +96,7 @@ local mappings = {
     r = { "<cmd>Telescope resume<cr>", "Last Search" },
     o = { "<cmd>Telescope builtin<cr>", "List Telescope Options" },
     u = { "<cmd>Telescope oldfiles<cr>", "Recently Opened Files" },
+    ['/'] = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Search Current File" },
     l = {
       name = "LSP",
       s = { "<cmd>Telescope lsp_document_symbols<cr>", "Document Symbols" },

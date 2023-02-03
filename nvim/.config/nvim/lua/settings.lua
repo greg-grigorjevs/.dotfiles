@@ -58,12 +58,24 @@ vim.o.undofile = true -- save undo history
 -- hi MatchParen cterm=NONE guibg=NONE ctermbg=NONE gui=NONE
 -- disables match parentheses highlighting
 
--- gruvbox config, order is important
+vim.o.termguicolors = true
+
+-- gruvbox-baby config, order is important
 -- vim.g.gruvbox_baby_background_color = "dark"
 -- vim.g.gruvbox_baby_keyword_style = "NONE"
--- vim.g.gruvbox_baby_comment_style = "NONE"
-vim.g.gruvbox_baby_telescope_theme = 0
-vim.cmd('colorscheme gruvbox-baby')
+--[[ vim.g.gruvbox_baby_comment_style = "italic" ]]
+--[[ vim.g.gruvbox_baby_telescope_theme = 0 ]]
+--[[ vim.g.gruvbox_baby_use_original_palette = 1 ]]
+--[[ vim.cmd('colorscheme gruvbox-baby') ]]
+
+--gruvbox-material config
+--[[ vim.g.gruvbox_material_foreground = 'original' ]]
+--[[ vim.g.gruvbox_material_better_performance = 1 ]]
+--[[ vim.cmd('colorscheme gruvbox-material') ]]
+
+-- community gruvbox for neovim config
+vim.o.background = 'dark'
+vim.cmd('colorscheme gruvbox')
 
 vim.cmd('highlight Matchparen guibg=none gui=bold,underline')
 
