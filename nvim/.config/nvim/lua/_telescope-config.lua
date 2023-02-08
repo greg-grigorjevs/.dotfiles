@@ -11,7 +11,7 @@ require('telescope').setup({
       }
     },
     layout_config = {
-      horizontal = { width = 0.9, preview_width = 0.5 }
+      horizontal = { width = 0.99, height = 0.99, preview_width = 0.5 }
     },
     file_ignore_patterns = {
       "vendor/*",

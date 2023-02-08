@@ -30,8 +30,8 @@ map("n", "<Bslash>w", ":HopWordAC<CR>")
 map("n", "<Bslash>b", ":HopWordBC<CR>")
 map("n", "<Bslash>j", ":HopLineAC<CR>")
 map("n", "<Bslash>k", ":HopLineBC<CR>")
-map("n", "<Bslash>f", ":HopChar1AC<CR>")
-map("n", "<Bslash>F", ":HopChar1BC<CR>")
+map("n", "f", ":HopChar1AC<CR>")
+map("n", "F", ":HopChar1BC<CR>")
 
 -- telescope mappings
 nmap('<C-p>', ':Telescope find_files<CR>')

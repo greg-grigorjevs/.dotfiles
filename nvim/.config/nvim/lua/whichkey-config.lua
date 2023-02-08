@@ -89,7 +89,7 @@ local mappings = {
 		name = "Telescope",
 		a = { "<cmd>Telescope find_files no_ignore=true hidden=true<cr>", "All Files" },
 		s = { "<cmd>Telescope live_grep<cr>", "Grep Search" },
-		b = { "<cmd>Telescope buffers<cr>", "Buffers" },
+		b = { "<cmd>Telescope buffers sort_mru=true<cr>", "Buffers" },
 		h = { "<cmd>Telescope help_tags<cr>", "Help Tags" },
 		g = { "<cmd>Telescope git_status<cr>", "Git Status" },
 		y = { "<cmd>Telescope neoclip star<cr>", "Yank History" },
