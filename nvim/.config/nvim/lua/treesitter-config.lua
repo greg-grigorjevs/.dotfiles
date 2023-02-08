@@ -6,11 +6,11 @@ require("nvim-treesitter.configs").setup {
     -- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
     -- the name of the parser)
     -- list of language that will be disabled
-    disable = {"yaml"},
-    
+    --[[ disable = {"yaml"}, ]]
+
     -- fixes indentation in react files
     additional_vim_regex_highlighting = {"jsx", "tsx", "js", "javascript", "javascriptreact", "typescriptreact"},
-    
+
   },
 	indent = { enable = {'php', 'yaml', 'html'} },
 --  autopairs = {enable = true},
@@ -19,7 +19,7 @@ require("nvim-treesitter.configs").setup {
   },
  rainbow = {
     enable = true,
-    -- disable = { "jsx", "cpp" }, list of languages you want to disable the plugin for
+    disable = { "php" }, -- list of languages you want to disable the plugin for
     extended_mode = true, -- Also highlight non-bracket delimiters like html tags, boolean or table: lang -> boolean
     max_file_lines = nil, -- Do not enable for files with more than n lines, int
     -- colors = {}, -- table of hex strings

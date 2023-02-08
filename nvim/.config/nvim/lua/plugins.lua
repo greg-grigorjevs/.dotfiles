@@ -32,6 +32,8 @@ return require('packer').startup(function()
     end
   }
 
+	use 'ThePrimeagen/harpoon'
+
   --[[
   use {'windwp/nvim-autopairs', config = function()
     require('nvim-autopairs').setup{}
