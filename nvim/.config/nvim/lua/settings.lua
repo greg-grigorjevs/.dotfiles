@@ -49,10 +49,14 @@ vim.o.smartcase = true
 -- Indentation
 vim.o.formatoptions = 'qnj1' -- q  - comment formatting; n - numbered lists; j - remove comment when joining lines; 1 - don't break after one-letter word
 vim.o.smartindent = true
-vim.o.expandtab = false
+vim.o.expandtab = true
+vim.o.smarttab = true
 vim.o.tabstop = 2 -- 1 tab = 2 spaces
 vim.o.shiftwidth = 2
+
 vim.o.undofile = true -- save undo history
+
+-- New splits behaviour
 vim.o.splitbelow = true
 vim.o.splitright = true
 
