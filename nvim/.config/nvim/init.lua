@@ -11,6 +11,7 @@ require('lsp')
 require('trouble-config')
 require('bufferline-config')
 require('diffview-config')
+require('lualine-config')
 
 
 --[[

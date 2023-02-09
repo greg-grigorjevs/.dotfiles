@@ -2,13 +2,15 @@ return require('packer').startup(function()
 
   use 'wbthomason/packer.nvim'
 
-  -- Themes
-  use { 'luisiacc/gruvbox-baby'}
+  -- Colorschemes
+  use { 'luisiacc/gruvbox-baby' }
   use { 'sainnhe/gruvbox-material' }
   --[[ use 'gruvbox-community/gruvbox' ]]
   use { 'ellisonleao/gruvbox.nvim' }
   use 'rebelot/kanagawa.nvim'
   use 'folke/tokyonight.nvim'
+  use 'marko-cerovac/material.nvim'
+  use 'Mofiqul/vscode.nvim'
 
   use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
   use 'folke/which-key.nvim'
@@ -32,7 +34,7 @@ return require('packer').startup(function()
     end
   }
 
-	use 'ThePrimeagen/harpoon'
+  use 'ThePrimeagen/harpoon'
 
   --[[
   use {'windwp/nvim-autopairs', config = function()
@@ -53,7 +55,10 @@ return require('packer').startup(function()
     branch = 'v1', -- optional but strongly recommended
     config = function()
       -- you can configure Hop the way you like here; see :h hop-config
-      require 'hop'.setup { keys = 'etovxqpdygfblzhckisuran' }
+      require 'hop'.setup {
+        keys = 'etovxqpdygfblzhckisuran',
+        jump_on_sole_occurence = true
+      }
     end
   }
 
@@ -82,7 +87,8 @@ return require('packer').startup(function()
         default_delay = 3,
         extra_keymaps = true,
         extended_keymaps = true,
-      } end
+      }
+    end
   }
 
   use 'JoosepAlviste/nvim-ts-context-commentstring' -- support for jsx commenting
@@ -143,6 +149,11 @@ return require('packer').startup(function()
         -- show_current_context_start = true,
       }
     end
+  }
+
+  use {
+    'nvim-lualine/lualine.nvim',
+    requires = { 'kyazdani42/nvim-web-devicons', opt = true }
   }
 
   -- LSP

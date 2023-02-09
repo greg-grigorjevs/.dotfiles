@@ -53,10 +53,7 @@ vim.o.expandtab = true
 vim.o.smarttab = true
 vim.o.tabstop = 2 -- 1 tab = 2 spaces
 vim.o.shiftwidth = 2
-
 vim.o.undofile = true -- save undo history
-
--- New splits behaviour
 vim.o.splitbelow = true
 vim.o.splitright = true
 
@@ -66,6 +63,7 @@ vim.o.splitright = true
 
 vim.o.termguicolors = true
 
+-- Colorschemes config
 -- gruvbox-baby config, order is important
 -- vim.g.gruvbox_baby_background_color = "dark"
 -- vim.g.gruvbox_baby_keyword_style = "NONE"
@@ -78,6 +76,9 @@ vim.o.termguicolors = true
 --[[ vim.g.gruvbox_material_foreground = 'original' ]]
 --[[ vim.g.gruvbox_material_better_performance = 1 ]]
 --[[ vim.cmd('colorscheme gruvbox-material') ]]
+
+-- material colorcheme config
+vim.g.material_style = 'palenight'
 
 -- community gruvbox for neovim config
 vim.o.background = 'dark'
