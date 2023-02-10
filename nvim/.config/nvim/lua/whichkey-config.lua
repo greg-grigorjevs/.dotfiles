@@ -176,7 +176,7 @@ local which_key = require("which-key");
 which_key.setup(setup);
 which_key.register(mappings, opts);
 which_key.register({
-	["<C-\\>"] = { "<cmd>FloatermToggle --width=0.9 --height=0.9<cr>", "Toggle Terminal" },
+	["<C-\\>"] = { "<cmd>FloatermToggle ft1 --width=0.9 --height=0.9<cr>", "Toggle Terminal" },
 });
 
 -- harpoon mappings
