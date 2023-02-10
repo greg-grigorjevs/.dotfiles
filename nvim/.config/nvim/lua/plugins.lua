@@ -134,7 +134,7 @@ return require('packer').startup(function()
   use 'lewis6991/gitsigns.nvim' -- git integration
 
   use 'kyazdani42/nvim-web-devicons'
-  use 'kyazdani42/nvim-tree.lua'
+  use { 'kyazdani42/nvim-tree.lua', lock = true } -- locked because of the deprecation of open_on_setup which I use. If needed to unlock then go to https://github.com/nvim-tree/nvim-tree.lua/wiki/Open-At-Startup
   use {
     'lukas-reineke/indent-blankline.nvim',
     config = function()
