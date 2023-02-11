@@ -69,12 +69,12 @@ vim.o.termguicolors = true
 -- vim.g.gruvbox_baby_keyword_style = "NONE"
 --[[ vim.g.gruvbox_baby_comment_style = "italic" ]]
 --[[ vim.g.gruvbox_baby_telescope_theme = 0 ]]
---[[ vim.g.gruvbox_baby_use_original_palette = 1 ]]
+vim.g.gruvbox_baby_use_original_palette = 1
 --[[ vim.cmd('colorscheme gruvbox-baby') ]]
 
 --gruvbox-material config
---[[ vim.g.gruvbox_material_foreground = 'original' ]]
---[[ vim.g.gruvbox_material_better_performance = 1 ]]
+vim.g.gruvbox_material_foreground = 'original'
+vim.g.gruvbox_material_better_performance = 1
 --[[ vim.cmd('colorscheme gruvbox-material') ]]
 
 -- material colorcheme config
