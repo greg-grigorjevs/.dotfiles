@@ -14,12 +14,16 @@ end
 -- Mappings
 --[[ imap("dj", "<ESC>") ]]
 
--- buffer navigation
---[[ nmap("<Tab>", ":tabnext<CR>") ]]
---[[ nmap("<S-Tab>", ":tabprevious<CR>") ]]
-nmap("<Tab>", ":BufferLineCycleNext<CR>")
-nmap("<S-Tab>", ":BufferLineCyclePrev<CR>")
+-- bufferline shortcuts navigation
+--[[ nmap("<Tab>", ":BufferLineCycleNext<CR>") ]]
+--[[ nmap("<S-Tab>", ":BufferLineCyclePrev<CR>") ]]
+--[[ nmap("<S-x>", ":bdelete<CR>") ]]
+
+-- barbar shortcuts
+nmap("<Tab>", ":BufferNext<CR>")
+nmap("<S-Tab>", ":BufferPrevious<CR>")
 nmap("<S-x>", ":bdelete<CR>")
+
 --[[ nmap("j", "gj"); ]]
 --[[ nmap("k", "gk"); ]]
 -- file tree

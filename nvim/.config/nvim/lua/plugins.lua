@@ -182,7 +182,8 @@ return require('packer').startup(function()
 
   use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
   use 'jwalton512/vim-blade'
-  use { 'akinsho/bufferline.nvim', tag = "v2.*", requires = 'kyazdani42/nvim-web-devicons' }
-
+  use { 'akinsho/bufferline.nvim', disable=true, tag = "v2.*", requires = 'kyazdani42/nvim-web-devicons' } -- disabled for barbar.nvim
+  use 'romgrk/barbar.nvim'
+  -- som
 
 end)
