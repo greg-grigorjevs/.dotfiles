@@ -52,6 +52,7 @@ return require('packer').startup(function()
   -- plugin for motions
   use {
     'phaazon/hop.nvim',
+    disable = true, -- disabled for lightspeed
     branch = 'v1', -- optional but strongly recommended
     config = function()
       -- you can configure Hop the way you like here; see :h hop-config
@@ -61,6 +62,7 @@ return require('packer').startup(function()
       }
     end
   }
+  use 'ggandor/lightspeed.nvim'
 
   use {
     "max397574/better-escape.nvim",
