@@ -131,6 +131,15 @@ local mappings = {
 		},
 	},
 
+  b = {
+    name = "Buffers",
+    p = {"<cmd>BufferPin<cr>", "Pin a buffer"},
+    P = {"<cmd>BufferPick<cr>", "Pick a buffer"},
+    x = {"<cmd>BufferCloseAllButCurrentOrPinned<cr>", "Close all buffers except current or pinned ones"},
+    X = {"<cmd>BufferCloseAllButCurrent<cr>", "Close all buffer except current"},
+    f = {"<cmd>BufferFirst<cr>", "Go to [f]irst buffer"},
+  },
+
 	t = {
 		name = "Terminal",
 		g = { "<cmd>FloatermNew --autoclose=2 lazygit --use-config-file=\"$HOME/.dotfiles/lazygit/.config/lazygit/config.yml\"<cr>", "lazygit" },

@@ -9,7 +9,8 @@ require('_telescope-config')
 require('neoclip-config')
 require('lsp')
 require('trouble-config')
-require('bufferline-config')
+--[[ require('bufferline-config') ]]
+require('barbar-config')
 require('diffview-config')
 require('lualine-config')
 
