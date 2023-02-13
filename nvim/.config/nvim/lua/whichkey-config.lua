@@ -133,7 +133,7 @@ local mappings = {
 
 	t = {
 		name = "Terminal",
-		g = { "<cmd>FloatermNew --autoclose=2 lazygit<cr>", "lazygit" },
+		g = { "<cmd>FloatermNew --autoclose=2 lazygit --use-config-file=\"$HOME/.dotfiles/lazygit/.config/lazygit/config.yml\"<cr>", "lazygit" },
 		K = { "<cmd>FloatermKill!<cr>", "Kill all terminals" }
 	},
 
