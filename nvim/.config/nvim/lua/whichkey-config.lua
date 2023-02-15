@@ -163,6 +163,12 @@ local mappings = {
 		r = { "<cmd>TroubleToggle lsp_references<cr>", "LSP References" },
 	},
 
+  s = {
+    name = 'Session',
+    w = { "<cmd>SaveSession<cr>", "Save" },
+    r = { "<cmd>RestoreSession<cr>", "Restore" },
+  },
+
 	w = { "<cmd>w<cr>", "Save File" },
 	W = { "<cmd>wa<cr>", "Save All Files" },
 	q = { "<cmd>q<cr>", "Close File" },
