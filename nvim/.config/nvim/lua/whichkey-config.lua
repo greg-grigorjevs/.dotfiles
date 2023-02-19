@@ -97,6 +97,7 @@ local mappings = {
 		o = { "<cmd>Telescope builtin<cr>", "List Telescope Options" },
 		u = { "<cmd>Telescope oldfiles<cr>", "Recently Opened Files" },
 		p = { "<cmd>Telescope harpoon marks<cr>", "Har[p]oon" },
+    j = { "<cmd>Telescope jumplist show_line=false<cr>", "[J]umplist" },
 		['/'] = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Search Current File" },
 		l = {
 			name = "LSP",

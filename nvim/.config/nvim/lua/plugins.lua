@@ -62,7 +62,13 @@ return require('packer').startup(function()
       }
     end
   }
-  use 'ggandor/lightspeed.nvim'
+
+  use {
+    'ggandor/lightspeed.nvim',
+    config = function()
+      require('lightspeed').opts.ignore_case = true
+    end
+  }
 
   use {
     "max397574/better-escape.nvim",
@@ -71,6 +77,14 @@ return require('packer').startup(function()
         mapping = { "dj" }
       }
     end,
+  }
+  use {
+    'phaazon/mind.nvim',
+    branch = 'v2.2',
+    requires = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      require 'mind'.setup()
+    end
   }
 
   use {
@@ -193,8 +207,10 @@ return require('packer').startup(function()
 
   use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
   use 'jwalton512/vim-blade'
-  use { 'akinsho/bufferline.nvim', disable=true, tag = "v2.*", requires = 'kyazdani42/nvim-web-devicons' } -- disabled for barbar.nvim
+  use { 'akinsho/bufferline.nvim', disable = true, tag = "v2.*", requires = 'kyazdani42/nvim-web-devicons' } -- disabled for barbar.nvim
   use 'romgrk/barbar.nvim'
   -- som
+
+  use 'tpope/vim-repeat' -- dot-repeat for some plugins
 
 end)
