@@ -106,6 +106,11 @@ local mappings = {
 			r = { "<cmd>Telescope lsp_references<cr>", "LSP References" },
 			d = { "<cmd>Telescope diagnonstics<cr>", "LSP Diagnostics" },
 		},
+    m = {
+      name = "Book[M]arks",
+      a = { "<cmd>lua require('telescope').extensions.vim_bookmarks.all()<cr>", "Show [A]ll bookmarks" },
+      c = { "<cmd>lua require('telescope').extensions.vim_bookmarks.current_file()<cr>", "Show bookmarks in the [c]urrent buffer" },
+    }
 	},
 
 	g = {

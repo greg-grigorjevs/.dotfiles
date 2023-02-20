@@ -215,5 +215,7 @@ return require('packer').startup(function()
   -- som
 
   use 'tpope/vim-repeat' -- dot-repeat for some plugins
+  use 'MattesGroeger/vim-bookmarks'
+  use 'tom-anders/telescope-vim-bookmarks.nvim'
 
 end)
