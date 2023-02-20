@@ -14,6 +14,7 @@ require('barbar-config')
 require('diffview-config')
 require('lualine-config')
 require('auto-session-config')
+require('leap-config')
 
 
 --[[

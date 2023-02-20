@@ -65,10 +65,13 @@ return require('packer').startup(function()
 
   use {
     'ggandor/lightspeed.nvim',
+    disable = true,
     config = function()
       require('lightspeed').opts.ignore_case = true
     end
   }
+  
+  use 'ggandor/leap.nvim'
 
   use {
     "max397574/better-escape.nvim",
