@@ -8,6 +8,10 @@ require('telescope').setup({
         override_file_sorter = true, -- override the file sorter
         case_mode = "smart_case", -- or "ignore_case" or "respect_case"
         -- the default case_mode is "smart_case"
+      },
+      frecency = {
+        default_workspace='CWD',
+        show_unindexed=false,
       }
     },
     pickers = {
@@ -67,3 +71,4 @@ require('telescope').setup({
 require('telescope').load_extension('fzf')
 require('telescope').load_extension('harpoon')
 require('telescope').load_extension('vim_bookmarks')
+require('telescope').load_extension('frecency')
