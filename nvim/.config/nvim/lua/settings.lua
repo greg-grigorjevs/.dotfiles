@@ -98,3 +98,14 @@ vim.cmd [[
 
 -- remember last position
 vim.cmd [[ autocmd BufReadPost * if @% !~# '\.git[\/\\]COMMIT_EDITMSG$' && line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif  ]]
+
+-- Autocommands
+local group = vim.api.nvim_create_augroup("SaveSessionOnBufWrite", {clear = true});
+vim.api.nvim_create_autocmd("BufWrite", {
+  callback = function ()
+    vim.cmd("SaveSession")
+  end,
+  group = group
+});
+
+
