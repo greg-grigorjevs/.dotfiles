@@ -5,7 +5,7 @@ export TERM="xterm-256color"
 
 
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/mbp-greg/.oh-my-zsh"
+export ZSH="/home/greggrigorjevs/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -108,7 +108,7 @@ source $ZSH/oh-my-zsh.sh
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-alias vim="nvim"
+# alias vim="nvim"
 alias zshconfig="vim ~/.zshrc"
 alias vimrc="vim ~/.vimrc"
 alias vimconf="nvim ~/.config/nvim"
@@ -151,6 +151,7 @@ mkcd() {
 jvac() {
     javac $1.java && java $1 ;
 }
+
 
 #Promt customization
 
@@ -222,13 +223,15 @@ fresh () {
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
+export PATH="/home/greggrigorjevs/PhpStorm-212.5712.51/bin:$PATH"
+
 # fzf config
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_COMMAND="fd --exclude 'node_modules'"
 export FZF_CTRL_T_COMMAND="fd -t f . ."
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 # Set PATH, MANPATH, etc., for Homebrew.
-eval "$(/opt/homebrew/bin/brew shellenv)"
+#eval "$(/opt/homebrew/bin/brew shellenv)"
 
 daisy_vpn () {
 	sshuttle --dns --daemon --pidfile ~/.ssh/sshuttle.pid -r greg.grigorjevs@dsbastion07-public 10.0.0.0/8 195.0.0.0/8
