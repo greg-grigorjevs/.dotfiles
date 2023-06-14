@@ -1,4 +1,4 @@
-export TERM="xterm-256color"
+# export TERM="xterm-256color"
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -132,6 +132,8 @@ alias sourcevim="source ~/.vimrc"
 # alias brew="arch -x86_64 brew"
 alias lg="lazygit"
 
+# Personal export
+export EDITOR='nvim'
 gswf() {
     # use git branch --all to dislay all branches
     git switch "$(git branch  | fzf --tac | tr -d '[:space:]')"
@@ -229,7 +231,7 @@ export PATH="/home/greggrigorjevs/PhpStorm-212.5712.51/bin:$PATH"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_COMMAND="fd --exclude 'node_modules'"
 export FZF_CTRL_T_COMMAND="fd -t f . ."
-export FZF_ALT_C_COMMAND="fd -t d . $HOME"
+# export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 # Set PATH, MANPATH, etc., for Homebrew.
 #eval "$(/opt/homebrew/bin/brew shellenv)"
 

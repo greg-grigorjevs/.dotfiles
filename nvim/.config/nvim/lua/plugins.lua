@@ -17,11 +17,13 @@ return require('packer').startup(function()
   use {
     'voldikss/vim-floaterm',
     config = function()
-      vim.g.floaterm_width = 0.9
-      vim.g.floaterm_height = 0.9
+      vim.g.floaterm_width = 0.99
+      vim.g.floaterm_height = 0.99
       vim.g.floaterm_opener = 'edit'
     end
   }
+
+  use "olimorris/onedarkpro.nvim"
 
   use {
     'MaxMEllon/vim-jsx-pretty',
@@ -112,7 +114,7 @@ return require('packer').startup(function()
     'declancm/cinnamon.nvim',
     config = function()
       require('cinnamon').setup {
-        default_delay = 3,
+        default_delay = 0.1,
         extra_keymaps = true,
         extended_keymaps = true,
       }
@@ -149,6 +151,15 @@ return require('packer').startup(function()
     'nvim-telescope/telescope.nvim',
     requires = { { 'nvim-lua/plenary.nvim' } }
   }
+
+  use {
+    "nvim-telescope/telescope-frecency.nvim",
+    config = function()
+      require "telescope".load_extension("frecency")
+    end,
+    requires = { "kkharji/sqlite.lua" }
+  }
+
   use 'AckslD/nvim-neoclip.lua'
 
   -- use {
@@ -213,6 +224,9 @@ return require('packer').startup(function()
   use { 'akinsho/bufferline.nvim', disable = true, tag = "v2.*", requires = 'kyazdani42/nvim-web-devicons' } -- disabled for barbar.nvim
   use 'romgrk/barbar.nvim'
   -- som
+  -- Markdown 
+  -- preview
+  use { "ellisonleao/glow.nvim", config = function() require("glow").setup({ width_ratio = 0.7, height_ratio = 0.7 }) end }
 
   use 'tpope/vim-repeat' -- dot-repeat for some plugins
   use 'MattesGroeger/vim-bookmarks'
