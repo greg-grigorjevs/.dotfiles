@@ -92,7 +92,7 @@ local mappings = {
 		b = { "<cmd>Telescope buffers sort_mru=true<cr>", "Buffers" },
 		h = { "<cmd>Telescope help_tags<cr>", "Help Tags" },
 		g = { "<cmd>Telescope git_status<cr>", "Git Status" },
-		y = { "<cmd>Telescope neoclip star<cr>", "Yank History" },
+		y = { "<cmd>Telescope neoclip plus<cr>", "Yank History" },
 		r = { "<cmd>Telescope resume<cr>", "Last Search" },
 		o = { "<cmd>Telescope builtin<cr>", "List Telescope Options" },
 		u = { "<cmd>Telescope oldfiles<cr>", "Recently Opened Files" },
