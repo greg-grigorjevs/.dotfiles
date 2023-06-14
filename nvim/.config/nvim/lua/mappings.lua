@@ -82,3 +82,6 @@ vnoremap <silent> # :call setreg("?",
     \ '\\_s\\+', 'g')
     \ )<Cr>n
 ]]
+
+-- reselect text that was just pasted in mode that it was previously yanked (v or V).  
+vim.cmd [[nnoremap <expr> gp '`[' . strpart(getregtype(), 0, 1) . '`]']]
