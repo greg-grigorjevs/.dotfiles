@@ -70,7 +70,7 @@ return require('packer').startup(function()
       require('lightspeed').opts.ignore_case = true
     end
   }
-  
+
   use 'ggandor/leap.nvim'
 
   use {
@@ -216,6 +216,15 @@ return require('packer').startup(function()
 
   use 'tpope/vim-repeat' -- dot-repeat for some plugins
   use 'MattesGroeger/vim-bookmarks'
-  use 'tom-anders/telescope-vim-bookmarks.nvim'
+  use { 'tom-anders/telescope-vim-bookmarks.nvim',
+    config = function()
+      vim.g.bookmark_save_per_working_dir = 0
+      vim.g.bookmark_auto_save = 1
+    end
+  }
+
+  use 'tpope/vim-fugitive'
+  use 'nvim-treesitter/nvim-treesitter-context'
+  use "b0o/schemastore.nvim"
 
 end)
