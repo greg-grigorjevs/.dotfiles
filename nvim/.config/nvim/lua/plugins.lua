@@ -23,6 +23,8 @@ return require('packer').startup(function()
     end
   }
 
+  use "olimorris/onedarkpro.nvim"
+
   use {
     'MaxMEllon/vim-jsx-pretty',
   }
@@ -112,7 +114,7 @@ return require('packer').startup(function()
     'declancm/cinnamon.nvim',
     config = function()
       require('cinnamon').setup {
-        default_delay = 3,
+        default_delay = 0.1,
         extra_keymaps = true,
         extended_keymaps = true,
       }

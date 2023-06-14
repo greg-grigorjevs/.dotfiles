@@ -10,7 +10,7 @@ require('neoclip-config')
 require('lsp')
 require('trouble-config')
 --[[ require('bufferline-config') ]]
-require('barbar-config')
+--[[ require('barbar-config') ]] -- a lot of deprecated stuff
 require('diffview-config')
 require('lualine-config')
 require('auto-session-config')

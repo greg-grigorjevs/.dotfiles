@@ -1,12 +1,13 @@
 --[[ require('nvim-lsp-installer').setup() ]]
 local servers = {
   'tsserver',
-  'sumneko_lua',
+  'lua_ls',
   'intelephense',
   'emmet_ls',
   'cssls',
   'jsonls',
   'html',
+  'pyright',
 }
 require('mason').setup()
 require('mason-lspconfig').setup({

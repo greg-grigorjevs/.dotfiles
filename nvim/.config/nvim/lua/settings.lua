@@ -65,7 +65,10 @@ vim.o.termguicolors = true
 
 -- Colorschemes config
 -- gruvbox-baby config, order is important
--- vim.g.gruvbox_baby_background_color = "dark"
+local colors = require("gruvbox-baby.colors").config()
+vim.g.gruvbox_baby_highlights = {TelescopeSelection = {fg = colors.orange}}
+vim.g.gruvbox_baby_background_color = "medium"
+vim.g.gruvbox_baby_function_style = "NONE"
 -- vim.g.gruvbox_baby_keyword_style = "NONE"
 --[[ vim.g.gruvbox_baby_comment_style = "italic" ]]
 --[[ vim.g.gruvbox_baby_telescope_theme = 0 ]]
@@ -73,8 +76,9 @@ vim.g.gruvbox_baby_use_original_palette = 1
 --[[ vim.cmd('colorscheme gruvbox-baby') ]]
 
 --gruvbox-material config
-vim.g.gruvbox_material_foreground = 'original'
-vim.g.gruvbox_material_better_performance = 1
+vim.g.gruvbox_material_foreground = "original"
+vim.g.gruvbox_material_background = "medium"
+--[[ vim.g.gruvbox_material_better_performance = 1 ]]
 --[[ vim.cmd('colorscheme gruvbox-material') ]]
 
 -- material colorcheme config
