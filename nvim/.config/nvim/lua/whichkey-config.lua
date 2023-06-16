@@ -172,8 +172,8 @@ local mappings = {
 
   s = {
     name = 'Session',
-    w = { "<cmd>SaveSession<cr>", "Save" },
-    r = { "<cmd>RestoreSession<cr>", "Restore" },
+    w = { "<cmd>SessionSave<cr>", "Save" },
+    r = { "<cmd>SessionRestore<cr>", "Restore" },
   },
 
 	w = { "<cmd>w<cr>", "Save File" },

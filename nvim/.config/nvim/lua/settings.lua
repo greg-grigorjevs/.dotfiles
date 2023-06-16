@@ -103,7 +103,7 @@ vim.cmd [[ autocmd BufReadPost * if @% !~# '\.git[\/\\]COMMIT_EDITMSG$' && line(
 local group = vim.api.nvim_create_augroup("SaveSessionOnBufWrite", {clear = true});
 vim.api.nvim_create_autocmd("BufWrite", {
   callback = function ()
-    vim.cmd("SaveSession")
+    vim.cmd("SessionSave")
   end,
   group = group
 });
