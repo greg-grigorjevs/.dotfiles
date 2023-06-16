@@ -51,7 +51,7 @@ local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protoc
 
 local lspconfig = require('lspconfig');
 for _, server in ipairs(servers) do
-  if server == 'sumneko_lua' then
+  if server == 'lua_ls' then
     lspconfig[server].setup {
       on_attach = on_attach,
       capabilities = capabilities,
