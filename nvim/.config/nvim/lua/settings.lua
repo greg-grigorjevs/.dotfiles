@@ -73,7 +73,7 @@ vim.g.gruvbox_baby_function_style = "NONE"
 --[[ vim.g.gruvbox_baby_comment_style = "italic" ]]
 --[[ vim.g.gruvbox_baby_telescope_theme = 0 ]]
 vim.g.gruvbox_baby_use_original_palette = 1
---[[ vim.cmd('colorscheme gruvbox-baby') ]]
+vim.cmd('colorscheme gruvbox-baby')
 
 --gruvbox-material config
 vim.g.gruvbox_material_foreground = "original"
@@ -85,8 +85,8 @@ vim.g.gruvbox_material_background = "medium"
 vim.g.material_style = 'palenight'
 
 -- community gruvbox for neovim config
-vim.o.background = 'dark'
-vim.cmd('colorscheme gruvbox')
+--[[ vim.o.background = 'dark' ]]
+--[[ vim.cmd('colorscheme gruvbox') ]]
 
 vim.cmd('highlight Matchparen guibg=none gui=bold,underline')
 
