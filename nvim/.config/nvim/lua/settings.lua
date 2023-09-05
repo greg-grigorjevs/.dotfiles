@@ -124,3 +124,5 @@ vim.cmd [[
   augroup END
 ]]
 
+  -- always open help in vertical left split (bo for right)
+  vim.cmd('cabbrev h vert to h')
