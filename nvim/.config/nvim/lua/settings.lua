@@ -66,7 +66,14 @@ vim.o.termguicolors = true
 -- Colorschemes config
 -- gruvbox-baby config, order is important
 local colors = require("gruvbox-baby.colors").config()
-vim.g.gruvbox_baby_highlights = {TelescopeSelection = {fg = colors.orange}}
+vim.g.gruvbox_baby_highlights = {
+  TelescopeSelection = { fg = colors.orange },
+  -- Flash highlight groups
+  FlashMatch = { bg = colors.blue_gray, fg = colors.dark },
+  FlashCurrent = { bg = colors.blue_gray, fg = colors.dark },
+  --[[ FlashLabel = { bg = colors.bright_yellow, fg = colors.dark }, ]]
+  FlashLabel = { bg = colors.milk, fg = colors.dark },
+}
 vim.g.gruvbox_baby_background_color = "medium"
 vim.g.gruvbox_baby_function_style = "NONE"
 -- vim.g.gruvbox_baby_keyword_style = "NONE"
