@@ -107,12 +107,20 @@ vim.cmd [[
 vim.cmd [[ autocmd BufReadPost * if @% !~# '\.git[\/\\]COMMIT_EDITMSG$' && line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif  ]]
 
 -- Autocommands
-local group = vim.api.nvim_create_augroup("SaveSessionOnBufWrite", {clear = true});
+local group = vim.api.nvim_create_augroup("SaveSessionOnBufWrite", { clear = true });
 vim.api.nvim_create_autocmd("BufWrite", {
-  callback = function ()
+  callback = function()
     vim.cmd("SessionSave")
   end,
   group = group
 });
 
+-- highlight the line number but not the whole line
+vim.cmd [[
+  set cursorline
+  hi clear CursorLine
+  augroup CLClear
+      autocmd! ColorScheme * hi clear CursorLine
+  augroup END
+]]
 
