@@ -8,6 +8,8 @@ local servers = {
   'jsonls',
   'html',
   'pyright',
+  'svelte',
+  'tailwindcss'
 }
 require('mason').setup()
 require('mason-lspconfig').setup({
@@ -24,6 +26,7 @@ vim.keymap.set('n', ']g', vim.diagnostic.goto_next, opts)
 local on_attach = function(client, bufnr)
   -- Enable completion triggered by <c-x><c-o>
   vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+  vim.diagnostic.config({ update_in_insert = true })
 
   -- Mappings.
   -- See `:help vim.lsp.*` for documentation on any of the below functions
@@ -68,6 +71,30 @@ for _, server in ipairs(servers) do
       on_attach = on_attach,
       capabilities = { textDocument = { completion = { completionItem = { snippetSupport = true } } } }
     }
+  elseif server == 'html' then
+    lspconfig[server].setup {
+      on_attach = on_attach,
+      capabilities = capabilities,
+      filetypes = { "html", "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact",
+        "typescript.tsx", "svelte" },
+    }
+  elseif server == 'intelephense' then
+    lspconfig[server].setup {
+      on_attach = on_attach,
+      capabilities = capabilities,
+      settings = {
+        intelephense = {
+          environment = {
+            include_paths = {
+              "./vendor/pestphp",
+              --[[ "./vendor/phpunit/phpunit", ]]
+              --[[ "./vendor/laravel" ]]
+            }
+          }
+        }
+      }
+    }
+
   else
     lspconfig[server].setup {
       on_attach = on_attach,

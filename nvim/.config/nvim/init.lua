@@ -14,7 +14,11 @@ require('trouble-config')
 require('diffview-config')
 require('lualine-config')
 require('auto-session-config')
-require('leap-config')
+require('nvim-dap-config')
+require('oil-config')
+require('flash-config')
+require('null-ls-config')
+require('prettier-config')
 
 
 --[[

@@ -31,6 +31,7 @@ return require('packer').startup(function()
 
   use {
     'norcalli/nvim-colorizer.lua',
+    disable = true,
     config = function()
       require 'colorizer'.setup({ "*" }, { mode = "foreground" })
     end
@@ -50,30 +51,6 @@ return require('packer').startup(function()
   -- use 'scrooloose/nerdtree'
   use 'andymass/vim-matchup' -- significatly expands % functionality
   use 'p00f/nvim-ts-rainbow'
-
-  -- plugin for motions
-  use {
-    'phaazon/hop.nvim',
-    disable = true, -- disabled for lightspeed
-    branch = 'v1', -- optional but strongly recommended
-    config = function()
-      -- you can configure Hop the way you like here; see :h hop-config
-      require 'hop'.setup {
-        keys = 'etovxqpdygfblzhckisuran',
-        jump_on_sole_occurence = true
-      }
-    end
-  }
-
-  use {
-    'ggandor/lightspeed.nvim',
-    disable = true,
-    config = function()
-      require('lightspeed').opts.ignore_case = true
-    end
-  }
-
-  use 'ggandor/leap.nvim'
 
   use {
     "max397574/better-escape.nvim",
@@ -144,6 +121,8 @@ return require('packer').startup(function()
           }
         end,
       }
+      local ft = require('Comment.ft')
+      ft.set('php', { '//%s' })
     end
   }
 
@@ -157,7 +136,8 @@ return require('packer').startup(function()
     config = function()
       require "telescope".load_extension("frecency")
     end,
-    requires = { "kkharji/sqlite.lua" }
+    requires = { "kkharji/sqlite.lua" },
+    disable = true
   }
 
   use 'AckslD/nvim-neoclip.lua'
@@ -222,9 +202,9 @@ return require('packer').startup(function()
   use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
   use 'jwalton512/vim-blade'
   use { 'akinsho/bufferline.nvim', disable = true, tag = "v2.*", requires = 'kyazdani42/nvim-web-devicons' } -- disabled for barbar.nvim
-  use 'romgrk/barbar.nvim'
+  use { 'romgrk/barbar.nvim', disable = true }
   -- som
-  -- Markdown 
+  -- Markdown
   -- preview
   use { "ellisonleao/glow.nvim", config = function() require("glow").setup({ width_ratio = 0.7, height_ratio = 0.7 }) end }
 
@@ -241,4 +221,18 @@ return require('packer').startup(function()
   use 'nvim-treesitter/nvim-treesitter-context'
   use "b0o/schemastore.nvim"
 
+  -- Debugging
+  use 'mfussenegger/nvim-dap'
+  use 'rcarriga/nvim-dap-ui'
+  use 'theHamsta/nvim-dap-virtual-text'
+  use 'nvim-telescope/telescope-dap.nvim'
+  use 'mortepau/codicons.nvim'
+
+  --[[ use 'sheerun/vim-polyglot' ]]
+  use 'folke/flash.nvim'
+
+  use 'stevearc/oil.nvim'
+
+  use('jose-elias-alvarez/null-ls.nvim')
+  use('MunifTanjim/prettier.nvim')
 end)

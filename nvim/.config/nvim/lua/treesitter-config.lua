@@ -9,11 +9,12 @@ require("nvim-treesitter.configs").setup {
     --[[ disable = {"yaml"}, ]]
 
     -- fixes indentation in react files
-    additional_vim_regex_highlighting = {"jsx", "tsx", "js", "javascript", "javascriptreact", "typescriptreact"},
+    additional_vim_regex_highlighting = {"jsx", "tsx", "js", "javascript", "javascriptreact", "typescriptreact", "svelte"},
 
   },
-	indent = { enable = {'php', 'yaml', 'html'} },
+	indent = { enable = {'php', 'yaml', 'html', 'svelte', 'jsx', 'tsx'} },
 --  autopairs = {enable = true},
+  autotag = true,
   matchup = {
     enable = true,
   },

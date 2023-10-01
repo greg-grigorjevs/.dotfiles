@@ -88,14 +88,16 @@ local mappings = {
 	f = {
 		name = "Telescope",
 		a = { "<cmd>Telescope find_files no_ignore=true hidden=true<cr>", "All Files" },
-		s = { "<cmd>Telescope live_grep<cr>", "Grep Search" },
 		b = { "<cmd>Telescope buffers sort_mru=true<cr>", "Buffers" },
+    c = { "<cmd>Telescope command_history<cr>", "Command History" },
+    d = { "<cmd>Telescope dap list_breakpoints<cr>", "Debugging Breakpoints" },
+		s = { "<cmd>Telescope live_grep<cr>", "Grep Search" },
 		h = { "<cmd>Telescope help_tags<cr>", "Help Tags" },
 		g = { "<cmd>Telescope git_status<cr>", "Git Status" },
 		y = { "<cmd>Telescope neoclip star<cr>", "Yank History" },
 		r = { "<cmd>Telescope resume<cr>", "Last Search" },
 		o = { "<cmd>Telescope builtin<cr>", "List Telescope Options" },
-		u = { "<cmd>Telescope oldfiles<cr>", "Recently Opened Files" },
+		u = { "<cmd>Telescope oldfiles only_cwd=true<cr>", "Recently Opened Files" },
 		p = { "<cmd>Telescope harpoon marks<cr>", "Har[p]oon" },
     j = { "<cmd>Telescope jumplist show_line=false<cr>", "[J]umplist" },
 		['/'] = { "<cmd>Telescope current_buffer_fuzzy_find<cr>", "Search Current File" },
@@ -176,6 +178,13 @@ local mappings = {
     r = { "<cmd>SessionRestore<cr>", "Restore" },
   },
 
+  y = {
+    name = 'Copy',
+    f = {"<cmd>let @* = expand('%:t')<CR>", "Current buffer's filename"},
+    p = {"<cmd>let @* = expand('%')<CR>", "Current buffer's relative path"},
+    P = {"<cmd>let @* = expand('%:p')<CR>", "Current buffer's full path"},
+  },
+
 	w = { "<cmd>w<cr>", "Save File" },
 	W = { "<cmd>wa<cr>", "Save All Files" },
 	q = { "<cmd>q<cr>", "Close File" },
@@ -209,6 +218,9 @@ which_key.register({
 	["<M-4>"] = { "<cmd>lua require'harpoon.ui'.nav_file(4)<cr>", "Harpoon open file 4" },
 	["<M-5>"] = { "<cmd>lua require'harpoon.ui'.nav_file(5)<cr>", "Harpoon open file 5" },
 	["<M-6>"] = { "<cmd>lua require'harpoon.ui'.nav_file(6)<cr>", "Harpoon open file 6" },
+	["<M-7>"] = { "<cmd>lua require'harpoon.ui'.nav_file(7)<cr>", "Harpoon open file 7" },
+	["<M-8>"] = { "<cmd>lua require'harpoon.ui'.nav_file(8)<cr>", "Harpoon open file 8" },
+	["<M-9>"] = { "<cmd>lua require'harpoon.ui'.nav_file(9)<cr>", "Harpoon open file 9" },
 })
 
 --[[ which_key.register(harpoon_mappings) ]]

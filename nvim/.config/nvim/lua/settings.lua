@@ -115,6 +115,9 @@ vim.api.nvim_create_autocmd("BufWrite", {
   group = group
 });
 
+-- Custom Commands
+
+
 -- highlight the line number but not the whole line
 vim.cmd [[
   set cursorline

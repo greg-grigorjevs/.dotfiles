@@ -20,7 +20,7 @@ end
 --[[ nmap("<S-x>", ":bdelete<CR>") ]]
 
 -- barbar shortcuts
-nmap("<Tab>", ":BufferNext<CR>")
+--[[ nmap("<Tab>", ":BufferNext<CR>") ]]
 nmap("<S-Tab>", ":BufferPrevious<CR>")
 nmap("<S-x>", ":bdelete<CR>")
 
