@@ -113,6 +113,7 @@ alias zshconfig="vim ~/.zshrc"
 alias vimrc="vim ~/.vimrc"
 alias vimconf="nvim ~/.config/nvim"
 alias alacrittyconfig="vim ~/.config/alacritty/alacritty.yml"
+alias kittyconfig="nvim ~/.config/kitty/kitty.conf"
 alias reload="source ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias c="clear"
@@ -131,6 +132,11 @@ alias vimconfig="vim ~/.vimrc"
 alias sourcevim="source ~/.vimrc"
 # alias brew="arch -x86_64 brew"
 alias lg="lazygit"
+alias pa="php artisan"
+alias pat="php artisan test"
+alias patf="php artisan test --filter"
+
+alias pest="./vendor/bin/pest"
 
 # Personal export
 export EDITOR='nvim'
@@ -141,9 +147,9 @@ gswf() {
 
 
 # enable syntax highlighting
-if command -v pyenv 1>/dev/null 2>&1; then
-  eval "$(pyenv init -)"
-fi
+# if command -v pyenv 1>/dev/null 2>&1; then
+#   eval "$(pyenv init -)"
+# fi
 
 #Create directory/ies and cd into it in one command
 mkcd() {
@@ -157,11 +163,11 @@ jvac() {
 #Promt customization
 
 # Load version control information
-autoload -Uz vcs_info
-precmd() { vcs_info }
+# autoload -Uz vcs_info
+# precmd() { vcs_info }
 
 # Format the vcs_info_msg_0_ variable
-zstyle ':vcs_info:git:*' formats 'on %b'
+# zstyle ':vcs_info:git:*' formats 'on %b'
  
 # Set up the prompt (with git branch name)
 setopt PROMPT_SUBST
@@ -169,8 +175,8 @@ setopt PROMPT_SUBST
 PROMPT='~ '
 
 
-export NVM_DIR="/Users/mbp-greg/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+# export NVM_DIR="/Users/mbp-greg/.nvm"
+# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
 # Affinity Support FE aliases
 refresh() {
@@ -223,12 +229,14 @@ fresh () {
 }
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="/Applications/kitty.app/Contents/MacOS":$PATH # makes kitty command work
+
 
 # fzf config
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_COMMAND="fd --exclude 'node_modules'"
-export FZF_CTRL_T_COMMAND="fd -t f . ."
-# export FZF_ALT_C_COMMAND="fd -t d . $HOME"
+export FZF_CTRL_T_COMMAND="fd -t f -I -E 'node_modules' -E 'vendor' . ."
+export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 # Set PATH, MANPATH, etc., for Homebrew.
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -239,3 +247,15 @@ daisy_vpn () {
 daisy_vpn_disconnect () {
 	kill -9 $(cat ~/.ssh/sshuttle.pid)
 }
+
+
+# Herd injected PHP binary.
+export PATH="/Users/mbp-greg/Library/Application Support/Herd/bin/":$PATH
+
+
+# Herd injected PHP 8.2 configuration.
+export HERD_PHP_82_INI_SCAN_DIR="/Users/mbp-greg/Library/Application Support/Herd/config/php/82/"
+
+
+# Herd injected PHP 7.4 configuration.
+export HERD_PHP_74_INI_SCAN_DIR="/Users/mbp-greg/Library/Application Support/Herd/config/php/74/"
