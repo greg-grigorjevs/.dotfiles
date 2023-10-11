@@ -123,9 +123,10 @@ vim.cmd [[
   set cursorline
   hi clear CursorLine
   augroup CLClear
-      autocmd! ColorScheme * hi clear CursorLine
+  autocmd! ColorScheme * hi clear CursorLine
   augroup END
 ]]
 
-  -- always open help in vertical left split (bo for right)
-  vim.cmd('cabbrev h vert to h')
+-- always open help in vertical left split (bo for right)
+vim.cmd('cabbrev h vert to h')
+

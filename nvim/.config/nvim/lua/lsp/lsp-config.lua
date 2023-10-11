@@ -88,7 +88,7 @@ for _, server in ipairs(servers) do
             include_paths = {
               "./vendor/pestphp",
               --[[ "./vendor/phpunit/phpunit", ]]
-              --[[ "./vendor/laravel" ]]
+              "./vendor/laravel"
             }
           }
         }

@@ -11,6 +11,8 @@ flash.setup({
   }
 })
 
+flash.toggle(false)
+
 vim.keymap.set({ "n", "x", "o" }, "s", function() flash.jump({
     search = { forward = true, wrap = false, multi_window = false, mode = function(str)
       return "\\<" .. str

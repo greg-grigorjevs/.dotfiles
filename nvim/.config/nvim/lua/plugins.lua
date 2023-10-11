@@ -50,13 +50,13 @@ return require('packer').startup(function()
   use 'jiangmiao/auto-pairs'
   -- use 'scrooloose/nerdtree'
   use 'andymass/vim-matchup' -- significatly expands % functionality
-  use 'p00f/nvim-ts-rainbow'
+  --[[ use 'p00f/nvim-ts-rainbow' ]]
 
   use {
     "max397574/better-escape.nvim",
     config = function()
       require("better_escape").setup {
-        mapping = { "dj" }
+        mapping = { "tn" }
       }
     end,
   }
@@ -156,6 +156,7 @@ return require('packer').startup(function()
   use { 'kyazdani42/nvim-tree.lua', lock = true } -- locked because of the deprecation of open_on_setup which I use. If needed to unlock then go to https://github.com/nvim-tree/nvim-tree.lua/wiki/Open-At-Startup
   use {
     'lukas-reineke/indent-blankline.nvim',
+    commit = '9637670896b68805430e2f72cf5d16be5b97a22a',
     config = function()
       vim.g.indentLine_enabled = 1
       vim.g.indent_blankline_use_treesitter = true
