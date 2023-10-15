@@ -92,6 +92,7 @@ local mappings = {
     c = { "<cmd>Telescope command_history<cr>", "Command History" },
     d = { "<cmd>Telescope dap list_breakpoints<cr>", "Debugging Breakpoints" },
 		s = { "<cmd>Telescope live_grep<cr>", "Grep Search" },
+    S = { ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>", "Grep Search with Args" },
 		h = { "<cmd>Telescope help_tags<cr>", "Help Tags" },
 		g = { "<cmd>Telescope git_status<cr>", "Git Status" },
 		y = { "<cmd>Telescope neoclip star<cr>", "Yank History" },
