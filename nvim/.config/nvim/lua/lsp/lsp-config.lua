@@ -9,7 +9,8 @@ local servers = {
   'html',
   'pyright',
   'svelte',
-  'tailwindcss'
+  'tailwindcss',
+  'clojure_lsp'
 }
 require('mason').setup()
 require('mason-lspconfig').setup({
