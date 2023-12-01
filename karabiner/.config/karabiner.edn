@@ -1,0 +1,63 @@
+{
+
+  :profiles {
+             :Default {:default true
+                     :sim     50     ;; simultaneous_threshold_milliseconds (def: 50)
+                                     ;; keys need to be pressed within this threshold to be considered simultaneous
+                     :delay   500    ;; to_delayed_action_delay_milliseconds (def: 500)
+                                     ;; basically it means time after which the key press is count delayed
+                     :alone   500    ;; to_if_alone_timeout_milliseconds (def: 1000)
+                                     ;; hold for 995s and single tap registered; hold for 1005s and seen as modifier
+                     :held    1000   ;; to_if_held_down_threshold_milliseconds (def: 500)
+                                     ;; key is fired twice when 500 ms is elapsed (otherwise seen as a hold command)                     ;; options here
+                       }
+             }
+ 
+ :simlayers {
+             :char-mode {:key :a}
+
+             :movement-mode {:key :f}
+             }
+
+ :main [
+        {:des "char-mode"
+         :rules [ :char-mode
+                [:f [:!S9]] 
+                [:d [:!Sopen_bracket]] 
+                [:s [:open_bracket]] 
+                [:j [:!S0]] 
+                [:p [:!S1]] 
+                [:k [:!Sclose_bracket]] 
+                [:l [:close_bracket]] 
+                [:i [:quote]] 
+                [:o [:!Squote]] 
+                [:r [:!S4]] 
+                [:h [:equal_sign]] 
+                [:n [:hyphen]] 
+                [:m [:!Shyphen]] 
+                [:t [:!Sequal_sign]] 
+                [:comma [:!Scomma]] 
+                [:period [:!Speriod]] 
+            ]
+         }
+
+        {:des "movement-mode"
+          :rules [ :movement-mode
+                  [:##j [:down_arrow]]
+                  [:##k [:up_arrow]]
+                  [:##h [:left_arrow]]
+                  [:##l [:right_arrow]]
+
+                  ; have modifier after q key if I am gonna use q for movement
+                  ; [:##r [:left_option]]
+                  ; [:##w [:left_command]]
+                  ; [:##e [:left_shift]]
+
+                  ; have modifiers before t key if I am gonna use t for movement layer
+                  [:##d [:left_option]]
+                  [:##a [:left_command]]
+                  [:##s [:left_shift]]
+                  ]
+         }
+ ]
+ }
