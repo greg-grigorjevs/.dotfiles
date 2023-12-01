@@ -87,7 +87,7 @@ for _, server in ipairs(servers) do
           environment = {
             include_paths = {
               "./vendor/pestphp",
-              --[[ "./vendor/phpunit/phpunit", ]]
+              "./vendor/phpunit/phpunit",
               "./vendor/laravel"
             }
           }
