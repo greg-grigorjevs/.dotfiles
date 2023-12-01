@@ -230,6 +230,8 @@ fresh () {
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export PATH="/Applications/kitty.app/Contents/MacOS":$PATH # makes kitty command work
+export PATH="$HOME/.local/bin":$PATH
+export PATH="~/bin":$PATH
 
 
 # fzf config
@@ -259,3 +261,6 @@ export HERD_PHP_82_INI_SCAN_DIR="/Users/mbp-greg/Library/Application Support/Her
 
 # Herd injected PHP 7.4 configuration.
 export HERD_PHP_74_INI_SCAN_DIR="/Users/mbp-greg/Library/Application Support/Herd/config/php/74/"
+
+# custom bindings
+bindkey -s ^f "tmux_sessionizer\n"
