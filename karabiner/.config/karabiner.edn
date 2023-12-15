@@ -24,11 +24,15 @@
                  [:i [:quote]]
                  [:o [:!Squote]]
                  [:r [:!S4]]
-                 [:h [:equal_sign]]
+                 [:##h [:equal_sign]]
+                 [:##semicolon [:p]] ; makes the actual semicolon on the keyboard to output semicolon on the colemac layout
+                 [:left_shift [:left_shift]]
+                 [:left_command [:left_command]]
                  [:n [:hyphen]]
                  [:m [:!Shyphen]]
-                 [:t [:!Sequal_sign]]
+                 [:##t [:!Sequal_sign]]
                  [:comma [:!Scomma]]
+                 [:spacebar [:spacebar]]
                  [:period [:!Speriod]]]}
 
         {:des "movement-mode"
