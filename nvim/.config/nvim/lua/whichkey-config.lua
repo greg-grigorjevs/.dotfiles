@@ -231,5 +231,5 @@ which_key.register({
 -- couldn't make it work using which-key syntax
 vim.cmd [[
   tnoremap <C-\> <C-\><C-n>:FloatermToggle<cr>
-  tnoremap dj <C-\><C-n>
+  tnoremap tn <C-\><C-n>
 ]]
