@@ -5,7 +5,7 @@
 
 
 # Path to your oh-my-zsh installation.
-export ZSH="/Users/mbp-greg/.oh-my-zsh"
+export ZSH="$HOME/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -79,7 +79,7 @@ export ZSH="/Users/mbp-greg/.oh-my-zsh"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
 	git
-    zsh-syntax-highlighting
+    # zsh-syntax-highlighting
 #	zsh-autosuggestions
 )
 
@@ -265,3 +265,6 @@ export HERD_PHP_74_INI_SCAN_DIR="/Users/mbp-greg/Library/Application Support/Her
 
 # custom bindings
 bindkey -s ^f "tmux_sessionizer\n"
+
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
