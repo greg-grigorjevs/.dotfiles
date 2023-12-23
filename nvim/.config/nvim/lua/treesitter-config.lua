@@ -63,6 +63,7 @@ require("nvim-treesitter.configs").setup {
         -- You can also use captures from other query groups like `locals.scm`
         --[[ ["as"] = { query = "@scope", query_group = "locals", desc = "Select language scope" }, ]]
       },
+      selection_modes = 'V'
       -- You can choose the select mode (default is charwise 'v')
       --
       -- Can also be a function which gets passed a table with the keys
