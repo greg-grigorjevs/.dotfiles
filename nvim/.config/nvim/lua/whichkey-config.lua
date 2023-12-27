@@ -160,7 +160,7 @@ local mappings = {
 		name = 'Format/Harpoon',
 		p = { "<cmd>Prettier<cr>", "Prettier" },
 		-- f = { "<cmd>CocCommand editor.action.formatDocument<cr>", "Format" }
-		f = { "<cmd>Format<cr>", 'LSP Format' },
+		--[[ f = { "<cmd>Format<cr>", 'LSP Format' }, ]]
 		a = { "<cmd>lua require 'harpoon.mark'.add_file()<cr>", "Add file to bookmarks" },
 		t = { "<cmd>lua require 'harpoon.ui'.toggle_quick_menu()<cr>", "Toggle harpoon" },
 	},
