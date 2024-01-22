@@ -1,5 +1,4 @@
 return require('packer').startup(function()
-
   use 'wbthomason/packer.nvim'
 
   -- Colorschemes
@@ -108,7 +107,7 @@ return require('packer').startup(function()
         pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook(),
       }
       local ft = require('Comment.ft')
-      ft.set('blade', { '{{-- %s --}}', '{{-- %s --}}'  })
+      ft.set('blade', { '{{-- %s --}}', '{{-- %s --}}' })
     end
   }
 
@@ -234,4 +233,11 @@ return require('packer').startup(function()
 
   use "stevearc/conform.nvim"
 
+  use {
+    'laytan/tailwind-sorter.nvim',
+    requires = { 'nvim-treesitter/nvim-treesitter', 'nvim-lua/plenary.nvim' },
+    config = function() require('tailwind-sorter').setup() end,
+    run = 'cd formatter && npm i && npm run build',
+  }
+  
 end)
