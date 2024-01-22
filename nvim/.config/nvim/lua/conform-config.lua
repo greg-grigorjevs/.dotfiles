@@ -10,6 +10,6 @@ vim.keymap.set({ "n", "v" }, "<leader>hf", function ()
   conform.format({
     lsp_fallback = true,
     async = false,
-    timeout_ms = 500
+    timeout_ms = 3000
   })
 end, { desc = "Format file or range using conform" })
