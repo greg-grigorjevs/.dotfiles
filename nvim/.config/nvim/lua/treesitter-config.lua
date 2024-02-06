@@ -1,34 +1,30 @@
 require("nvim-treesitter.configs").setup {
-	ensure_installed = "all",
-	highlight = {
+  ensure_installed = "all",
+  highlight = {
     enable = true,
-     -- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
+    -- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
     -- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
     -- the name of the parser)
     -- list of language that will be disabled
-    disable = {"conf"},
+    disable = { "conf" },
 
     -- fixes indentation in react files
-    additional_vim_regex_highlighting = {"jsx", "tsx", "js", "javascript", "javascriptreact", "typescriptreact", "svelte"},
+    additional_vim_regex_highlighting = { "jsx", "tsx", "js", "javascript", "javascriptreact", "typescriptreact", "svelte" },
 
   },
-	indent = { enable = {'php', 'yaml', 'html', 'svelte', 'jsx', 'tsx'} },
---  autopairs = {enable = true},
+  indent = { enable = { 'php', 'yaml', 'html', 'svelte', 'jsx', 'tsx' } },
+  --  autopairs = {enable = true},
   autotag = true,
   matchup = {
     enable = true,
   },
- rainbow = {
+  rainbow = {
     enable = true,
-    disable = { "php" }, -- list of languages you want to disable the plugin for
+    disable = { "php" },  -- list of languages you want to disable the plugin for
     extended_mode = true, -- Also highlight non-bracket delimiters like html tags, boolean or table: lang -> boolean
     max_file_lines = nil, -- Do not enable for files with more than n lines, int
     -- colors = {}, -- table of hex strings
     -- termcolors = {} -- table of colour name strings
-  },
-  context_commentstring = {
-    enable = true,
-    enable_autocmd = false,
   },
   incremental_selection = {
     enable = true,
@@ -55,7 +51,7 @@ require("nvim-treesitter.configs").setup {
         ["ac"] = "@comment.outer",
         ["ii"] = "@conditional.inner",
         ["ai"] = "@conditional.outer",
-        
+
         -- You can optionally set descriptions to the mappings (used in the desc parameter of
         -- nvim_buf_set_keymap) which plugins like which-key display
 
@@ -94,9 +90,13 @@ local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
 parser_config.blade = {
   install_info = {
     url = "https://github.com/EmranMR/tree-sitter-blade",
-    files = {"src/parser.c"},
+    files = { "src/parser.c" },
     branch = "main",
   },
   filetype = "blade"
 }
 
+require('ts_context_commentstring').setup {
+  enable = true,
+  enable_autocmd = false,
+}
