@@ -20,6 +20,7 @@ require('flash-config')
 require('null-ls-config')
 require('prettier-config')
 require('conform-config')
+require('luasnip_config')
 
 
 --[[
