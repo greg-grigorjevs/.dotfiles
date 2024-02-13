@@ -41,4 +41,5 @@ ls.add_snippets('php', {
       i(0)
     })
   ),
+  s('var', fmt('/** @var {} */', i(1, 'class'))),
 })
