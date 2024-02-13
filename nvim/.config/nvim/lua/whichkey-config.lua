@@ -140,6 +140,11 @@ local mappings = {
 		},
 	},
 
+  r = {
+    name = "Reload",
+    r = { "<cmd>ReloadBrowser<cr>", "Browser" }
+  },
+
   b = {
     name = "Buffers",
     p = {"<cmd>BufferPin<cr>", "Pin a buffer"},

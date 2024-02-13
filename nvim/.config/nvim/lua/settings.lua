@@ -8,10 +8,10 @@ vim.cmd("autocmd FileType * set formatoptions-=cro")
 vim.api.nvim_set_keymap("", "<Space>", "<Nop>", { noremap = true, silent = true })
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
-vim.cmd("set clipboard+=unnamedplus") -- use system clipboard
-vim.o.mouse = "a" -- use mouse
+vim.cmd("set clipboard+=unnamedplus")       -- use system clipboard
+vim.o.mouse = "a"                           -- use mouse
 vim.o.wrap = false
-vim.o.startofline = true -- don't know what this does
+vim.o.startofline = true                    -- don't know what this does
 vim.o.completeopt = 'menu,menuone,noselect' -- completion window behaviour
 vim.o.swapfile = false
 
@@ -38,7 +38,7 @@ vim.o.sidescrolloff = 5
 -- signcolumn = auto
 -- signcolumn = auto
 -- vim.wo.signcolumn="yes"
-vim.o.number = true -- shows line number
+vim.o.number = true   -- shows line number
 vim.o.numberwidth = 2 -- always reserve 3 spaces for line number
 
 -- Search
@@ -47,11 +47,12 @@ vim.o.ignorecase = true
 vim.o.smartcase = true
 
 -- Indentation
-vim.o.formatoptions = 'qnj1' -- q  - comment formatting; n - numbered lists; j - remove comment when joining lines; 1 - don't break after one-letter word
+vim.o.formatoptions =
+'qnj1' -- q  - comment formatting; n - numbered lists; j - remove comment when joining lines; 1 - don't break after one-letter word
 vim.o.smartindent = true
 vim.o.expandtab = true
 vim.o.smarttab = true
-vim.o.tabstop = 2 -- 1 tab = 2 spaces
+vim.o.tabstop = 2     -- 1 tab = 2 spaces
 vim.o.shiftwidth = 2
 vim.o.undofile = true -- save undo history
 vim.o.splitbelow = true
@@ -130,3 +131,11 @@ vim.cmd [[
 -- always open help in vertical left split (bo for right)
 vim.cmd('cabbrev h vert to h')
 
+vim.api.nvim_create_user_command('ReloadBrowser', function()
+  vim.cmd([[
+    silent exe "!osascript -e 'tell app \"Google Chrome\" to activate\<cr>
+            \tell app \"System events\"\<cr> keystroke \"r\" using command down\<cr>
+            \end tell'"
+    silent exe "!osascript -e 'tell app \"Kitty\" to activate'"
+]])
+end, { nargs = '*' })
