@@ -201,7 +201,7 @@ local mappings = {
   w = { "<cmd>w<cr>", "Save File" },
   W = { "<cmd>wa<cr>", "Save All Files" },
   q = { "<cmd>q<cr>", "Close File" },
-  Q = { "<cmd>qa<cr>", "Quit Nvim" },
+  Q = { "<cmd>qa!<cr>", "Quit Nvim" },
 
   ["%"] = { "<cmd>w<bar>so %<cr>", "Save and source current file" },
 
