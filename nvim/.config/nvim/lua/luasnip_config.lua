@@ -25,21 +25,20 @@ ls.setup({
 })
 
 ls.add_snippets('php', {
-  s('dd', fmt([[
+  s({ trig = 'dd', snippetType = 'autosnippet' }, fmt([[
   dd(${});
   ]],
-      { i(1, 'variable') }),
-    { type = 'autosnippets' }
+    { i(1, 'variable') })
   ),
   s('fore', fmt([[
   foreach (${} as ${}) {{
       {}
   }}
   ]], {
-      i(1, 'set'),
-      i(2, 'item'),
-      i(0)
-    })
+    i(1, 'set'),
+    i(2, 'item'),
+    i(0)
+  })
   ),
   s('var', fmt('/** @var {} */', i(1, 'class'))),
 })
