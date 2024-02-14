@@ -30,6 +30,11 @@ ls.add_snippets('php', {
   ]],
     { i(1, 'variable') })
   ),
+  s({ trig = 'dump', snippetType = 'autosnippet' }, fmt([[
+  dump(${});
+  ]],
+    { i(1, 'variable') })
+  ),
   s('fore', fmt([[
   foreach (${} as ${}) {{
       {}
