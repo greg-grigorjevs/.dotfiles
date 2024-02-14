@@ -239,5 +239,12 @@ return require('packer').startup(function()
     config = function() require('tailwind-sorter').setup() end,
     run = 'cd formatter && npm i && npm run build',
   }
-  
+
+  use {
+    'fei6409/log-highlight.nvim',
+    config = function()
+      require('log-highlight').setup {}
+    end,
+  }
+
 end)
