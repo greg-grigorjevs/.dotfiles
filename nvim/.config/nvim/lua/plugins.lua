@@ -249,4 +249,34 @@ return require('packer').startup(function()
 
   use { 'windwp/nvim-ts-autotag' }
 
+  use({
+    "epwalsh/obsidian.nvim",
+    tag = "*", -- recommended, use latest release instead of latest commit
+    requires = {
+      -- Required.
+      "nvim-lua/plenary.nvim",
+
+    },
+    config = function()
+      require("obsidian").setup({
+        workspaces = {
+          -- {
+          --   name = "personal",
+          --   path = "~/vaults/personal",
+          -- },
+          {
+            name = "work",
+            path = "~/vaults/work",
+            -- strict = true
+          },
+        },
+        -- creates new notes in the currently selected worspace which should be the default IMO
+        -- but default is current dir
+        new_notes_location = "notes_subdir"
+
+      })
+
+      vim.o.conceallevel = 2
+    end,
+  })
 end)
