@@ -14,7 +14,6 @@ require("nvim-treesitter.configs").setup {
   },
   indent = { enable = { 'php', 'yaml', 'html', 'svelte', 'jsx', 'tsx' } },
   --  autopairs = {enable = true},
-  autotag = true,
   matchup = {
     enable = true,
   },
@@ -83,6 +82,12 @@ require("nvim-treesitter.configs").setup {
       -- and should return true of false
       --[[ include_surrounding_whitespace = true, ]]
     },
+  },
+  autotag = {
+    enable = true,
+    enable_rename = true,
+    enable_close = true,
+    enable_close_on_slash = true,
   },
 }
 
