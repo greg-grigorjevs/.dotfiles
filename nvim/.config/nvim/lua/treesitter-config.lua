@@ -50,6 +50,8 @@ require("nvim-treesitter.configs").setup {
         ["ac"] = "@comment.outer",
         ["ii"] = "@conditional.inner",
         ["ai"] = "@conditional.outer",
+        ["al"] = "@loop.outer",
+        ["il"] = "@loop.inner"
 
         -- You can optionally set descriptions to the mappings (used in the desc parameter of
         -- nvim_buf_set_keymap) which plugins like which-key display
