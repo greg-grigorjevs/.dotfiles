@@ -41,6 +41,7 @@
                  [:##k [:up_arrow]]
                  [:##h [:left_arrow]]
                  [:##l [:right_arrow]]
+                 [:caps_lock [:caps_lock]]
 
                   ; have modifier after q key if I am gonna use q for movement
                   ; [:##r [:left_option]]
