@@ -266,7 +266,10 @@ return require('packer').startup(function()
           -- },
           {
             name = "work",
-            path = "~/vaults/work",
+            -- path = "~/vaults/work",
+            path = function()
+              return '/Users/' .. os.getenv('USER') .. '/Library/Mobile Documents/iCloud~md~obsidian/Documents/vault'
+            end
             -- strict = true
           },
         },
