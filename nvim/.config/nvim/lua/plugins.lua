@@ -38,15 +38,12 @@ return require('packer').startup(function()
 
   use 'ThePrimeagen/harpoon'
 
-  --[[
   use {'windwp/nvim-autopairs', config = function()
     require('nvim-autopairs').setup{}
   end
   }
 
-  --]]
 
-  use 'jiangmiao/auto-pairs'
   -- use 'scrooloose/nerdtree'
   use 'andymass/vim-matchup' -- significatly expands % functionality
   --[[ use 'p00f/nvim-ts-rainbow' ]]
