@@ -147,6 +147,12 @@ local mappings = {
     },
   },
 
+  o = {
+    name = "Obsidian",
+    n = { ":ObsidianNew ", "[N]ew Obsidian Note" },
+    p = { "<cmd>ObsidianOpen<CR>", "O[p]en current note" }
+  },
+
   r = {
     name = "Reload",
     r = { "<cmd>ReloadBrowser<cr>", "Browser" }
@@ -207,21 +213,22 @@ local mappings = {
 
 }
 
--- Try to make it work
---[[ local harpoon_mappings = {} ]]
---[[ for i = 0, 9, 1 do ]]
---[[ 	local key = string.format("<M-%s>", i+1) ]]
---[[ 	local value = string.format("<cmd>lua require'harpoon.ui'.nav_file(%s)<cr>", i+1) ]]
---[[ 	table.insert(harpoon_mappings, {[key] = {value}}) ]]
---[[ end ]]
---[[ print(harpoon_mappings["<M-1>"]) ]]
-
 local which_key = require("which-key");
 which_key.setup(setup);
+
+-- Leader key mappings
 which_key.register(mappings, opts);
+
+-- Toggle floating terminal
 which_key.register({
   ["<C-\\>"] = { "<cmd>FloatermToggle ft1 --width=0.9 --height=0.9<cr>", "Toggle Terminal" },
 });
+
+-- Obsidian notes quick search
+which_key.register({
+  ["<M-o>"] = { "<cmd>ObsidianQuickSwitch<CR>", "[O]bsidian notes search" },
+  ["<M-O>"] = { "<cmd>ObsidianSearch<CR>", "[O]bsidian notes grep search" }
+})
 
 which_key.register({
   ["<C-P>"] = { "<cmd>Telescope find_files<cr>", "Find files" },
