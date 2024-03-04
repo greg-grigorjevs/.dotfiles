@@ -223,6 +223,11 @@ which_key.register({
   ["<C-\\>"] = { "<cmd>FloatermToggle ft1 --width=0.9 --height=0.9<cr>", "Toggle Terminal" },
 });
 
+which_key.register({
+  ["<C-P>"] = { "<cmd>Telescope find_files<cr>", "Find files" },
+  ["<M-p>"] = { "<cmd>Telescope find_files no_ignore=true hidden=true<cr>", "Find all files" }
+})
+
 -- harpoon mappings
 which_key.register({
   ["<M-1>"] = { "<cmd>lua require'harpoon.ui'.nav_file(1)<cr>", "Harpoon open file 1" },
