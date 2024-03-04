@@ -39,11 +39,11 @@ nmap("<S-x>", ":bdelete<CR>")
 --[[ map("n", "F", ":HopChar1BC<CR>") ]]
 
 -- telescope mappings
-nmap('<C-p>', ':Telescope find_files<CR>')
-nmap('<leader>fs', ':Telescope live_grep<CR>')
-nmap('<leader>fb', ':Telescope buffers<CR>')
-nmap('<leader>fh', ':Telescope help_tags<CR>')
-nmap('<leader>fg', ':Telescope git_status<CR>')
+-- nmap('<C-p>', ':Telescope find_files<CR>')
+-- nmap('<leader>fs', ':Telescope live_grep<CR>')
+-- nmap('<leader>fb', ':Telescope buffers<CR>')
+-- nmap('<leader>fh', ':Telescope help_tags<CR>')
+-- nmap('<leader>fg', ':Telescope git_status<CR>')
 -- vim.api.nvim_set_keymap('n', '<leader>fgs', ':Telescope git_status<CR>', {noremap = false})
 
 nmap('g.', '<C-I>')
