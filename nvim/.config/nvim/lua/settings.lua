@@ -25,7 +25,7 @@ vim.o.timeoutlen = 300
 
 -- Display
 vim.o.showmatch = true
-vim.o.scrolloff = 5 -- auto-scroll near top/bottom
+vim.o.scrolloff = 15 -- auto-scroll near top/bottom
 vim.o.sidescrolloff = 5
 
 -- vim.o.list = true -- shows whitespaces
