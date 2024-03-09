@@ -204,6 +204,8 @@ return require('packer').startup(function()
   }
 
   use 'tpope/vim-fugitive'
+  use 'tpope/vim-rhubarb' -- support GBrowse for github
+  use 'tommcdo/vim-fubitive' -- support GBrowse for bitbucket
   use 'nvim-treesitter/nvim-treesitter-context'
   use "b0o/schemastore.nvim"
 
@@ -279,4 +281,5 @@ return require('packer').startup(function()
       vim.o.conceallevel = 2
     end,
   })
+
 end)
