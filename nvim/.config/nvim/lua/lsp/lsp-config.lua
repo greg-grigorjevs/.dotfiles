@@ -77,7 +77,7 @@ for _, server in ipairs(servers) do
       on_attach = on_attach,
       capabilities = capabilities,
       filetypes = { "html", "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact",
-        "typescript.tsx", "svelte" },
+        "typescript.tsx", "svelte", 'blade' },
     }
   elseif server == 'intelephense' then
     lspconfig[server].setup {
@@ -89,7 +89,7 @@ for _, server in ipairs(servers) do
             include_paths = {
               "./vendor/pestphp",
               "./vendor/phpunit/phpunit",
-              --[[ "./vendor/laravel" ]] -- messes up with the lsp for some reason
+              -- "./vendor/laravel" -- messes up with the lsp for some reason
             }
           }
         }

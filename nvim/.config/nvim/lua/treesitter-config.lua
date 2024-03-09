@@ -12,7 +12,7 @@ require("nvim-treesitter.configs").setup {
     additional_vim_regex_highlighting = { "jsx", "tsx", "js", "javascript", "javascriptreact", "typescriptreact", "svelte" },
 
   },
-  indent = { enable = { 'php', 'yaml', 'html', 'svelte', 'jsx', 'tsx' } },
+  indent = { enable = { 'php', 'yaml', 'html', 'svelte', 'jsx', 'tsx', 'blade' } },
   --  autopairs = {enable = true},
   matchup = {
     enable = true,
@@ -90,6 +90,13 @@ require("nvim-treesitter.configs").setup {
     enable_rename = true,
     enable_close = true,
     enable_close_on_slash = true,
+    filetypes = {
+      'html', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'svelte', 'vue', 'tsx', 'jsx', 'rescript',
+      'xml',
+      'php', 'blade',
+      'markdown',
+      'astro', 'glimmer', 'handlebars', 'hbs'
+    }
   },
 }
 
