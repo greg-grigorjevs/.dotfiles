@@ -136,6 +136,8 @@ alias lg="lazygit"
 alias pa="php artisan"
 alias pat="php artisan test"
 alias patf="php artisan test --filter"
+alias dotfiles="cd ~/.dotfiles && nvim . -c 'Telescope find_files hidden=true'"
+alias copyhistory="fc -ln 0 | fzf --tac --no-sort | tr -d \\\n | pbcopy"
 
 alias pest="./vendor/bin/pest"
 
