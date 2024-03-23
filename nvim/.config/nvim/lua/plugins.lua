@@ -38,8 +38,8 @@ return require('packer').startup(function()
 
   use 'ThePrimeagen/harpoon'
 
-  use {'windwp/nvim-autopairs', config = function()
-    require('nvim-autopairs').setup{}
+  use { 'windwp/nvim-autopairs', config = function()
+    require('nvim-autopairs').setup {}
   end
   }
 
@@ -204,7 +204,7 @@ return require('packer').startup(function()
   }
 
   use 'tpope/vim-fugitive'
-  use 'tpope/vim-rhubarb' -- support GBrowse for github
+  use 'tpope/vim-rhubarb'    -- support GBrowse for github
   use 'tommcdo/vim-fubitive' -- support GBrowse for bitbucket
   use 'nvim-treesitter/nvim-treesitter-context'
   use "b0o/schemastore.nvim"
@@ -274,12 +274,17 @@ return require('packer').startup(function()
         },
         -- creates new notes in the currently selected worspace which should be the default IMO
         -- but default is current dir
-        new_notes_location = "notes_subdir"
+        new_notes_location = "notes_subdir",
+        follow_url_func = function(url)
+          -- Open the URL in the default web browser.
+          vim.fn.jobstart({ "open", url }) -- Mac OS
+          -- vim.fn.jobstart({"xdg-open", url})  -- linux
+        end,
+        open_app_foreground = true,
 
       })
 
       vim.o.conceallevel = 2
     end,
   })
-
 end)
