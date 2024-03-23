@@ -35,6 +35,13 @@ ls.add_snippets('php', {
   ]],
     { i(1, 'variable') })
   ),
+  s({ trig = '/**', snippetType = 'autosnippet' }, fmt([[
+  /**
+  * {}
+  */
+  ]],
+    { i(1, 'comment') })
+  ),
   s('fore', fmt([[
   foreach (${} as ${}) {{
       {}
