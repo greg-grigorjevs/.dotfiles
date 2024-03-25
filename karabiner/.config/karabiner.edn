@@ -24,6 +24,7 @@
                  [:i [:quote]]
                  [:o [:!Squote]]
                  [:r [:!S4]]
+                 [:y [:comma]]
                  [:##h [:equal_sign]]
                  [:##semicolon [:p]] ; makes the actual semicolon on the keyboard to output semicolon on the colemac layout
                  [:left_shift [:left_shift]]
@@ -32,6 +33,7 @@
                  [:m [:!Shyphen]]
                  [:##t [:!Sequal_sign]]
                  [:comma [:!Scomma]]
+                 [:!Scomma [:comma]]
                  [:spacebar [:spacebar]]
                  [:period [:!Speriod]]]}
 
