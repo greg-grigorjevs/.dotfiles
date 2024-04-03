@@ -29,7 +29,7 @@
                  [:##semicolon [:p]] ; makes the actual semicolon on the keyboard to output semicolon on the colemac layout
                  [:left_shift [:left_shift]]
                  [:left_command [:left_command]]
-                 [:n [:hyphen]]
+                 [:##n [:hyphen]]
                  [:m [:!Shyphen]]
                  [:##t [:!Sequal_sign]]
                  [:comma [:!Scomma]]
