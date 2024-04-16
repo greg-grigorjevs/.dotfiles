@@ -91,7 +91,8 @@ return require('packer').startup(function()
         extra_keymaps = true,
         extended_keymaps = true,
       }
-    end
+    end,
+    disable = true
   }
 
   use 'JoosepAlviste/nvim-ts-context-commentstring' -- support for jsx commenting
