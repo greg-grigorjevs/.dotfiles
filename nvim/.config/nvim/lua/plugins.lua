@@ -288,4 +288,6 @@ return require('packer').startup(function()
       vim.o.conceallevel = 2
     end,
   })
+
+use 'nvim-treesitter/playground'
 end)
