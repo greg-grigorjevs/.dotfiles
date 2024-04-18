@@ -211,7 +211,7 @@ return require('packer').startup(function()
   use "b0o/schemastore.nvim"
 
   -- Debugging
-  use 'mfussenegger/nvim-dap'
+  use {  'mfussenegger/nvim-dap', requires = {'nvim-neotest/nvim-nio'} }
   use 'rcarriga/nvim-dap-ui'
   use 'theHamsta/nvim-dap-virtual-text'
   use 'nvim-telescope/telescope-dap.nvim'
