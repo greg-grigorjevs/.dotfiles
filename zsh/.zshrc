@@ -140,6 +140,7 @@ alias dotfiles="cd ~/.dotfiles && nvim . -c 'Telescope find_files hidden=true'"
 alias copyhistory="fc -ln 0 | fzf --tac --no-sort | tr -d \\\n | pbcopy"
 alias kmonadon="tmux new-session -ds kmonad sudo kmonad ~/.dotfiles/kmonad/kmonad.kbd"
 alias kmonadoff="tmux kill-session -t kmonad"
+alias kmonadrestart="kmonadoff && kmonadon"
 
 alias pest="./vendor/bin/pest"
 
