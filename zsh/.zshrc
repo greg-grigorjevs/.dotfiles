@@ -249,13 +249,6 @@ export FZF_ALT_C_COMMAND="fd -t d . $HOME"
 # Set PATH, MANPATH, etc., for Homebrew.
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-daisy_vpn () {
-	sshuttle --dns --daemon --pidfile ~/.ssh/sshuttle.pid -r greg.grigorjevs@dsbastion07-public 10.0.0.0/8 195.0.0.0/8
-}
-
-daisy_vpn_disconnect () {
-	kill -9 $(cat ~/.ssh/sshuttle.pid)
-}
 
 
 # Herd injected PHP binary.
