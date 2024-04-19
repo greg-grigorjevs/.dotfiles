@@ -256,4 +256,8 @@ which_key.register({
 vim.cmd [[
   tnoremap <C-\> <C-\><C-n>:FloatermToggle<cr>
   tnoremap tn <C-\><C-n>
+
+  noremap G Gzz
+  noremap <C-d> <C-d>zz
+  noremap <C-u> <C-u>zz
 ]]
