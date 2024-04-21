@@ -25,12 +25,12 @@ empty layer for reference
   sym (tap-hold 200 a (layer-toggle symbol-layer))
   
   nve (tap-hold 200 a (layer-toggle nav-layer))
-  sle (tap-hold 200 c (layer-toggle symbol-layer-engrammer))
+  sme (tap-hold 200 c (layer-toggle symbol-layer))
 
-  lsb (layer-switch base)
-  lse (layer-switch base-engrammer)
+  ;; thg (tap-hold 200 g lsft)
+  thg (tap-next g lsft)
 
-  thg (tap-hold 200 g lsft)
+  lsw (tap-hold 200 (layer-switch base-engrammer) (layer-switch base))
 )
 
 (defsrc
@@ -55,7 +55,7 @@ empty layer for reference
   esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
   g  1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab  b    y    o    u    '    ;    l    d    w    v    z    =    ret
-  lctl @sle i    e    @nve ,    .    h    t    s    n    q    \
+  lctl @sme i    e    @nve ,    .    h    t    s    n    q    \
   @thg x    j    k    -    `    /    r    m    f    p    rsft up
   fn   caps lalt lmet           spc            rmet ralt left down rght
 )
@@ -73,21 +73,12 @@ empty layer for reference
 ;; p is for semicolon on colemak 
   _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
-  _    _    _    _    $    _    _    ,    '    "    P    _    _    _
-  _    _    [    {    \(   _    =    \)   }    ]    p    _    _
+  _    _    _    _    $    _    _    ,    '    "    :    _    _    _
+  _    _    [    {    \(   _    =    \)   }    ]    ;    _    _
   _    _    _    _    _    _    -    \_   <    >    _    _    _
-  _    _    _    _              _              @lse _    _    _    _
+  _    _    _    _              _              @lsw _    _    _    _
 )
 
-(deflayer symbol-layer-engrammer
-;; does the same thing for engrammer layout
-  _    _    _    _    _    _    _    _    _    _    _    _    _
-  _    _    _    _    _    _    _    _    _    _    _    _    _    _
-  _    _    _    _    $    _    _    g    t    T    Y    _    _    _
-  _    _    -    \_   \(   _    ]    \)   +    =    y    _    _
-  _    _    _    _    _    _    b    B    G    H    _    _    _
-  _    _    _    _              _              @lsb _    _    _    _
-)
 
 
 
