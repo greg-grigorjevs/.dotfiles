@@ -27,8 +27,7 @@ empty layer for reference
   nve (tap-hold 200 a (layer-toggle nav-layer))
   sme (tap-hold 200 c (layer-toggle symbol-layer))
 
-  ;; thg (tap-hold 200 g lsft)
-  thg (tap-next g lsft)
+  thg (tap-hold 200 g lsft)
 
   lsw (tap-hold 200 (layer-switch base-engrammer) (layer-switch base))
 )
