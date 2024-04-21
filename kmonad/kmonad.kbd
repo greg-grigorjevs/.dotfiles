@@ -29,6 +29,8 @@ empty layer for reference
 
   lsb (layer-switch base)
   lse (layer-switch base-engrammer)
+
+  thg (tap-hold 200 g lsft)
 )
 
 (defsrc
@@ -36,7 +38,7 @@ empty layer for reference
   grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab  q    w    e    r    t    y    u    i    o    p    [    ]    ret
   caps a    s    d    f    g    h    j    k    l    ;    '    \
-  lsft `    z    x    c    v    b    n    m    ,    .    /    rsft up
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft up
   fn   lctl lalt lmet           spc            rmet ralt left down rght
 )
 
@@ -45,7 +47,7 @@ empty layer for reference
   grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab  q    w    e    r    t    y    u    i    o    p    [    ]    ret
   lctl @sym s    d    @nav g    h    j    k    l    ;    '    \
-  lsft `    z    x    c    v    b    n    m    ,    .    /    rsft up
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft up
   fn   caps lalt lmet           spc            rmet ralt left down rght
 )
 
@@ -54,7 +56,7 @@ empty layer for reference
   g  1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab  b    y    o    u    '    ;    l    d    w    v    z    =    ret
   lctl @sle i    e    @nve ,    .    h    t    s    n    q    \
-  lsft `    x    j    k    -    `    /    r    m    f    p    rsft up
+  @thg x    j    k    -    `    /    r    m    f    p    rsft up
   fn   caps lalt lmet           spc            rmet ralt left down rght
 )
 
@@ -63,7 +65,7 @@ empty layer for reference
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    lsft lalt _    _    left down up   rght    _    _    _
-  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _              _              _    _    _    _    _
 )
 
@@ -73,7 +75,7 @@ empty layer for reference
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    $    _    _    ,    '    "    P    _    _    _
   _    _    [    {    \(   _    =    \)   }    ]    p    _    _
-  _    _    _    _    _    _    _    -    \_   <    >    _    _    _
+  _    _    _    _    _    _    -    \_   <    >    _    _    _
   _    _    _    _              _              @lse _    _    _    _
 )
 
@@ -83,7 +85,7 @@ empty layer for reference
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    $    _    _    g    t    T    Y    _    _    _
   _    _    -    \_   \(   _    ]    \)   +    =    y    _    _
-  _    _    _    _    _    _    _    b    B    G    H    _    _    _
+  _    _    _    _    _    _    b    B    G    H    _    _    _
   _    _    _    _              _              @lsb _    _    _    _
 )
 
