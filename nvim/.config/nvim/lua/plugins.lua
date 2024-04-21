@@ -52,7 +52,7 @@ return require('packer').startup(function()
     "max397574/better-escape.nvim",
     config = function()
       require("better_escape").setup {
-        mapping = { "tn" }
+        mapping = { "ah", "tn" } -- engram and colemak
       }
     end,
   }
