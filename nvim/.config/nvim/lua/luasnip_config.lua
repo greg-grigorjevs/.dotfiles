@@ -54,10 +54,10 @@ ls.add_snippets('php', {
   ),
   s('@script', fmt([[
   @script
-    <script>
-      {}
-    </script>
+      <script>
+          {}
+      </script>
   @endscript
-  ]]), {i(1)}),
+  ]], {i(1)})),
   s('var', fmt('/** @var {} */', i(1, 'class'))),
 })
