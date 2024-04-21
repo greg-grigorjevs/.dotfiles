@@ -290,4 +290,6 @@ return require('packer').startup(function()
   })
 
 use 'nvim-treesitter/playground'
+use('kmonad/kmonad-vim')
+
 end)
