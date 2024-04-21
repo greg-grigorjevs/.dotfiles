@@ -23,7 +23,9 @@ empty layer for reference
 (defalias
   nav (tap-hold 200 f (layer-toggle nav-layer))
   sym (tap-hold 200 a (layer-toggle symbol-layer))
-  sle (tap-hold 200 a (layer-toggle symbol-layer-engrammer))
+  
+  nve (tap-hold 200 a (layer-toggle nav-layer))
+  sle (tap-hold 200 c (layer-toggle symbol-layer-engrammer))
 
   lsb (layer-switch base)
   lse (layer-switch base-engrammer)
@@ -34,7 +36,7 @@ empty layer for reference
   grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab  q    w    e    r    t    y    u    i    o    p    [    ]    ret
   caps a    s    d    f    g    h    j    k    l    ;    '    \
-  lsft z    x    c    v    b    n    m    ,    .    /    rsft up
+  lsft `    z    x    c    v    b    n    m    ,    .    /    rsft up
   fn   lctl lalt lmet           spc            rmet ralt left down rght
 )
 
@@ -43,16 +45,16 @@ empty layer for reference
   grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab  q    w    e    r    t    y    u    i    o    p    [    ]    ret
   lctl @sym s    d    @nav g    h    j    k    l    ;    '    \
-  lsft z    x    c    v    b    n    m    ,    .    /    rsft up
+  lsft `    z    x    c    v    b    n    m    ,    .    /    rsft up
   fn   caps lalt lmet           spc            rmet ralt left down rght
 )
 
 (deflayer base-engrammer
   esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
-  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
-  tab  q    w    e    r    t    y    u    i    o    p    [    ]    ret
-  lctl @sle s    d    @nav g    h    j    k    l    ;    '    \
-  lsft z    x    c    v    b    n    m    ,    .    /    rsft up
+  g  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  b    y    o    u    '    ;    l    d    w    v    z    =    ret
+  lctl @sle i    e    @nve ,    .    h    t    s    n    q    \
+  lsft `    x    j    k    -    `    /    r    m    f    p    rsft up
   fn   caps lalt lmet           spc            rmet ralt left down rght
 )
 
@@ -61,7 +63,7 @@ empty layer for reference
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    lsft lalt _    _    left down up   rght    _    _    _
-  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _              _              _    _    _    _    _
 )
 
@@ -71,7 +73,7 @@ empty layer for reference
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    $    _    _    ,    '    "    P    _    _    _
   _    _    [    {    \(   _    =    \)   }    ]    p    _    _
-  _    _    _    _    _    _    -    \_   <    >    _    _    _
+  _    _    _    _    _    _    _    -    \_   <    >    _    _    _
   _    _    _    _              _              @lse _    _    _    _
 )
 
@@ -81,7 +83,7 @@ empty layer for reference
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    $    _    _    g    t    T    Y    _    _    _
   _    _    -    \_   \(   _    ]    \)   +    =    y    _    _
-  _    _    _    _    _    _    b    B    G    H    _    _    _
+  _    _    _    _    _    _    _    b    B    G    H    _    _    _
   _    _    _    _              _              @lsb _    _    _    _
 )
 
