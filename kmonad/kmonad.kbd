@@ -31,6 +31,8 @@ empty layer for reference
   ctv (tap-hold 200 b lctl)
 
   lsw (tap-hold 200 (layer-switch base-engrammer) (layer-switch base))
+  
+  fn (around (layer-toggle function) fn)
 )
 
 (defsrc
@@ -52,12 +54,12 @@ empty layer for reference
 )
 
 (deflayer base-engrammer
-  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  esc    brdn brup lp   mctl bldn blup prev pp   next mute vold volu
   g  1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab  q    y    o    u    '    ;    l    d    w    z    z    =    ret
   @ctv @sme i    e    @nve ,    .    h    t    s    n    v    \
   @thg x    j    k    -    `    /    r    m    f    p    rsft up
-  fn   caps lalt lmet           spc            rmet ralt left down rght
+  @fn   caps lalt lmet           spc            rmet ralt left down rght
 )
 
 (deflayer nav-layer
@@ -79,7 +81,14 @@ empty layer for reference
   _    _    _    _              _              @lsw _    _    _    _
 )
 
-
+(deflayer function
+  _    f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _              _              _    _    _    _    _
+)
 
 
 
