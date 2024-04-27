@@ -239,6 +239,7 @@ export PATH="/Applications/kitty.app/Contents/MacOS":$PATH # makes kitty command
 export PATH="$HOME/.local/bin":$PATH
 export PATH="~/bin":$PATH
 export PATH="$HOME/.composer/vendor/bin":$PATH
+export PATH="$HOME/.dotfiles/bin":$PATH
 
 
 # fzf config
