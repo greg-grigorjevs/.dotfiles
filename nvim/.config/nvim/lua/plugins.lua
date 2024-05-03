@@ -211,7 +211,7 @@ return require('packer').startup(function()
   use "b0o/schemastore.nvim"
 
   -- Debugging
-  use {  'mfussenegger/nvim-dap', requires = {'nvim-neotest/nvim-nio'} }
+  use { 'mfussenegger/nvim-dap', requires = { 'nvim-neotest/nvim-nio' } }
   use 'rcarriga/nvim-dap-ui'
   use 'theHamsta/nvim-dap-virtual-text'
   use 'nvim-telescope/telescope-dap.nvim'
@@ -289,7 +289,40 @@ return require('packer').startup(function()
     end,
   })
 
-use 'nvim-treesitter/playground'
-use('kmonad/kmonad-vim')
+  use 'nvim-treesitter/playground'
+  use('kmonad/kmonad-vim')
 
+  -- didn't work for some reason. could't run neotest.run.run
+  use {
+    "nvim-neotest/neotest",
+    disable = true,
+    requires = {
+      "nvim-neotest/nvim-nio",
+      "nvim-lua/plenary.nvim",
+      "antoinemadec/FixCursorHold.nvim",
+      "nvim-treesitter/nvim-treesitter",
+      "olimorris/neotest-phpunit",
+      config = function()
+        require("neotest").setup({
+          adapters = {
+            require("neotest-phpunit")
+          }
+        })
+      end
+    }
+  }
+
+  -- use this instead of neotest
+  use {
+    "vim-test/vim-test",
+    config = function()
+      vim.cmd([[
+        let test#php#phpunit#executable = 'php artisan test'
+        " let test#strategy = 'floaterm'
+        let test#strategy = 'neovim_sticky'
+        let test#neovim#term_position = "vert"
+        let test#neovim_sticky#reopen_window = 1 
+      ]])
+    end
+  }
 end)
