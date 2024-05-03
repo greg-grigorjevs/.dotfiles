@@ -235,6 +235,11 @@ which_key.register({
 which_key.register({
   ["<C-P>"] = { "<cmd>Telescope find_files<cr>", "Find files" },
   ["<M-p>"] = { "<cmd>Telescope find_files no_ignore=true hidden=true<cr>", "Find all files" }
+
+-- quickfix list mappings
+which_key.register({
+  ["<M-t>"] = { "<cmd>cprev<cr>", "cprev"},
+  ["<M-h>"] = { "<cmd>cnext<cr>", "cnext"},
 })
 
 -- harpoon mappings
