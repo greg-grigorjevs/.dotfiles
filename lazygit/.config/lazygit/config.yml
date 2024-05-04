@@ -1,2 +1,2 @@
 os:
-  editCommand: 'floaterm {{filename}}'
+  edit: 'floaterm {{filename}}'
