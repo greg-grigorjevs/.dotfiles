@@ -75,6 +75,7 @@ local opts = {
 
 local mappings = {
 
+  ['\\'] = { "<C-\\><C-p><CR>"},
   e = { "<cmd>NvimTreeFindFileToggle<cr>", "File Tree" },
 
   p = {
@@ -169,10 +170,11 @@ local mappings = {
 
   t = {
     name = "Terminal/Test",
-    g = { "<cmd>FloatermNew --autoclose=2 --name=lazygit lazygit --use-config-file=\"$HOME/.dotfiles/lazygit/.config/lazygit/config.yml\"<cr>", "lazygit" },
+    -- g = { "<cmd>FloatermNew --autoclose=2 --name=lazygit lazygit --use-config-file=\"$HOME/.dotfiles/lazygit/.config/lazygit/config.yml\"<cr>", "lazygit" },
+    g = { "<cmd>LazyGit<cr>", "lazygit"},
     K = { "<cmd>FloatermKill!<cr>", "Kill all terminals" },
-    t = { "<cmd>FloatermShow lazygit<cr>", "[T]oggle existing lazygit if exists" },
-    n = { "<cmd>TestNearest<cr>", "Run [N]earest test" },
+    -- t = { "<cmd>FloatermShow lazygit<cr>", "[T]oggle existing lazygit if exists" },
+    t = { "<cmd>TestNearest<cr>", "Run Nearest [T]est" },
     l = { "<cmd>TestLast<cr>", "Run [L]ast test" },
   },
 
@@ -234,7 +236,8 @@ which_key.register({
 
 which_key.register({
   ["<C-P>"] = { "<cmd>Telescope find_files<cr>", "Find files" },
-  ["<M-p>"] = { "<cmd>Telescope find_files no_ignore=true hidden=true<cr>", "Find all files" }
+  ["<M-p>"] = { "<cmd>Telescope find_files no_ignore=true hidden=true<cr>", "Find all files" },
+})
 
 -- quickfix list mappings
 which_key.register({
