@@ -332,4 +332,9 @@ return require('packer').startup(function()
       vim.g.lazygit_floating_window_scaling_factor = 1 -- scaling factor for floating window
     end
   }
+  -- packer
+use {
+    "nvim-telescope/telescope-file-browser.nvim",
+    requires = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" }
+}
 end)
