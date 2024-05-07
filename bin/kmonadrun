@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+logdir=/tmp/kmonad
+# kmonad=${1:-$HOME/.local/bin/kmonad}
+
+# run multiple kmonad configs and automatically relaunch them if any of them crashes
+run() {
+    mkdir -p $logdir && rm -f $logdir/*
+    for cfg in ~/.dotfiles/kmonad/*kbd; do
+        launch_kmonad $cfg &
+    done
+}
+
+launch_kmonad() {
+    local config=$1 configbase outfile errfile
+    configbase=$(basename $config)
+    outfile="$logdir/$configbase.out"
+    errfile="$logdir/$configbase.err"
+    while ! test -s $errfile || is_mac_keycode_error $errfile; do
+        sudo kmonad $config >> $outfile 2>> $errfile 
+    done
+}
+
+is_mac_keycode_error() {
+    local errfile=$1
+    tail -n 1 $errfile | grep -q "Cannot translate from mac keycode"
+}
+
+run
+wait

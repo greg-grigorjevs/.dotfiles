@@ -138,7 +138,7 @@ alias pat="php artisan test"
 alias patf="php artisan test --filter"
 alias dotfiles="cd ~/.dotfiles && nvim . -c 'Telescope find_files hidden=true'"
 alias copyhistory="fc -ln 0 | fzf --tac --no-sort | tr -d \\\n | pbcopy"
-alias kmonadon="tmux new-session -ds kmonad sudo kmonad ~/.dotfiles/kmonad/kmonad.kbd"
+alias kmonadon="tmux new-session -ds kmonad kmonadrun"
 alias kmonadoff="tmux kill-session -t kmonad"
 alias kmonadrestart="kmonadoff && kmonadon"
 
@@ -268,3 +268,5 @@ bindkey -s ^f "tmux_sessionizer\n"
 
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
+
+source /Users/gregg/.config/broot/launcher/bash/br
