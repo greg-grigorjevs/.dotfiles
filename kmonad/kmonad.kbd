@@ -28,7 +28,7 @@ empty layer for reference
   sme (tap-hold 200 c (layer-toggle symbol-layer))
 
   thg (tap-hold 200 g lsft)
-  ctv (tap-hold 200 b lctl)
+  ctv (tap-hold 200 ; lctl)
 
   lsw (tap-hold 200 (layer-switch base-engrammer) (layer-switch base))
   
@@ -56,8 +56,8 @@ empty layer for reference
 (deflayer base-engrammer
   esc    brdn brup lp   mctl bldn blup prev pp   next mute vold volu
   g  1    2    3    4    5    6    7    8    9    0    -    =    bspc
-  tab  q    y    o    u    '    ;    l    d    w    z    z    =    ret
-  @ctv @sme i    e    @nve ,    .    h    t    s    n    v    \
+  tab  q    y    o    u    '    .    l    d    w    z    z    =    ret
+  @ctv @sme i    e    @nve ,    b    h    t    s    n    v    \
   @thg x    j    k    -    `    /    r    m    f    p    rsft up
   @fn   caps lalt lmet           spc            rmet ralt left down rght
 )
