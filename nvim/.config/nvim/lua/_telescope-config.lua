@@ -12,6 +12,7 @@ require('telescope').setup({
     layout_config = {
       horizontal = { width = 0.99, height = 0.99, preview_width = 0.5 }
     },
+    cache_picker = { num_pickers = 5 },
     file_ignore_patterns = {
       "vendor/*",
       "%.lock",
