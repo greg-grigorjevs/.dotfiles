@@ -321,7 +321,7 @@ return require('packer').startup(function()
         " let test#strategy = 'floaterm'
         let test#strategy = 'neovim_sticky'
         let test#neovim#term_position = "vert"
-        let test#neovim_sticky#reopen_window = 1 
+        let test#neovim_sticky#reopen_window = 1
       ]])
     end
   }
@@ -333,8 +333,21 @@ return require('packer').startup(function()
     end
   }
   -- packer
-use {
+  use {
     "nvim-telescope/telescope-file-browser.nvim",
     requires = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" }
-}
+  }
+
+  use 'mbbill/undotree'
+
+  -- database
+  use {
+    "tpope/vim-dadbod",
+    requires = { 'kristijanhusak/vim-dadbod-ui', 'kristijanhusak/vim-dadbod-completion'}
+  }
+
+  use '~/.dotfiles/nvim/.config/nvim/custom/flash-def'
+  use {
+    'folke/neodev.nvim',
+  }
 end)
