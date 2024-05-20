@@ -58,7 +58,7 @@ empty layer for reference
   g  1    2    3    4    5    6    7    8    9    0    -    =    bspc
   tab  q    y    o    u    '    .    l    d    w    z    z    =    ret
   @ctv @sme i    e    @nve ,    b    h    t    s    n    v    \
-  @thg x    j    k    -    `    /    r    m    f    p    rsft up
+  lsft x    j    k    -    `    /    r    m    f    p    rsft up
   @fn   caps lalt lmet           spc            rmet ralt left down rght
 )
 
