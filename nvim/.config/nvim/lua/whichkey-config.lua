@@ -151,7 +151,8 @@ local mappings = {
   o = {
     name = "Obsidian",
     n = { ":ObsidianNew ", "[N]ew Obsidian Note" },
-    p = { "<cmd>ObsidianOpen<CR>", "O[p]en current note" }
+    p = { "<cmd>ObsidianOpen<CR>", "O[p]en current note" },
+    t = { "<cmd>ObsidianToday<CR>", "New Note for [T]oday" }
   },
 
   r = {
