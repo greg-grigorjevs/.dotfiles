@@ -23,8 +23,10 @@ cmp.setup({
     ['<Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
-      elseif luasnip.expand_or_jumpable() then
-        luasnip.expand_or_jump()
+      -- test if this is the reason why the cursor jumps to a completely random place when I press tab to intent an empty line
+      -- otherwise the problem would be in cmp itself
+      -- elseif luasnip.expand_or_jumpable() then
+      --   luasnip.expand_or_jump()
       else
         fallback()
       end
