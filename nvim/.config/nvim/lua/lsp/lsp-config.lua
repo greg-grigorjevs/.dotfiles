@@ -1,3 +1,4 @@
+      require('neodev').setup({})
 --[[ require('nvim-lsp-installer').setup() ]]
 local servers = {
   'tsserver',
@@ -10,7 +11,8 @@ local servers = {
   'pyright',
   'svelte',
   'tailwindcss',
-  'clojure_lsp'
+  'clojure_lsp',
+  'pest_ls'
 }
 require('mason').setup()
 require('mason-lspconfig').setup({
