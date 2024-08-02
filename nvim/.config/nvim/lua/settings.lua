@@ -74,8 +74,13 @@ vim.g.gruvbox_baby_highlights = {
   FlashCurrent = { bg = colors.blue_gray, fg = colors.dark },
   --[[ FlashLabel = { bg = colors.bright_yellow, fg = colors.dark }, ]]
   FlashLabel = { bg = colors.milk, fg = colors.dark },
+  ["@tag"] = { fg = "#ff8715" },
+  ["@tag.attribute"] = { fg = colors.light_blue },
+  ["@tag.delimiter"] = { fg = colors.foreground },
+  ["@variable.member"] = { fg = colors.blue_gray },
+
 }
-vim.g.gruvbox_baby_background_color = "medium"
+vim.g.gruvbox_baby_background_color = "dark"
 vim.g.gruvbox_baby_function_style = "NONE"
 -- vim.g.gruvbox_baby_keyword_style = "NONE"
 --[[ vim.g.gruvbox_baby_comment_style = "italic" ]]
@@ -95,6 +100,9 @@ vim.g.material_style = 'palenight'
 -- community gruvbox for neovim config
 --[[ vim.o.background = 'dark' ]]
 --[[ vim.cmd('colorscheme gruvbox') ]]
+
+-- vim.g.matchup_enabled = 0
+vim.g.matchup_matchparen_enabled = 0
 
 vim.cmd('highlight Matchparen guibg=none gui=bold,underline')
 
