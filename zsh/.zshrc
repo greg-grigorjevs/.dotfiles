@@ -68,7 +68,10 @@ jvac() {
     javac $1.java && java $1 ;
 }
 
-
+pal() {
+  selected_command=$(pa list --raw | awk '{print $1}' | fzf)
+  print -z -- "pa $selected_command"
+}
 
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
