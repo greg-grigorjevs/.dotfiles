@@ -1,5 +1,13 @@
 eval "$(starship init zsh)"
 
+#export HISTFILE="~/.zsh_history"
+export HISTFILESIZE=
+export HISTSIZE=10000
+export SAVEHIST=10000
+
+setopt share_history
+
+
 # You may need to manually set your language environment
  export LANG=en_US.UTF-8
 
@@ -73,6 +81,34 @@ pal() {
   print -z -- "pa $selected_command"
 }
 
+__fzf_defaults() {
+  # $1: Prepend to FZF_DEFAULT_OPTS_FILE and FZF_DEFAULT_OPTS
+  # $2: Append to FZF_DEFAULT_OPTS_FILE and FZF_DEFAULT_OPTS
+  echo "--height ${FZF_TMUX_HEIGHT:-40%} --bind=ctrl-z:ignore $1"
+  command cat "${FZF_DEFAULT_OPTS_FILE-}" 2> /dev/null
+  echo "${FZF_DEFAULT_OPTS-} $2"
+}
+
+# CTRL-T - Paste the selected file path(s) into the command line
+__fzf_select() {
+  setopt localoptions pipefail no_aliases 2> /dev/null
+  local item
+  FZF_DEFAULT_COMMAND=${FZF_CTRL_T_COMMAND:-} \
+  FZF_DEFAULT_OPTS=$(__fzf_defaults "--reverse --walker=file,dir,follow,hidden --scheme=path" "${FZF_CTRL_T_OPTS-} -m") \
+  FZF_DEFAULT_OPTS_FILE='' $(__fzfcmd) "$@" < /dev/tty | while read item; do
+    echo -n "${(q)item} "
+  done
+  local ret=$?
+  echo
+  return $ret
+}
+
+__fzfcmd() {
+  [ -n "${TMUX_PANE-}" ] && { [ "${FZF_TMUX:-0}" != 0 ] || [ -n "${FZF_TMUX_OPTS-}" ]; } &&
+    echo "fzf-tmux ${FZF_TMUX_OPTS:--d${FZF_TMUX_HEIGHT:-40%}} -- " || echo "fzf"
+}
+
+
 export PATH="/Applications/Sublime Text.app/Contents/SharedSupport/bin:$PATH"
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 export PATH="/Applications/kitty.app/Contents/MacOS":$PATH # makes kitty command work
@@ -81,14 +117,16 @@ export PATH="~/bin":$PATH
 export PATH="$HOME/.composer/vendor/bin":$PATH
 export PATH="$HOME/.dotfiles/bin":$PATH
 
+# Set PATH, MANPATH, etc., for Homebrew.
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 
 # fzf config
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+#[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+source <(fzf --zsh)
 export FZF_DEFAULT_COMMAND="fd --exclude 'node_modules'"
 export FZF_CTRL_T_COMMAND="fd -t f -I -E 'node_modules' -E 'vendor' . ."
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
-# Set PATH, MANPATH, etc., for Homebrew.
-eval "$(/opt/homebrew/bin/brew shellenv)"
 
 
 
@@ -114,3 +152,13 @@ source /Users/gregg/.config/broot/launcher/bash/br
 # zplug
 source ~/.zplug/init.zsh
 zplug "jeffreytse/zsh-vi-mode"
+
+# wrapper around yazi. use this to change the cwd on exit
+function yy() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+	yazi "$@" --cwd-file="$tmp"
+	if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+		cd -- "$cwd"
+	fi
+	rm -f -- "$tmp"
+}
