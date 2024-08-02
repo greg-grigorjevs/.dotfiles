@@ -1,4 +1,4 @@
-      require('neodev').setup({})
+require('neodev').setup({})
 --[[ require('nvim-lsp-installer').setup() ]]
 local servers = {
   'tsserver',
@@ -39,7 +39,7 @@ local on_attach = function(client, bufnr)
   vim.keymap.set('n', 'gd', "<cmd>TroubleToggle lsp_definitions<cr>", bufopts)
   vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
   vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
-  vim.keymap.set({'n', 'i'}, '<C-k>', vim.lsp.buf.signature_help, bufopts)
+  vim.keymap.set({ 'n', 'i' }, '<C-k>', vim.lsp.buf.signature_help, bufopts)
   vim.keymap.set('n', '<space>lwa', vim.lsp.buf.add_workspace_folder, bufopts)
   vim.keymap.set('n', '<space>lwr', vim.lsp.buf.remove_workspace_folder, bufopts)
   vim.keymap.set('n', '<space>lwl', function()
@@ -72,7 +72,8 @@ for _, server in ipairs(servers) do
   elseif server == 'cssls' then
     lspconfig[server].setup {
       on_attach = on_attach,
-      capabilities = { textDocument = { completion = { completionItem = { snippetSupport = true } } } }
+      capabilities = { textDocument = { completion = { completionItem = { snippetSupport = true } } } },
+      filetypes = {'html', 'css', 'scss', 'less'}
     }
   elseif server == 'html' then
     lspconfig[server].setup {
@@ -97,7 +98,6 @@ for _, server in ipairs(servers) do
         }
       }
     }
-
   else
     lspconfig[server].setup {
       on_attach = on_attach,
@@ -105,6 +105,20 @@ for _, server in ipairs(servers) do
     }
   end
 end
+
+-- For some reason intelephense does not attach to a blade file
+-- when it is the FIRST buffer that is opened after nvim is openned
+-- running edit command fixes is so do it automatically only once on
+-- first blade file that is opened in a session.
+vim.api.nvim_create_autocmd("LspAttach", {
+  once = true,
+  pattern = "*.blade.php",
+  callback = function()
+    vim.defer_fn(function()
+      vim.api.nvim_command('edit')
+    end, 800)
+  end,
+})
 
 --[[ lspconfig.emmet_ls.setup{
   capabilities = capabilities,
