@@ -19,6 +19,8 @@ return require('packer').startup(function()
       vim.g.floaterm_width = 0.99
       vim.g.floaterm_height = 0.99
       vim.g.floaterm_opener = 'edit'
+      -- vim.g.floaterm_keymap_prev = '<M-b>'
+      -- vim.g.floaterm_keymap_next = '<M-s>'
     end
   }
 
@@ -52,7 +54,7 @@ return require('packer').startup(function()
     "max397574/better-escape.nvim",
     config = function()
       require("better_escape").setup {
-        mapping = { "ah", "tn" } -- engram and colemak
+        mapping = { "ah" } -- engram and colemak
       }
     end,
   }
@@ -99,6 +101,7 @@ return require('packer').startup(function()
 
   use {
     'numToStr/Comment.nvim',
+    disable = true,
     config = function()
       require('Comment').setup {
         -- add support for jsx comments
@@ -106,6 +109,34 @@ return require('packer').startup(function()
       }
       local ft = require('Comment.ft')
       ft.set('blade', { '{{-- %s --}}', '{{-- %s --}}' })
+    end
+  }
+
+  use {
+    'echasnovski/mini.nvim',
+    config = function()
+      require('mini.comment').setup({
+        options = {
+          custom_commentstring = function()
+              local curline = vim.fn.line(".")
+              local lang = vim.treesitter.get_parser():language_for_range({ curline, 0, curline, 0 }):lang()
+              -- vim.print(lang)
+            if vim.bo.filetype == 'blade' then
+              local curline = vim.fn.line(".")
+              local lang = vim.treesitter.get_parser():language_for_range({ curline, 0, curline, 0 }):lang()
+              -- vim.print(lang)
+              if lang == 'php' or lang == 'php_only' or lang == 'javascript' then
+                return '// %s'
+              end
+              return '{{-- %s --}}'
+            elseif vim.bo.filetype == 'php' then
+              return '// %s'
+            else
+              return nil
+            end
+          end
+        }
+      })
     end
   }
 
@@ -187,7 +218,7 @@ return require('packer').startup(function()
   use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
 
   use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
-  use 'jwalton512/vim-blade'
+  use { 'jwalton512/vim-blade', disable = false }
   use { 'akinsho/bufferline.nvim', disable = true, tag = "v2.*", requires = 'kyazdani42/nvim-web-devicons' } -- disabled for barbar.nvim
   use { 'romgrk/barbar.nvim', disable = true }
   -- som
@@ -343,11 +374,21 @@ return require('packer').startup(function()
   -- database
   use {
     "tpope/vim-dadbod",
-    requires = { 'kristijanhusak/vim-dadbod-ui', 'kristijanhusak/vim-dadbod-completion'}
+    requires = { 'kristijanhusak/vim-dadbod-ui', 'kristijanhusak/vim-dadbod-completion' },
+    config = function ()
+      vim.g.db_ui_auto_execute_table_helpers = 1
+    end
   }
 
   use '~/.dotfiles/nvim/.config/nvim/custom/flash-def'
   use {
     'folke/neodev.nvim',
+  }
+  -- TODO: do this
+  use {
+    "folke/todo-comments.nvim",
+    config = function()
+      require('todo-comments').setup()
+    end
   }
 end)
