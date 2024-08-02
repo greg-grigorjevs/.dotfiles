@@ -8,9 +8,10 @@ flash.setup({
     char = {
       enabled = true,
       multi_line = false,
-      -- autohide = true,
+      autohide = true,
       jump_labels = true,
-      highlight = { backdrop = false }
+      highlight = { backdrop = false },
+      label = { current = false}
     }
   }
 })
