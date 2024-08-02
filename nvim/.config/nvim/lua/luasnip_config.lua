@@ -60,4 +60,11 @@ ls.add_snippets('php', {
   @endscript
   ]], {i(1)})),
   s('var', fmt('/** @var {} */', i(1, 'class'))),
+  s('try', fmt([[
+  try {{
+      {}
+  }} catch (\Throwable $e) {{
+      dd($e);
+  }}
+  ]], {i(0)}))
 })
