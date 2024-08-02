@@ -2,6 +2,11 @@ local lga_actions = require("telescope-live-grep-args.actions")
 
 require('telescope').setup({
   defaults = {
+    mappings = {
+      i = {
+        ["<esc>"] = require('telescope.actions').close,
+      }
+    },
     path_display = { 'truncate' },
     pickers = {
       --[[ jumplist = {show_line = false}, -- doesn't work ?! ]]
@@ -65,16 +70,16 @@ require('telescope').setup({
     },
     fzf = {
       minimum_grep_characters = 2,
-      fuzzy                   = true,           -- false will only do exact matching
-      override_generic_sorter = true,           -- override the generic sorter
-      override_file_sorter    = true,           -- override the file sorter
-      case_mode               = "smart_case",   -- or "ignore_case" or "respect_case"
+      fuzzy                   = true,         -- false will only do exact matching
+      override_generic_sorter = true,         -- override the generic sorter
+      override_file_sorter    = true,         -- override the file sorter
+      case_mode               = "smart_case", -- or "ignore_case" or "respect_case"
       -- the default case_mode is "smart_case"
     },
     live_grep_args = {
-      auto_quoting = true,   -- enable/disable auto-quoting
+      auto_quoting = true, -- enable/disable auto-quoting
       -- define mappings, e.g.
-      mappings = {           -- extend mappings
+      mappings = {         -- extend mappings
         i = {
           ["<C-k>"] = lga_actions.quote_prompt(),
           ["<C-i>"] = lga_actions.quote_prompt({ postfix = " --iglob " }),
