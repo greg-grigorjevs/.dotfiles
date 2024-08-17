@@ -4,7 +4,6 @@ return require('packer').startup(function()
   -- Colorschemes
   use { 'luisiacc/gruvbox-baby' }
   use { 'sainnhe/gruvbox-material' }
-  --[[ use 'gruvbox-community/gruvbox' ]]
   use { 'ellisonleao/gruvbox.nvim' }
   use 'rebelot/kanagawa.nvim'
   use 'folke/tokyonight.nvim'
@@ -46,9 +45,7 @@ return require('packer').startup(function()
   }
 
 
-  -- use 'scrooloose/nerdtree'
   use 'andymass/vim-matchup' -- significatly expands % functionality
-  --[[ use 'p00f/nvim-ts-rainbow' ]]
 
   use {
     "max397574/better-escape.nvim",
@@ -76,15 +73,6 @@ return require('packer').startup(function()
       }
     end
   }
-  -- smooth scrolling
-  --[[ use { ]]
-  --[[   'karb94/neoscroll.nvim', ]]
-  --[[   config = function() ]]
-  --[[     require("neoscroll").setup { ]]
-  --[[       easing_function = "quadratic", ]]
-  --[[     } ]]
-  --[[   end, ]]
-  --[[ } ]]
   use {
     'declancm/cinnamon.nvim',
     config = function()
@@ -159,10 +147,6 @@ return require('packer').startup(function()
 
   use 'AckslD/nvim-neoclip.lua'
 
-  -- use {
-  --   'neoclide/coc.nvim',
-  --   branch = 'release'
-  -- }
 
   use 'mattn/emmet-vim'
   use 'tpope/vim-surround'
@@ -194,12 +178,6 @@ return require('packer').startup(function()
   }
 
   -- LSP
-  use {
-    "williamboman/nvim-lsp-installer",
-    config = function()
-      require('nvim-lsp-installer').setup()
-    end
-  }
   use "williamboman/mason.nvim"
   use "williamboman/mason-lspconfig.nvim"
   use 'neovim/nvim-lspconfig'
@@ -224,7 +202,6 @@ return require('packer').startup(function()
   -- som
   -- Markdown
   -- preview
-  use { "ellisonleao/glow.nvim", config = function() require("glow").setup({ width_ratio = 0.7, height_ratio = 0.7 }) end }
 
   use 'tpope/vim-repeat' -- dot-repeat for some plugins
   use 'MattesGroeger/vim-bookmarks'
@@ -248,7 +225,6 @@ return require('packer').startup(function()
   use 'nvim-telescope/telescope-dap.nvim'
   use 'mortepau/codicons.nvim'
 
-  --[[ use 'sheerun/vim-polyglot' ]]
   use 'folke/flash.nvim'
 
   use 'stevearc/oil.nvim'
@@ -264,12 +240,6 @@ return require('packer').startup(function()
 
   use "stevearc/conform.nvim"
 
-  use {
-    'laytan/tailwind-sorter.nvim',
-    requires = { 'nvim-treesitter/nvim-treesitter', 'nvim-lua/plenary.nvim' },
-    config = function() require('tailwind-sorter').setup() end,
-    run = 'cd formatter && npm i && npm run build',
-  }
 
   use {
     'fei6409/log-highlight.nvim',
@@ -357,12 +327,6 @@ return require('packer').startup(function()
     end
   }
 
-  use {
-    "kdheepak/lazygit.nvim",
-    config = function()
-      vim.g.lazygit_floating_window_scaling_factor = 1 -- scaling factor for floating window
-    end
-  }
   -- packer
   use {
     "nvim-telescope/telescope-file-browser.nvim",
@@ -384,7 +348,6 @@ return require('packer').startup(function()
   use {
     'folke/neodev.nvim',
   }
-  -- TODO: do this
   use {
     "folke/todo-comments.nvim",
     config = function()
