@@ -12,7 +12,7 @@ require("nvim-treesitter.configs").setup {
     additional_vim_regex_highlighting = { "jsx", "tsx", "js", "javascript", "javascriptreact", "typescriptreact", "svelte" },
 
   },
-  indent = { enable = { 'php', 'yaml', 'html', 'svelte', 'jsx', 'tsx', 'blade', 'markdown' } },
+  indent = { enable = { 'php', 'blade', 'yaml', 'svelte', 'jsx', 'tsx', 'blade', 'markdown' } },
   --  autopairs = {enable = true},
   matchup = {
     enable = true,
