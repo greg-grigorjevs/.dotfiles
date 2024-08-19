@@ -33,6 +33,7 @@ empty layer for reference
   lsw (tap-hold 200 (layer-switch base-engrammer) (layer-switch base))
   
   fn (around (layer-toggle function) fn)
+  hyp C-A-M-S
 )
 
 (defsrc
@@ -50,7 +51,7 @@ empty layer for reference
   tab  q    y    o    u    '    .    l    d    w    z    z    =    ret
   @ctv @sme i    e    @nve ,    b    h    t    s    n    v    \
   lsft x    j    k    -    `    /    r    m    f    p    rsft up
-  @fn   caps lalt lmet           spc            rmet ralt left down rght
+  @fn   caps lalt lmet           spc            @hyp ralt left down rght
 )
 
 (deflayer base
