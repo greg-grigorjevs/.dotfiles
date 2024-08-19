@@ -6,8 +6,6 @@
 -- stop from auto inserting comments on the next line
 vim.cmd("autocmd FileType * set formatoptions-=cro")
 vim.api.nvim_set_keymap("", "<Space>", "<Nop>", { noremap = true, silent = true })
-vim.g.mapleader = " "
-vim.g.maplocalleader = " "
 vim.cmd("set clipboard+=unnamedplus")       -- use system clipboard
 vim.o.mouse = "a"                           -- use mouse
 vim.o.wrap = false

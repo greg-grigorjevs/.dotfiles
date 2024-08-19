@@ -1,357 +1,115 @@
-return require('packer').startup(function()
-  use 'wbthomason/packer.nvim'
-
-  -- Colorschemes
-  use { 'luisiacc/gruvbox-baby' }
-  use { 'sainnhe/gruvbox-material' }
-  use { 'ellisonleao/gruvbox.nvim' }
-  use 'rebelot/kanagawa.nvim'
-  use 'folke/tokyonight.nvim'
-  use 'marko-cerovac/material.nvim'
-  use 'Mofiqul/vscode.nvim'
-
-  use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
-  use 'folke/which-key.nvim'
-  use {
-    'voldikss/vim-floaterm',
-    config = function()
-      vim.g.floaterm_width = 0.99
-      vim.g.floaterm_height = 0.99
-      vim.g.floaterm_opener = 'edit'
-      -- vim.g.floaterm_keymap_prev = '<M-b>'
-      -- vim.g.floaterm_keymap_next = '<M-s>'
-    end
-  }
-
-  use "olimorris/onedarkpro.nvim"
-
-  use {
-    'MaxMEllon/vim-jsx-pretty',
-  }
-
-  use {
-    'norcalli/nvim-colorizer.lua',
-    disable = true,
-    config = function()
-      require 'colorizer'.setup({ "*" }, { mode = "foreground" })
-    end
-  }
-
-  use 'ThePrimeagen/harpoon'
-
-  use { 'windwp/nvim-autopairs', config = function()
-    require('nvim-autopairs').setup {}
+-- Bootstrap lazy.nvim
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+      { out,                            "WarningMsg" },
+      { "\nPress any key to exit..." },
+    }, true, {})
+    vim.fn.getchar()
+    os.exit(1)
   end
-  }
+end
+vim.opt.rtp:prepend(lazypath)
 
+-- Make sure to setup `mapleader` and `maplocalleader` before
+-- loading lazy.nvim so that mappings are correct.
+-- This is also a good place to setup other settings (vim.opt)
+vim.g.mapleader = " "
+vim.g.maplocalleader = ""
 
-  use 'andymass/vim-matchup' -- significatly expands % functionality
+local plugins = {
 
-  use {
-    "max397574/better-escape.nvim",
+  -- Colorschemes,
+  'luisiacc/gruvbox-baby',
+  'sainnhe/gruvbox-material',
+  'ellisonleao/gruvbox.nvim',
+  'rebelot/kanagawa.nvim',
+  'folke/tokyonight.nvim',
+  'marko-cerovac/material.nvim',
+  'Mofiqul/vscode.nvim',
+  "olimorris/onedarkpro.nvim",
+
+  'MaxMEllon/vim-jsx-pretty',
+  'ThePrimeagen/harpoon',
+
+  {
+    'windwp/nvim-autopairs',
     config = function()
-      require("better_escape").setup {
-        mapping = { "ah" } -- engram and colemak
-      }
-    end,
-  }
-  use {
-    'phaazon/mind.nvim',
-    branch = 'v2.2',
-    requires = { 'nvim-lua/plenary.nvim' },
-    config = function()
-      require 'mind'.setup()
+      require('nvim-autopairs').setup {}
     end
-  }
-
-  use {
-    'rmagatti/auto-session',
-    config = function()
-      require("auto-session").setup {
-        log_level = "error",
-        auto_session_suppress_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
-      }
-    end
-  }
-  use {
-    'declancm/cinnamon.nvim',
-    config = function()
-      require('cinnamon').setup {
-        default_delay = 0.1,
-        extra_keymaps = true,
-        extended_keymaps = true,
-      }
-    end,
-    disable = true
-  }
-
-  use 'JoosepAlviste/nvim-ts-context-commentstring' -- support for jsx commenting
-
-  use {
-    'numToStr/Comment.nvim',
-    disable = true,
-    config = function()
-      require('Comment').setup {
-        -- add support for jsx comments
-        pre_hook = require('ts_context_commentstring.integrations.comment_nvim').create_pre_hook(),
-      }
-      local ft = require('Comment.ft')
-      ft.set('blade', { '{{-- %s --}}', '{{-- %s --}}' })
-    end
-  }
-
-  use {
-    'echasnovski/mini.nvim',
-    config = function()
-      require('mini.comment').setup({
-        options = {
-          custom_commentstring = function()
-              local curline = vim.fn.line(".")
-              local lang = vim.treesitter.get_parser():language_for_range({ curline, 0, curline, 0 }):lang()
-              -- vim.print(lang)
-            if vim.bo.filetype == 'blade' then
-              local curline = vim.fn.line(".")
-              local lang = vim.treesitter.get_parser():language_for_range({ curline, 0, curline, 0 }):lang()
-              -- vim.print(lang)
-              if lang == 'php' or lang == 'php_only' or lang == 'javascript' then
-                return '// %s'
-              end
-              return '{{-- %s --}}'
-            elseif vim.bo.filetype == 'php' then
-              return '// %s'
-            else
-              return nil
-            end
-          end
-        }
-      })
-    end
-  }
-
-  use {
-    'nvim-telescope/telescope.nvim',
-    requires = {
-      { 'nvim-lua/plenary.nvim' },
-      { 'nvim-telescope/telescope-live-grep-args.nvim' }
-    }
-  }
-
-  use {
-    "nvim-telescope/telescope-frecency.nvim",
-    config = function()
-      require "telescope".load_extension("frecency")
-    end,
-    requires = { "kkharji/sqlite.lua" },
-    disable = true
-  }
-
-  use 'AckslD/nvim-neoclip.lua'
-
-
-  use 'mattn/emmet-vim'
-  use 'tpope/vim-surround'
-
-  use 'lewis6991/gitsigns.nvim' -- git integration
-
-  use 'kyazdani42/nvim-web-devicons'
-  use { 'kyazdani42/nvim-tree.lua', lock = true } -- locked because of the deprecation of open_on_setup which I use. If needed to unlock then go to https://github.com/nvim-tree/nvim-tree.lua/wiki/Open-At-Startup
-  use {
-    'lukas-reineke/indent-blankline.nvim',
-    commit = '9637670896b68805430e2f72cf5d16be5b97a22a',
-    config = function()
-      vim.g.indentLine_enabled = 1
-      vim.g.indent_blankline_use_treesitter = true
-      vim.g.indent_blankline_show_current_context = true
-      vim.g.indent_blankline_show_first_indent_level = false
-      require("indent_blankline").setup {
-        -- space_char_blankline = " ",
-        space_current_context = true,
-        show_current_context_start = false
-        -- show_current_context_start = true,
-      }
-    end
-  }
-
-  use {
-    'nvim-lualine/lualine.nvim',
-    requires = { 'kyazdani42/nvim-web-devicons', opt = true }
-  }
+  },
+  'andymass/vim-matchup',                        -- significatly expands % functionality
+  'JoosepAlviste/nvim-ts-context-commentstring', -- support for jsx commenting
+  'mattn/emmet-vim',
+  'tpope/vim-surround',
+  'kyazdani42/nvim-web-devicons',
 
   -- LSP
-  use "williamboman/mason.nvim"
-  use "williamboman/mason-lspconfig.nvim"
-  use 'neovim/nvim-lspconfig'
-  use 'hrsh7th/cmp-nvim-lsp'
-  use 'hrsh7th/cmp-buffer'
-  use 'hrsh7th/cmp-path'
-  use 'hrsh7th/cmp-cmdline'
-  use 'hrsh7th/nvim-cmp'
-  use 'hrsh7th/cmp-nvim-lsp-signature-help'
+  "williamboman/mason.nvim",
+  "williamboman/mason-lspconfig.nvim",
+  'neovim/nvim-lspconfig',
+  'hrsh7th/cmp-nvim-lsp',
+  'hrsh7th/cmp-buffer',
+  'hrsh7th/cmp-path',
+  'hrsh7th/cmp-cmdline',
+  'hrsh7th/nvim-cmp',
+  'hrsh7th/cmp-nvim-lsp-signature-help',
 
-  -- For luasnip users.
-  use 'L3MON4D3/LuaSnip'
-  use 'saadparwaiz1/cmp_luasnip'
+  'jwalton512/vim-blade',
 
-  use 'folke/trouble.nvim'
-  use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
-
-  use { 'sindrets/diffview.nvim', requires = 'nvim-lua/plenary.nvim' }
-  use { 'jwalton512/vim-blade', disable = false }
-  use { 'akinsho/bufferline.nvim', disable = true, tag = "v2.*", requires = 'kyazdani42/nvim-web-devicons' } -- disabled for barbar.nvim
-  use { 'romgrk/barbar.nvim', disable = true }
-  -- som
-  -- Markdown
-  -- preview
-
-  use 'tpope/vim-repeat' -- dot-repeat for some plugins
-  use 'MattesGroeger/vim-bookmarks'
-  use { 'tom-anders/telescope-vim-bookmarks.nvim',
+  'tpope/vim-repeat', -- dot-repeat for some plugins
+  'MattesGroeger/vim-bookmarks',
+  {
+    'tom-anders/telescope-vim-bookmarks.nvim',
     config = function()
       vim.g.bookmark_save_per_working_dir = 0
       vim.g.bookmark_auto_save = 1
     end
-  }
+  },
 
-  use 'tpope/vim-fugitive'
-  use 'tpope/vim-rhubarb'    -- support GBrowse for github
-  use 'tommcdo/vim-fubitive' -- support GBrowse for bitbucket
-  use 'nvim-treesitter/nvim-treesitter-context'
-  use "b0o/schemastore.nvim"
-
-  -- Debugging
-  use { 'mfussenegger/nvim-dap', requires = { 'nvim-neotest/nvim-nio' } }
-  use 'rcarriga/nvim-dap-ui'
-  use 'theHamsta/nvim-dap-virtual-text'
-  use 'nvim-telescope/telescope-dap.nvim'
-  use 'mortepau/codicons.nvim'
-
-  use 'folke/flash.nvim'
-
-  use 'stevearc/oil.nvim'
-
-  use('jose-elias-alvarez/null-ls.nvim')
-  use('MunifTanjim/prettier.nvim')
-
-  use({
+  'tpope/vim-fugitive',
+  'tpope/vim-rhubarb',    -- support GBrowse for github
+  'tommcdo/vim-fubitive', -- support GBrowse for bitbucket
+  'nvim-treesitter/nvim-treesitter-context',
+  "b0o/schemastore.nvim",
+  {
     "nvim-treesitter/nvim-treesitter-textobjects",
-    after = "nvim-treesitter",
-    requires = "nvim-treesitter/nvim-treesitter",
-  })
-
-  use "stevearc/conform.nvim"
-
-
-  use {
+    dependencies = "nvim-treesitter/nvim-treesitter",
+  },
+  {
     'fei6409/log-highlight.nvim',
     config = function()
       require('log-highlight').setup {}
     end,
-  }
+  },
+  'windwp/nvim-ts-autotag',
+  'nvim-treesitter/playground',
+  'kmonad/kmonad-vim',
+  'mbbill/undotree',
 
-  use { 'windwp/nvim-ts-autotag' }
-
-  use({
-    "epwalsh/obsidian.nvim",
-    tag = "*", -- recommended, use latest release instead of latest commit
-    requires = {
-      -- Required.
-      "nvim-lua/plenary.nvim",
-
-    },
-    config = function()
-      require("obsidian").setup({
-        workspaces = {
-          -- {
-          --   name = "personal",
-          --   path = "~/vaults/personal",
-          -- },
-          {
-            name = "work",
-            -- path = "~/vaults/work",
-            path = function()
-              return '/Users/' .. os.getenv('USER') .. '/Library/Mobile Documents/iCloud~md~obsidian/Documents/vault'
-            end
-            -- strict = true
-          },
-        },
-        -- creates new notes in the currently selected worspace which should be the default IMO
-        -- but default is current dir
-        new_notes_location = "notes_subdir",
-        follow_url_func = function(url)
-          -- Open the URL in the default web browser.
-          vim.fn.jobstart({ "open", url }) -- Mac OS
-          -- vim.fn.jobstart({"xdg-open", url})  -- linux
-        end,
-        open_app_foreground = true,
-
-      })
-
-      vim.o.conceallevel = 2
-    end,
-  })
-
-  use 'nvim-treesitter/playground'
-  use('kmonad/kmonad-vim')
-
-  -- didn't work for some reason. could't run neotest.run.run
-  use {
-    "nvim-neotest/neotest",
-    disable = true,
-    requires = {
-      "nvim-neotest/nvim-nio",
-      "nvim-lua/plenary.nvim",
-      "antoinemadec/FixCursorHold.nvim",
-      "nvim-treesitter/nvim-treesitter",
-      "olimorris/neotest-phpunit",
-      config = function()
-        require("neotest").setup({
-          adapters = {
-            require("neotest-phpunit")
-          }
-        })
-      end
-    }
-  }
-
-  -- use this instead of neotest
-  use {
-    "vim-test/vim-test",
-    config = function()
-      vim.cmd([[
-        let test#php#phpunit#executable = 'php artisan test'
-        " let test#strategy = 'floaterm'
-        let test#strategy = 'neovim_sticky'
-        let test#neovim#term_position = "vert"
-        let test#neovim_sticky#reopen_window = 1
-      ]])
-    end
-  }
-
-  -- packer
-  use {
-    "nvim-telescope/telescope-file-browser.nvim",
-    requires = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" }
-  }
-
-  use 'mbbill/undotree'
-
-  -- database
-  use {
+  {
     "tpope/vim-dadbod",
-    requires = { 'kristijanhusak/vim-dadbod-ui', 'kristijanhusak/vim-dadbod-completion' },
-    config = function ()
+    dependencies = { 'kristijanhusak/vim-dadbod-ui', 'kristijanhusak/vim-dadbod-completion' },
+    config = function()
       vim.g.db_ui_auto_execute_table_helpers = 1
     end
-  }
-
-  use '~/.dotfiles/nvim/.config/nvim/custom/flash-def'
-  use {
-    'folke/neodev.nvim',
-  }
-  use {
+  },
+  'folke/neodev.nvim',
+  {
     "folke/todo-comments.nvim",
     config = function()
       require('todo-comments').setup()
     end
   }
-end)
+}
+
+require('lazy').setup({
+  spec = {
+    plugins,
+    { import = 'plugin_configs' }
+  }
+})
