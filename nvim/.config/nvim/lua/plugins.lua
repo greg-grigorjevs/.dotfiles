@@ -98,7 +98,6 @@ local plugins = {
       vim.g.db_ui_auto_execute_table_helpers = 1
     end
   },
-  'folke/neodev.nvim',
   {
     "folke/todo-comments.nvim",
     config = function()

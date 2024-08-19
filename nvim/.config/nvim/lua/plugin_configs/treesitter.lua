@@ -3,7 +3,16 @@ return {
   build = ':TSUpdate',
   config = function()
     require("nvim-treesitter.configs").setup {
-      ensure_installed = { 'php', 'lua' },
+      ensure_installed = {
+        -- blade needs to installed manually with :TSInstall blade
+        'php',
+        'php_only',
+        'lua',
+        'html',
+        'css',
+        'markdown',
+        'javascript',
+      },
       highlight = {
         enable = true,
         -- NOTE: these are the names of the parsers and not the filetype. (for example if you want to

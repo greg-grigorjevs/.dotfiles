@@ -1,5 +1,3 @@
-require('neodev').setup({})
---[[ require('nvim-lsp-installer').setup() ]]
 local servers = {
   'tsserver',
   'lua_ls',
@@ -73,7 +71,7 @@ for _, server in ipairs(servers) do
     lspconfig[server].setup {
       on_attach = on_attach,
       capabilities = { textDocument = { completion = { completionItem = { snippetSupport = true } } } },
-      filetypes = {'html', 'css', 'scss', 'less'}
+      filetypes = { 'html', 'css', 'scss', 'less' }
     }
   elseif server == 'html' then
     lspconfig[server].setup {

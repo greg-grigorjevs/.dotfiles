@@ -23,10 +23,10 @@ cmp.setup({
     ['<Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
-      -- test if this is the reason why the cursor jumps to a completely random place when I press tab to intent an empty line
-      -- otherwise the problem would be in cmp itself
-      -- elseif luasnip.expand_or_jumpable() then
-      --   luasnip.expand_or_jump()
+        -- test if this is the reason why the cursor jumps to a completely random place when I press tab to intent an empty line
+        -- otherwise the problem would be in cmp itself
+        -- elseif luasnip.expand_or_jumpable() then
+        --   luasnip.expand_or_jump()
       else
         fallback()
       end
@@ -45,6 +45,7 @@ cmp.setup({
     { name = 'nvim_lsp' },
     -- { name = 'vsnip' }, -- For vsnip users.
     { name = 'luasnip' }, -- For luasnip users.
+    { name = 'lazydev' },
     -- { name = 'ultisnips' }, -- For ultisnips users.
     -- { name = 'snippy' }, -- For snippy users.
   }, {
@@ -65,8 +66,8 @@ cmp.setup.filetype('gitcommit', {
 
 cmp.setup.filetype('sql', {
   sources = {
-    { name = "vim-dadbod-completion"},
-    { name = "buffer"}
+    { name = "vim-dadbod-completion" },
+    { name = "buffer" }
   }
 })
 

@@ -70,6 +70,10 @@ vim.g.gruvbox_baby_highlights = {
   -- Flash highlight groups
   FlashMatch = { bg = colors.blue_gray, fg = colors.dark },
   FlashCurrent = { bg = colors.blue_gray, fg = colors.dark },
+  -- Git
+  -- GitSignsAdd = { fg = colors.light_blue },
+  GitSignsChange = { fg = colors.bright_yellow },
+  GitSignsDelete = { fg = colors.red },
   --[[ FlashLabel = { bg = colors.bright_yellow, fg = colors.dark }, ]]
   FlashLabel = { bg = colors.milk, fg = colors.dark },
   ["@tag"] = { fg = "#ff8715" },
@@ -114,13 +118,6 @@ vim.cmd [[
 vim.cmd [[ autocmd BufReadPost * if @% !~# '\.git[\/\\]COMMIT_EDITMSG$' && line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif  ]]
 
 -- Autocommands
-local group = vim.api.nvim_create_augroup("SaveSessionOnBufWrite", { clear = true });
-vim.api.nvim_create_autocmd("BufWrite", {
-  callback = function()
-    vim.cmd("SessionSave")
-  end,
-  group = group
-});
 
 -- Custom Commands
 
