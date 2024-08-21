@@ -4,7 +4,7 @@ return {
     ft = "lua", -- only load on lua files
     opts = {
       library = {
-        { path = '~/.hammerspoon/Spoons/EmmyLua.spoon/annotations', words = { 'hs' } }
+        { path = '~/.hammerspoon/Spoons/EmmyLua.spoon/annotations', words = { 'hs.' } }
       }
     }
   },
