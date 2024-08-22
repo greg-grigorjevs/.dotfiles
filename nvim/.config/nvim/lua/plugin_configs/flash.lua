@@ -78,7 +78,7 @@ return {
     end, { desc = 'Go to line' })
 
 
-    vim.keymap.set({ 'n' }, "g/", function()
+    vim.keymap.set({ 'n' }, "gl", function()
       require('flash').jump({
         action = function(match, state)
           vim.api.nvim_win_call(match.win, function()
