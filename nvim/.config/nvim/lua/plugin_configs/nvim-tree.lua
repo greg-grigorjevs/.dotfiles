@@ -5,14 +5,19 @@ return {
   config = function()
     require('nvim-tree').setup({
       filters = {
-        dotfiles = false
+        dotfiles = false,
+        custom = { '.gitignore' }
       },
       view = {
+        -- auto adjust width
         width = {}
       },
       actions = {
         change_dir = {
           global = true
+        },
+        expand_all = {
+          exclude = { 'vendor', '.git', 'node_modules' }
         },
         open_file = {
           quit_on_open = true
