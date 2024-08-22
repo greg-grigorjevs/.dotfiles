@@ -15,6 +15,12 @@ spoon.SpoonInstall:andUse('AppWindowSwitcher', {
   }
 })
 
+-- screenshot current window and copy it to clipbaard
+hs.hotkey.bind({ "cmd", "shift" }, "7", function()
+  local windowId = hs.window.focusedWindow():id()
+  hs.task.new('/usr/sbin/screencapture', nil, { '-l' .. windowId, '-c' }):start()
+end)
+
 
 require('window-management')
 
