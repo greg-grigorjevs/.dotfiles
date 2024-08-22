@@ -1,7 +1,8 @@
 return {
   "stevearc/conform.nvim",
   config = function()
-    require('conform').setup({
+    local conform = require('conform')
+    conform.setup({
       formatters_by_ft = {
         blade = { { 'prettierd', 'prettier' } }
       },
