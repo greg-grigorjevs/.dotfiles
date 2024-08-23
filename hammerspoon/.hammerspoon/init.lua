@@ -1,8 +1,10 @@
 local hyper = { 'cmd', 'ctrl', 'alt', 'shift' }
 local meh   = { 'ctrl', 'alt', 'shift' }
 
-hs.loadSpoon('EmmyLua')
+-- hs.loadSpoon('EmmyLua')
 hs.loadSpoon('SpoonInstall')
+
+spoon.SpoonInstall:andUse('EmmyLua')
 
 spoon.SpoonInstall:andUse('AppWindowSwitcher', {
   hotkeys = {
@@ -26,7 +28,7 @@ require('window-management')
 
 -- enable/disable kmonad when connecting/disconnecting my keyboards
 hs.usb.watcher.new(function(data)
-  if (data.productName == "Voyager" or data.productName == "Moonlander") then
+  if (data.productName == "Voyager" or data.productName == "Moonlander Mark I") then
     if (data.eventType == "removed") then
       hs.execute('kmonadon', true)
     elseif (data.eventType == "added") then
