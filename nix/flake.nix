@@ -12,69 +12,127 @@
   };
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
-  let
-    configuration = { pkgs, ... }: {
-      # List packages installed in system profile. To search by name, run:
-      # $ nix-env -qaP | grep wget
-      environment.systemPackages =
-        [ 
-          pkgs.vim
-          pkgs.direnv
-          pkgs.age
-          pkgs.sshs
-          pkgs.atac
-          pkgs.termshark
-          pkgs.portal
-          pkgs.glow
+    let
+      configuration = { pkgs, ... }: rec {
+        # List packages installed in system profile. To search by name, run:
+        # $ nix-env -qaP | grep wget
+        # environment.systemPackages =
+        #   [ 
+        #     pkgs.vim
+        #     pkgs.direnv
+        #     pkgs.age
+        #     pkgs.sshs
+        #     pkgs.atac
+        #     pkgs.termshark
+        #     pkgs.portal
+        #     pkgs.glow
+        #   ];
+        user = "gregg";
+        host = "CRS-MAC-01.local";
+        services.nix-daemon.enable = true;
+        nix.settings.experimental-features = "nix-command flakes";
+        programs.zsh.enable = true; # default shell on catalina
+        system.configurationRevision = self.rev or self.dirtyRev or null;
+        system.stateVersion = 4;
+        nixpkgs.hostPlatform = "aarch64-darwin";
+        security.pam.enableSudoTouchIdAuth = true;
+
+        users.users.omerxx.home = "/Users/${user}";
+        home-manager.backupFileExtension = "backup";
+        nix.configureBuildUsers = true;
+        nix.useDaemon = true;
+
+        system.defaults = {
+          dock.autohide = true;
+          dock.mru-spaces = false;
+          finder.AppleShowAllExtensions = true;
+          finder.FXPreferredViewStyle = "clmv";
+          screencapture.location = "~/Desktop/screenshots";
+          # screensaver.askForPasswordDelay = 10;
+        };
+
+        home-config = { config, pkgs, ... }: {
+          home.username = user;
+          home.homeDirectory = "/Users/${user}";
+          home.stateVersion = "23.05"; # Please read the comment before changing.
+
+          # Makes sense for user specific applications that shouldn't be available system-wide
+          home.packages = with pkgs; [
+            "nvim"
+            "ripgreg"
+            "fd"
+            "fzf"
+            "composer"
+            "git"
+          ];
+
+          # Home Manager is pretty good at managing dotfiles. The primary way to manage
+          # plain files is through 'home.file'.
+          home.file = {
+            ".zshrc".source = ../zsh/.zshrc;
+            # ".zshrc".source = ~/dotfiles/zshrc/.zshrc;
+            # ".config/wezterm".source = ~/dotfiles/wezterm;
+            # ".config/skhd".source = ~/dotfiles/skhd;
+            # ".config/starship".source = ~/dotfiles/starship;
+            # ".config/zellij".source = ~/dotfiles/zellij;
+            # ".config/nvim".source = ~/dotfiles/nvim;
+            # ".config/nix".source = ~/dotfiles/nix;
+            # ".config/nix-darwin".source = ~/dotfiles/nix-darwin;
+            # ".config/tmux".source = ~/dotfiles/tmux;
+          };
+
+          home.sessionVariables = { };
+
+          home.sessionPath = [
+            "/run/current-system/sw/bin"
+            "$HOME/.nix-profile/bin"
+          ];
+          programs.home-manager.enable = true;
+          programs.zsh = {
+            enable = true;
+            initExtra = ''
+              # Add any additional configurations here
+              export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
+              if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+                . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+              fi
+            '';
+          };
+        };
+
+        # Homebrew needs to be installed on its own!
+        homebrew.enable = true;
+        homebrew.casks = [
+          "hammerspoon"
+          "raycast"
+          "amphetamine"
+          "kitty"
+          "hammerspoon"
+          "obsidian"
+          "vlc"
+          "transmission"
+          "appcleaner"
         ];
-      services.nix-daemon.enable = true;
-      nix.settings.experimental-features = "nix-command flakes";
-      programs.zsh.enable = true;  # default shell on catalina
-      system.configurationRevision = self.rev or self.dirtyRev or null;
-      system.stateVersion = 4;
-      nixpkgs.hostPlatform = "aarch64-darwin";
-      security.pam.enableSudoTouchIdAuth = true;
-
-      users.users.omerxx.home = "/Users/omerxx";
-      home-manager.backupFileExtension = "backup";
-      nix.configureBuildUsers = true;
-      nix.useDaemon = true;
-
-      system.defaults = {
-        dock.autohide = true;
-        dock.mru-spaces = false;
-        finder.AppleShowAllExtensions = true;
-        finder.FXPreferredViewStyle = "clmv";
-        loginwindow.LoginwindowText = "devops-toolbox";
-        screencapture.location = "~/Pictures/screenshots";
-        screensaver.askForPasswordDelay = 10;
+        homebrew.brews = [
+        ];
+      };
+    in
+    {
+      darwinConfigurations.${configuration.host} = nix-darwin.lib.darwinSystem {
+        system = "aarch64-darwin";
+        modules = [
+          configuration
+          home-manager.darwinModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            # home-manager.users.${user} = import ./home.nix;
+            home-manager.users.${configuration.user} = configuration.home-config;
+          }
+        ];
       };
 
-      # Homebrew needs to be installed on its own!
-      homebrew.enable = true;
-      homebrew.casks = [
-	      "wireshark"
-              "google-chrome"
-      ];
-      homebrew.brews = [
-	      "imagemagick"
-      ];
+      # Expose the package set, including overlays, for convenience.
+      darwinPackages = self.darwinConfigurations.${configuration.host}.pkgs;
     };
-  in
-  {
-    darwinConfigurations."Omers-MacBook-Pro" = nix-darwin.lib.darwinSystem {
-      system = "aarch64-darwin";
-      modules = [ 
-	configuration
-        home-manager.darwinModules.home-manager {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.users.omerxx = import ./home.nix;
-        }
-      ];
-    };
-
-    # Expose the package set, including overlays, for convenience.
-    darwinPackages = self.darwinConfigurations."Omers-MacBook-Pro".pkgs;
-  };
 }
