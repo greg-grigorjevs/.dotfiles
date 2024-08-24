@@ -4,7 +4,8 @@ return {
     local conform = require('conform')
     conform.setup({
       formatters_by_ft = {
-        blade = { { 'prettierd', 'prettier' } }
+        blade = { { 'prettierd', 'prettier' } },
+        nix = { 'nixpkgs_fmt' }
       },
       format_on_save = {
         -- I recommend these options. See :help conform.format for details.
