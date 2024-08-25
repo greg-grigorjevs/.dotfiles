@@ -13,6 +13,8 @@
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
     let
+        user = "gregg";
+        #host = "CRS-MAC-01.local";
       configuration = { pkgs, ... }: rec {
         # List packages installed in system profile. To search by name, run:
         # $ nix-env -qaP | grep wget
@@ -27,8 +29,6 @@
         #     pkgs.portal
         #     pkgs.glow
         #   ];
-        user = "gregg";
-        host = "CRS-MAC-01.local";
         services.nix-daemon.enable = true;
         nix.settings.experimental-features = "nix-command flakes";
         programs.zsh.enable = true; # default shell on catalina
@@ -51,25 +51,42 @@
           # screensaver.askForPasswordDelay = 10;
         };
 
+
+        # Homebrew needs to be installed on its own!
+        homebrew.enable = true;
+        homebrew.casks = [
+          "hammerspoon"
+          "raycast"
+          "amphetamine"
+          "kitty"
+          "hammerspoon"
+          "obsidian"
+          "vlc"
+          "transmission"
+          "appcleaner"
+        ];
+        homebrew.brews = [
+        ];
+      };
         home-config = { config, pkgs, ... }: {
           home.username = user;
-          home.homeDirectory = "/Users/${user}";
+          home.homeDirectory = nixpkgs.lib.mkForce "/Users/${user}";
           home.stateVersion = "23.05"; # Please read the comment before changing.
 
           # Makes sense for user specific applications that shouldn't be available system-wide
           home.packages = with pkgs; [
-            "nvim"
-            "ripgreg"
-            "fd"
-            "fzf"
-            "composer"
-            "git"
+            neovim
+            ripgrep
+            fd
+            fzf
+            #composer
+            git
           ];
 
           # Home Manager is pretty good at managing dotfiles. The primary way to manage
           # plain files is through 'home.file'.
           home.file = {
-            ".zshrc".source = ../zsh/.zshrc;
+            ".zshrc".source = /Users/gregg/.dotfiles/zsh/.zshrc;
             # ".zshrc".source = ~/dotfiles/zshrc/.zshrc;
             # ".config/wezterm".source = ~/dotfiles/wezterm;
             # ".config/skhd".source = ~/dotfiles/skhd;
@@ -99,26 +116,9 @@
             '';
           };
         };
-
-        # Homebrew needs to be installed on its own!
-        homebrew.enable = true;
-        homebrew.casks = [
-          "hammerspoon"
-          "raycast"
-          "amphetamine"
-          "kitty"
-          "hammerspoon"
-          "obsidian"
-          "vlc"
-          "transmission"
-          "appcleaner"
-        ];
-        homebrew.brews = [
-        ];
-      };
     in
     {
-      darwinConfigurations.${configuration.host} = nix-darwin.lib.darwinSystem {
+      darwinConfigurations."Grigorijss-MacBook-Pro-2" = nix-darwin.lib.darwinSystem {
         system = "aarch64-darwin";
         modules = [
           configuration
@@ -127,12 +127,12 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             # home-manager.users.${user} = import ./home.nix;
-            home-manager.users.${configuration.user} = configuration.home-config;
+            home-manager.users.gregg = home-config;
           }
         ];
       };
 
       # Expose the package set, including overlays, for convenience.
-      darwinPackages = self.darwinConfigurations.${configuration.host}.pkgs;
+      darwinPackages = self.darwinConfigurations."Grigorijss-MacBook-Pro-2".pkgs;
     };
 }
