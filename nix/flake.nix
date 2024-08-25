@@ -14,13 +14,14 @@
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
     let
         user = "gregg";
-        #host = "CRS-MAC-01.local";
+        host = "Grigorijss-MacBook-Pro-2";
       configuration = { pkgs, ... }: rec {
         # List packages installed in system profile. To search by name, run:
         # $ nix-env -qaP | grep wget
-        # environment.systemPackages =
+        #environment.systemPackages =
         #   [ 
-        #     pkgs.vim
+        #     pkgs.neovim
+        #  ];
         #     pkgs.direnv
         #     pkgs.age
         #     pkgs.sshs
@@ -37,13 +38,14 @@
         nixpkgs.hostPlatform = "aarch64-darwin";
         security.pam.enableSudoTouchIdAuth = true;
 
-        users.users.omerxx.home = "/Users/${user}";
+        users.users.${user}.home = "/Users/${user}";
         home-manager.backupFileExtension = "backup";
         nix.configureBuildUsers = true;
         nix.useDaemon = true;
 
         system.defaults = {
           dock.autohide = true;
+          dock.autohide-delay = 0.0;
           dock.mru-spaces = false;
           finder.AppleShowAllExtensions = true;
           finder.FXPreferredViewStyle = "clmv";
@@ -53,7 +55,7 @@
 
 
         # Homebrew needs to be installed on its own!
-        homebrew.enable = true;
+        homebrew.enable = false;
         homebrew.casks = [
           "hammerspoon"
           "raycast"
@@ -71,14 +73,15 @@
         home-config = { config, pkgs, ... }: {
           home.username = user;
           home.homeDirectory = nixpkgs.lib.mkForce "/Users/${user}";
-          home.stateVersion = "23.05"; # Please read the comment before changing.
+          home.stateVersion = "24.05"; # Please read the comment before changing.
 
           # Makes sense for user specific applications that shouldn't be available system-wide
           home.packages = with pkgs; [
-            neovim
+          #  neovim
             ripgrep
             fd
             fzf
+            cargo
             #composer
             git
           ];
@@ -92,7 +95,7 @@
             # ".config/skhd".source = ~/dotfiles/skhd;
             # ".config/starship".source = ~/dotfiles/starship;
             # ".config/zellij".source = ~/dotfiles/zellij;
-            # ".config/nvim".source = ~/dotfiles/nvim;
+             ".config/nvim".source = ~/.dotfiles/nvim/.config/nvim;
             # ".config/nix".source = ~/dotfiles/nix;
             # ".config/nix-darwin".source = ~/dotfiles/nix-darwin;
             # ".config/tmux".source = ~/dotfiles/tmux;
@@ -127,7 +130,7 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             # home-manager.users.${user} = import ./home.nix;
-            home-manager.users.gregg = home-config;
+            home-manager.users.${user} = home-config;
           }
         ];
       };
