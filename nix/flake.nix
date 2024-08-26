@@ -13,15 +13,15 @@
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
     let
-        user = "gregg";
-        host = "Grigorijss-MacBook-Pro-2";
+        user = "admin";
+        host = "admins-Virtual-Machine";
       configuration = { pkgs, ... }: rec {
         # List packages installed in system profile. To search by name, run:
         # $ nix-env -qaP | grep wget
-        #environment.systemPackages =
-        #   [ 
-        #     pkgs.neovim
-        #  ];
+        environment.systemPackages =
+           [ 
+       #      pkgs.neovim
+          ];
         #     pkgs.direnv
         #     pkgs.age
         #     pkgs.sshs
@@ -77,7 +77,7 @@
 
           # Makes sense for user specific applications that shouldn't be available system-wide
           home.packages = with pkgs; [
-          #  neovim
+            neovim
             ripgrep
             fd
             fzf
@@ -89,7 +89,7 @@
           # Home Manager is pretty good at managing dotfiles. The primary way to manage
           # plain files is through 'home.file'.
           home.file = {
-            ".zshrc".source = /Users/gregg/.dotfiles/zsh/.zshrc;
+            ".zshrc".source = ../zsh/.zshrc;
             # ".zshrc".source = ~/dotfiles/zshrc/.zshrc;
             # ".config/wezterm".source = ~/dotfiles/wezterm;
             # ".config/skhd".source = ~/dotfiles/skhd;
@@ -107,7 +107,10 @@
             "/run/current-system/sw/bin"
             "$HOME/.nix-profile/bin"
           ];
+	#programs.neovim.enable = true;
           programs.home-manager.enable = true;
+programs.nix-index.enable = true;
+	#programs.fzf.enable = true;
           programs.zsh = {
             enable = true;
             initExtra = ''
@@ -121,14 +124,16 @@
         };
     in
     {
-      darwinConfigurations."Grigorijss-MacBook-Pro-2" = nix-darwin.lib.darwinSystem {
+      darwinConfigurations.${host} = nix-darwin.lib.darwinSystem {
         system = "aarch64-darwin";
         modules = [
           configuration
           home-manager.darwinModules.home-manager
           {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
+            home-manager.useGlobalPkgs = false;
+		# changing this to false fixed installed packages not available
+		# why ? 
+            home-manager.useUserPackages = false;
             # home-manager.users.${user} = import ./home.nix;
             home-manager.users.${user} = home-config;
           }
@@ -136,6 +141,6 @@
       };
 
       # Expose the package set, including overlays, for convenience.
-      darwinPackages = self.darwinConfigurations."Grigorijss-MacBook-Pro-2".pkgs;
+      darwinPackages = self.darwinConfigurations.${host} .pkgs;
     };
 }

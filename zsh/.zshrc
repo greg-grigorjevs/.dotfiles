@@ -139,7 +139,7 @@ function yy() {
 }
 
 # Nix
-export PATH=$PATH:/nix/var/nix/profiles/default/bin/
+#export PATH=$PATH:/nix/var/nix/profiles/default/bin/
 if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
   . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
 fi
