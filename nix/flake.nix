@@ -13,14 +13,14 @@
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
     let
-        user = "admin";
-        host = "admins-Virtual-Machine";
+      user = "admin";
+      host = "admins-Virtual-Machine";
       configuration = { pkgs, ... }: rec {
         # List packages installed in system profile. To search by name, run:
         # $ nix-env -qaP | grep wget
         environment.systemPackages =
-           [ 
-       #      pkgs.neovim
+          [
+            #      pkgs.neovim
           ];
         #     pkgs.direnv
         #     pkgs.age
@@ -30,6 +30,10 @@
         #     pkgs.portal
         #     pkgs.glow
         #   ];
+
+        #fonts.fontDir.enable = true;
+        fonts.packages = [ (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" ]; }) ];
+
         services.nix-daemon.enable = true;
         nix.settings.experimental-features = "nix-command flakes";
         programs.zsh.enable = true; # default shell on catalina
@@ -55,73 +59,76 @@
 
 
         # Homebrew needs to be installed on its own!
-        homebrew.enable = false;
+        homebrew.enable = true;
         homebrew.casks = [
-          "hammerspoon"
-          "raycast"
-          "amphetamine"
+          #"hammerspoon"
+          #"raycast"
+          #"amphetamine"
           "kitty"
-          "hammerspoon"
-          "obsidian"
-          "vlc"
-          "transmission"
-          "appcleaner"
+          "wezterm"
+          #"hammerspoon"
+          #"obsidian"
+          #"vlc"
+          #"transmission"
+          #"appcleaner"
         ];
         homebrew.brews = [
         ];
       };
-        home-config = { config, pkgs, ... }: {
-          home.username = user;
-          home.homeDirectory = nixpkgs.lib.mkForce "/Users/${user}";
-          home.stateVersion = "24.05"; # Please read the comment before changing.
+      home-config = { config, pkgs, ... }: {
+        home.username = user;
+        home.homeDirectory = nixpkgs.lib.mkForce "/Users/${user}";
+        home.stateVersion = "24.05"; # Please read the comment before changing.
 
-          # Makes sense for user specific applications that shouldn't be available system-wide
-          home.packages = with pkgs; [
-            neovim
-            ripgrep
-            fd
-            fzf
-            cargo
-            #composer
-            git
-          ];
+        # Makes sense for user specific applications that shouldn't be available system-wide
+        home.packages = with pkgs; [
+          neovim
+          kmonad
+          ripgrep
+          fd
+          fzf
+          cargo
+          #composer
+          git
+        ];
 
-          # Home Manager is pretty good at managing dotfiles. The primary way to manage
-          # plain files is through 'home.file'.
-          home.file = {
-            ".zshrc".source = ../zsh/.zshrc;
-            # ".zshrc".source = ~/dotfiles/zshrc/.zshrc;
-            # ".config/wezterm".source = ~/dotfiles/wezterm;
-            # ".config/skhd".source = ~/dotfiles/skhd;
-            # ".config/starship".source = ~/dotfiles/starship;
-            # ".config/zellij".source = ~/dotfiles/zellij;
-             ".config/nvim".source = ~/.dotfiles/nvim/.config/nvim;
-            # ".config/nix".source = ~/dotfiles/nix;
-            # ".config/nix-darwin".source = ~/dotfiles/nix-darwin;
-            # ".config/tmux".source = ~/dotfiles/tmux;
-          };
-
-          home.sessionVariables = { };
-
-          home.sessionPath = [
-            "/run/current-system/sw/bin"
-            "$HOME/.nix-profile/bin"
-          ];
-	#programs.neovim.enable = true;
-          programs.home-manager.enable = true;
-programs.nix-index.enable = true;
-	#programs.fzf.enable = true;
-          programs.zsh = {
-            enable = true;
-            initExtra = ''
-              # Add any additional configurations here
-              export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
-              if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
-                . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
-              fi
-            '';
-          };
+        # Home Manager is pretty good at managing dotfiles. The primary way to manage
+        # plain files is through 'home.file'.
+        home.file = {
+          ".zshrc".source = ../zsh/.zshrc;
+          # ".zshrc".source = ~/dotfiles/zshrc/.zshrc;
+          # ".config/wezterm".source = ~/dotfiles/wezterm;
+          # ".config/skhd".source = ~/dotfiles/skhd;
+          # ".config/starship".source = ~/dotfiles/starship;
+          # ".config/zellij".source = ~/dotfiles/zellij;
+          ".config/nvim".source = ~/.dotfiles/nvim/.config/nvim;
+          ".config/kitty".source = ../kitty/.config/kitty;
+          # ".config/nix".source = ~/dotfiles/nix;
+          # ".config/nix-darwin".source = ~/dotfiles/nix-darwin;
+          # ".config/tmux".source = ~/dotfiles/tmux;
         };
+
+        home.sessionVariables = { };
+
+        home.sessionPath = [
+          "/run/current-system/sw/bin"
+          "$HOME/.nix-profile/bin"
+        ];
+        #programs.neovim.enable = true;
+        programs.home-manager.enable = true;
+        programs.nix-index.enable = true;
+        #programs.fzf.enable = true;
+        programs.zsh = {
+          enable = true;
+          initExtra = ''
+            # Add any additional configurations here
+            export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
+            if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+              . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+            fi
+          '';
+        };
+      };
     in
     {
       darwinConfigurations.${host} = nix-darwin.lib.darwinSystem {
@@ -131,8 +138,8 @@ programs.nix-index.enable = true;
           home-manager.darwinModules.home-manager
           {
             home-manager.useGlobalPkgs = false;
-		# changing this to false fixed installed packages not available
-		# why ? 
+            # changing this to false fixed installed packages not available
+            # why ? 
             home-manager.useUserPackages = false;
             # home-manager.users.${user} = import ./home.nix;
             home-manager.users.${user} = home-config;
@@ -141,6 +148,6 @@ programs.nix-index.enable = true;
       };
 
       # Expose the package set, including overlays, for convenience.
-      darwinPackages = self.darwinConfigurations.${host} .pkgs;
+      darwinPackages = self.darwinConfigurations.${host}.pkgs;
     };
 }
