@@ -88,6 +88,7 @@ export PATH="$HOME/.local/bin":$PATH
 export PATH="~/bin":$PATH
 export PATH="$HOME/.composer/vendor/bin":$PATH
 export PATH="$HOME/.dotfiles/bin":$PATH
+export PATH="$HOME/.cargo/bin":$PATH
 
 # Set PATH, MANPATH, etc., for Homebrew.
 eval "$(/opt/homebrew/bin/brew shellenv)"
