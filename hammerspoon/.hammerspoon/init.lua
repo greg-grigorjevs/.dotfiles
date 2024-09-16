@@ -35,7 +35,8 @@ hs.usb.watcher.new(function(data)
       hs.execute('kmonadoff', true)
     end
   end
-end):start()
+end)
+--:start()
 
 
 
