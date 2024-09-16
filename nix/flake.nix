@@ -3,8 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixpkgs-23.11-darwin";
-    #nixpkgs-stable.config.allowBroken = true;
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixpkgs-24.05-darwin";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager = {
@@ -17,25 +16,15 @@
     let
       user = "gregg";
       host = "CRS-MAC-01";
-      stable-pkgs = import nixpkgs-stable { system = "aarch64-darwin"; config.allowBroken = true; };
+      stable-pkgs = import nixpkgs-stable { system = "aarch64-darwin"; config.allowBroken = false; };
       #stable-pkgs = nixpkgs-stable.legacyPackages."aarch64-darwin";
       configuration = { pkgs, ... }: rec {
         # List packages installed in system profile. To search by name, run:
         # $ nix-env -qaP | grep wget
         environment.systemPackages =
           [
-            #stable-pkgs.kanata
           ];
-        #     pkgs.direnv
-        #     pkgs.age
-        #     pkgs.sshs
-        #     pkgs.atac
-        #     pkgs.termshark
-        #     pkgs.portal
-        #     pkgs.glow
-        #   ];
 
-        #fonts.fontDir.enable = true;
         fonts.packages = [ (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" ]; }) ];
 
         services.nix-daemon.enable = true;
@@ -60,43 +49,24 @@
           screencapture.location = "~/Desktop/screenshots";
           # screensaver.askForPasswordDelay = 10;
         };
-        #        security.sudo = {
-        #          enable = true;
-        #          extraRules = [{
-        #            commands = [
-        #            
-        #          {
-        #            command = "kanata";
-        #            options = [ "NOPASSWD"];
-        #          }
-        #            ];
-        #          }];
-        #        };
 
 
         # Homebrew needs to be installed on its own!
-        homebrew.enable = false;
+        homebrew.enable = true;
         homebrew.casks = [
-          #"hammerspoon"
-          #"raycast"
-          #"amphetamine"
           "kitty"
-          "wezterm"
-          #"hammerspoon"
-          #"obsidian"
-          #"vlc"
-          #"transmission"
-          #"appcleaner"
+          "hammerspoon"
+          "obsidian"
+          "google-chrome"
+          # "raycast"
+          # "vlc"
+          # "transmission"
+          # "appcleaner"
         ];
         homebrew.brews = [
         ];
       };
       home-config = { config, lib, pkgs, stable-pkgs, ... }:
-        let
-          rustEnv = pkgs.mkShell {
-            buildInputs = [ pkgs.cargo pkgs.rustc ];
-          };
-        in
         {
           home.username = user;
           home.homeDirectory = nixpkgs.lib.mkForce "/Users/${user}";
@@ -118,6 +88,8 @@
             fzf
             gcc
             cargo
+            tree
+            yazi
             #composer
             git
             #stable-pkgs.kanata
@@ -128,16 +100,14 @@
           # plain files is through 'home.file'.
           home.file = {
             ".zshrc".source = ../zsh/.zshrc;
-            # ".zshrc".source = ~/dotfiles/zshrc/.zshrc;
-            # ".config/wezterm".source = ~/dotfiles/wezterm;
-            # ".config/skhd".source = ~/dotfiles/skhd;
-            # ".config/starship".source = ~/dotfiles/starship;
+            ".config/lazygit".source = ~/.dotfiles/lazygit/.config/lazygit;
+            ".config/starship.toml".source = ~/.dotfiles/starship/.config/starship.toml;
             # ".config/zellij".source = ~/dotfiles/zellij;
             ".config/nvim".source = ~/.dotfiles/nvim/.config/nvim;
             ".config/kitty".source = ../kitty/.config/kitty;
             # ".config/nix".source = ~/dotfiles/nix;
             # ".config/nix-darwin".source = ~/dotfiles/nix-darwin;
-            # ".config/tmux".source = ~/dotfiles/tmux;
+            ".tmux.conf".source = ~/.dotfiles/tmux/.tmux.conf;
           };
 
           home.sessionVariables = { };
