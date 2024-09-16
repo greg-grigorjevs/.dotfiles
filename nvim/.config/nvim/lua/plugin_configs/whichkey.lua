@@ -1,5 +1,13 @@
 return {
   'folke/which-key.nvim',
+  opts = {
+    plugins = {
+      presets = {
+        g = false,
+        text_objects = false
+      }
+    }
+  },
   config = function()
     local wk = require("which-key")
     wk.add({
