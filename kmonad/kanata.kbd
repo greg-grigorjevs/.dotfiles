@@ -1,0 +1,102 @@
+(defcfg
+  process-unmapped-keys yes
+  macos-dev-names-include ("Apple Internal Keyboard / Trackpad")
+)
+
+#| --------------------------------------------------------
+
+empty layer for reference
+
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _              _              _    _    _    _    _
+
+
+
+
+ ------------------------------------------------------- |#
+
+(defalias
+  nav (tap-hold 200 200 f (layer-toggle nav-layer))
+  sym (tap-hold 200 200 a (layer-toggle symbol-layer))
+  
+  nve (tap-hold 200 200 a (layer-toggle nav-layer))
+  sme (tap-hold 200 200 c (layer-toggle symbol-layer))
+
+  thg (tap-hold 200 200 g lsft)
+  ctv (tap-hold 200 200 ; lctl)
+
+  lsw (tap-hold 200 200 (layer-switch base-engrammer) (layer-switch base))
+
+  $ S-4
+  
+  ;;fn (around (layer-toggle function) fn)
+  hyp (multi lsft lalt lctrl lmet)
+)
+
+(defsrc
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    ret
+  caps a    s    d    f    g    h    j    k    l    ;    '    \
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft up
+  fn   lctl lalt lmet           spc            rmet ralt left down rght
+)
+
+(deflayer base-engrammer
+  ;;esc    brdn brup lp   mctl bldn blup prev pp   next mute vold volu
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  g  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    y    o    u    '    .    l    d    w    z    z    =    ret
+  @ctv @sme i    e    @nve ,    b    h    t    s    n    v    \
+  lsft x    j    k    -    `    /    r    m    f    p    rsft up
+  fn   caps lalt lmet           spc            @hyp ralt left down rght
+)
+
+(deflayer base
+  esc  f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
+  tab  q    w    e    r    t    y    u    i    o    p    [    ]    ret
+  lctl @sym s    d    @nav g    h    j    k    l    ;    '    \
+  lsft z    x    c    v    b    n    m    ,    .    /    rsft up
+  fn   caps lalt lmet           spc            rmet ralt left down rght
+)
+
+
+(deflayer nav-layer
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    lrld    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    lsft lalt _    _    left down up   rght _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _              _              _    _    _    _    _
+)
+
+(deflayer symbol-layer
+;; p is for semicolon on colemak 
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    @$    _    _    ,    '    S-'    S-;    _    _    _
+  _    _    [    S-[    S-9   _    =    S-0   S-]    ]    ;    _    _
+  _    _    _    _    _    _    -    S--   S-,    S-.    _    _    _
+  _    _    _    _              _              @lsw _    _    _    _
+)
+
+
+(deflayer function
+  _    f1   f2   f3   f4   f5   f6   f7   f8   f9   f10  f11  f12
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _              _              _    _    _    _    _
+)
+
+
+
+
+
+
