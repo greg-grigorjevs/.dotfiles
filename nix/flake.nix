@@ -27,6 +27,11 @@
 
         fonts.packages = [ (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" ]; }) ];
 
+        system.keyboard = {
+          enableKeyMapping = true;
+          remapCapsLockToControl = true;
+        };
+
         services.nix-daemon.enable = true;
         nix.settings.experimental-features = "nix-command flakes";
         programs.zsh.enable = true; # default shell on catalina
@@ -45,7 +50,7 @@
           dock.autohide-delay = 0.0;
           dock.mru-spaces = false;
           finder.AppleShowAllExtensions = true;
-          finder.FXPreferredViewStyle = "clmv";
+          finder.FXPreferredViewStyle = "Nlsv";
           screencapture.location = "~/Desktop/screenshots";
           # screensaver.askForPasswordDelay = 10;
         };
@@ -80,10 +85,16 @@
 
           # Makes sense for user specific applications that shouldn't be available system-wide
           home.packages = with pkgs; [
+            ansible
             neovim
             #kmonad
             ripgrep
             lazygit
+            tmux
+            nodePackages.prettier
+            prettierd
+            starship
+            yarn
             fd
             fzf
             gcc
@@ -102,6 +113,7 @@
             ".zshrc".source = ../zsh/.zshrc;
             ".config/lazygit".source = ~/.dotfiles/lazygit/.config/lazygit;
             ".config/starship.toml".source = ~/.dotfiles/starship/.config/starship.toml;
+            ".hammerspoon".source = ~/.dotfiles/hammerspoon/.hammerspoon;
             # ".config/zellij".source = ~/dotfiles/zellij;
             ".config/nvim".source = ~/.dotfiles/nvim/.config/nvim;
             ".config/kitty".source = ../kitty/.config/kitty;
@@ -140,10 +152,10 @@
           home-manager.darwinModules.home-manager
           {
             home-manager.extraSpecialArgs = { inherit stable-pkgs; };
-            home-manager.useGlobalPkgs = false;
+            home-manager.useGlobalPkgs = true;
             # changing this to false fixed installed packages not available
             # why ? 
-            home-manager.useUserPackages = false;
+            # home-manager.useUserPackages = false;
             home-manager.backupFileExtension = "backup";
             # home-manager.users.${user} = import ./home.nix;
             home-manager.users.${user} = home-config;
