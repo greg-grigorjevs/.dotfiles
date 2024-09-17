@@ -115,7 +115,7 @@
             ".config/starship.toml".source = ~/.dotfiles/starship/.config/starship.toml;
             ".hammerspoon".source = ~/.dotfiles/hammerspoon/.hammerspoon;
             # ".config/zellij".source = ~/dotfiles/zellij;
-            ".config/nvim".source = ~/.dotfiles/nvim/.config/nvim;
+            ".config/nvim".source = config.lib.file.mkOutOfStoreSymlink ~/.dotfiles/nvim/.config/nvim;
             ".config/kitty".source = ../kitty/.config/kitty;
             # ".config/nix".source = ~/dotfiles/nix;
             # ".config/nix-darwin".source = ~/dotfiles/nix-darwin;
