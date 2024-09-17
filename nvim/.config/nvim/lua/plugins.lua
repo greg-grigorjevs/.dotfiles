@@ -90,6 +90,7 @@ local plugins = {
   'nvim-treesitter/playground',
   'kmonad/kmonad-vim',
   'mbbill/undotree',
+  'stevearc/dressing.nvim',
 
   {
     "tpope/vim-dadbod",
