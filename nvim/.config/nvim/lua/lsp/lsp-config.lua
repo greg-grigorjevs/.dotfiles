@@ -1,5 +1,5 @@
 local servers = {
-  'tsserver',
+  'ts_ls',
   'lua_ls',
   'intelephense',
   'emmet_ls',
