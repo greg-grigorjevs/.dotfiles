@@ -12,6 +12,7 @@ return {
         'css',
         'markdown',
         'javascript',
+        -- 'blade',
       },
       highlight = {
         enable = true,
