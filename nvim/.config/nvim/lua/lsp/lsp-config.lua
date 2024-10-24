@@ -10,7 +10,7 @@ local servers = {
   'svelte',
   'tailwindcss',
   'clojure_lsp',
-  'pest_ls'
+  -- 'pest_ls'
 }
 require('mason').setup()
 require('mason-lspconfig').setup({
