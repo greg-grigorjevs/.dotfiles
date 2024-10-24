@@ -34,7 +34,10 @@
 
         services.nix-daemon.enable = true;
         nix.settings.experimental-features = "nix-command flakes";
-        programs.zsh.enable = true; # default shell on catalina
+        programs.zsh = {
+          enable = true; # default shell on catalina
+          enableCompletion = false; # fixed compinit warnings on mac m1 pro
+        };
         system.configurationRevision = self.rev or self.dirtyRev or null;
         system.stateVersion = 4;
         nixpkgs.hostPlatform = "aarch64-darwin";
@@ -110,16 +113,16 @@
           # Home Manager is pretty good at managing dotfiles. The primary way to manage
           # plain files is through 'home.file'.
           home.file = {
-            ".zshrc".source = ../zsh/.zshrc;
-            ".config/lazygit".source = ~/.dotfiles/lazygit/.config/lazygit;
-            ".config/starship.toml".source = ~/.dotfiles/starship/.config/starship.toml;
-            ".hammerspoon".source = ~/.dotfiles/hammerspoon/.hammerspoon;
-            # ".config/zellij".source = ~/dotfiles/zellij;
+            ".zshrc".source = config.lib.file.mkOutOfStoreSymlink ~/.dotfiles/zsh/.zshrc;
+            ".config/lazygit".source = config.lib.file.mkOutOfStoreSymlink ~/.dotfiles/lazygit/.config/lazygit;
+            ".config/starship.toml".source = config.lib.file.mkOutOfStoreSymlink ~/.dotfiles/starship/.config/starship.toml;
+            ".hammerspoon".source = config.lib.file.mkOutOfStoreSymlink ~/.dotfiles/hammerspoon/.hammerspoon;
+            # ".config/zellij".source = config.lib.file.mkOutOfStoreSymlink ~/dotfiles/zellij;
             ".config/nvim".source = config.lib.file.mkOutOfStoreSymlink ~/.dotfiles/nvim/.config/nvim;
-            ".config/kitty".source = ../kitty/.config/kitty;
-            # ".config/nix".source = ~/dotfiles/nix;
-            # ".config/nix-darwin".source = ~/dotfiles/nix-darwin;
-            ".tmux.conf".source = ~/.dotfiles/tmux/.tmux.conf;
+            ".config/kitty".source = config.lib.file.mkOutOfStoreSymlink ../kitty/.config/kitty;
+            # ".config/nix".source = config.lib.file.mkOutOfStoreSymlink ~/dotfiles/nix;
+            # ".config/nix-darwin".source = config.lib.file.mkOutOfStoreSymlink ~/dotfiles/nix-darwin;
+            ".tmux.conf".source = config.lib.file.mkOutOfStoreSymlink ~/.dotfiles/tmux/.tmux.conf;
           };
 
           home.sessionVariables = { };
@@ -130,17 +133,25 @@
           ];
           #programs.neovim.enable = true;
           programs.home-manager.enable = true;
-          programs.nix-index.enable = true;
+          #programs.nix-index.enable = true;
+          
+          #disable this whole thing altogether as it seeems that zsh is not getting configured properly
+          # if I am symlinking my existing .zshrc
           #programs.fzf.enable = true;
+          #programs.fzf.enableZshIntegration = true;
           programs.zsh = {
-            enable = true;
+            enable = false;
+            #dotDir = ".config/nixzsh";
             initExtra = ''
               # Add any additional configurations here
               export PATH=/run/current-system/sw/bin:$HOME/.nix-profile/bin:$PATH
               if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
                 . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
               fi
+
+              #source ~/.zshrc
             '';
+            enableCompletion = false;
           };
         };
     in
@@ -155,7 +166,7 @@
             home-manager.useGlobalPkgs = true;
             # changing this to false fixed installed packages not available
             # why ? 
-            # home-manager.useUserPackages = false;
+             home-manager.useUserPackages = false;
             home-manager.backupFileExtension = "backup";
             # home-manager.users.${user} = import ./home.nix;
             home-manager.users.${user} = home-config;
