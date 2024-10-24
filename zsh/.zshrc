@@ -94,7 +94,6 @@ export PATH="$HOME/.cargo/bin":$PATH
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # fzf config
-source <(fzf --zsh)
 export FZF_DEFAULT_COMMAND="fd --exclude 'node_modules'"
 export FZF_CTRL_T_COMMAND="fd -t f -I -E 'node_modules' -E 'vendor' . ."
 export FZF_ALT_C_COMMAND="fd -t d . $HOME"
@@ -123,11 +122,11 @@ bindkey -s ^f "tmux_sessionizer\n"
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 
-source /Users/gregg/.config/broot/launcher/bash/br
-
-# zplug
-source ~/.zplug/init.zsh
-zplug "jeffreytse/zsh-vi-mode"
+# source /Users/gregg/.config/broot/launcher/bash/br
+#
+# # zplug
+# source ~/.zplug/init.zsh
+# zplug "jeffreytse/zsh-vi-mode"
 
 # wrapper around yazi. use this to change the cwd on exit
 function yy() {
@@ -140,8 +139,11 @@ function yy() {
 }
 
 # Nix
-#export PATH=$PATH:/nix/var/nix/profiles/default/bin/
 if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
   . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
 fi
 # End Nix
+
+# on my m1 pro mac works only after moving under the above nix thing
+# and only at the end of the file. no idea why.
+source <(fzf --zsh)
