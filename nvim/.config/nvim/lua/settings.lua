@@ -144,3 +144,8 @@ vim.api.nvim_create_user_command('ReloadBrowser', function()
 end, { nargs = '*' })
 
 vim.treesitter.language.register('bash', 'zsh')
+vim.filetype.add({
+  pattern = {
+    ['.*%.blade%.php'] = 'php',
+  }
+})

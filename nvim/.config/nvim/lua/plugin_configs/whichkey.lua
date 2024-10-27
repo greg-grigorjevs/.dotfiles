@@ -55,7 +55,7 @@ return {
       { "<leader>gdd", "<cmd>Gitsigns diffthis HEAD<cr>",                                           desc = "Diff" },
       { "<leader>gdo", "<cmd>DiffviewOpen<cr>",                                                     desc = "open" },
       { "<leader>gdc", "<cmd>DiffviewClose<cr>",                                                    desc = "close" },
-      { "<leader>gdm", "<cmd>DiffviewOpen master",                                                  desc = "compare with master" },
+      { "<leader>gdm", "<cmd>DiffviewOpen master<cr>",                                              desc = "compare with master" },
 
       { "<leader>o",   group = "Obsidian" },
       { "<leader>on",  ":ObsidianNew ",                                                             desc = "[N]ew Obsidian Note" },
@@ -83,10 +83,10 @@ return {
       { "<leader>ht", "<cmd>lua require 'harpoon.ui'.toggle_quick_menu()<cr>",     desc = "Toggle harpoon" },
 
       { "<leader>x",  group = "Trouble" },
-      { "<leader>xx", "<cmd>TroubleToggle<cr>",                                    desc = "Toggle Trouble" },
-      { "<leader>xw", "<cmd>TroubleToggle workspace_diagnostics<cr>",              desc = "Workspace Diagnostics" },
-      { "<leader>xd", "<cmd>TroubleToggle document_diagnostics<cr>",               desc = "Document Diagnostics" },
-      { "<leader>xr", "<cmd>TroubleToggle lsp_references<cr>",                     desc = "LSP References" },
+      { "<leader>xx", "<cmd>Trouble<cr>",                                          desc = "Toggle Trouble" },
+      { "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>",                    desc = "Workspace Diagnostics" },
+      { "<leader>xd", "<cmd>Trouble document_diagnostics<cr>",                     desc = "Document Diagnostics" },
+      { "<leader>xr", "<cmd>Trouble lsp_references<cr>",                           desc = "LSP References" },
 
 
 

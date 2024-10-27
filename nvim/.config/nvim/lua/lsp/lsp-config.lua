@@ -1,5 +1,5 @@
 local servers = {
-  'ts_ls',
+  -- 'ts_ls',
   'lua_ls',
   'intelephense',
   'emmet_ls',
@@ -35,7 +35,7 @@ local on_attach = function(client, bufnr)
   local bufopts = { noremap = true, silent = true, buffer = bufnr }
   vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, bufopts)
   --[[ vim.keymap.set('n', 'gd', vim.lsp.buf.definition, bufopts) ]]
-  vim.keymap.set('n', 'gd', "<cmd>TroubleToggle lsp_definitions<cr>", bufopts)
+  vim.keymap.set('n', 'gd', "<cmd>Trouble lsp_definitions toggle focus=true<cr>", bufopts)
   vim.keymap.set('n', 'K', vim.lsp.buf.hover, bufopts)
   vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, bufopts)
   vim.keymap.set({ 'n', 'i' }, '<C-k>', vim.lsp.buf.signature_help, bufopts)

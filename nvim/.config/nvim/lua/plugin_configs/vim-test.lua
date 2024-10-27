@@ -7,6 +7,7 @@ return {
         let test#strategy = 'neovim_sticky'
         let test#neovim#term_position = "vert"
         let test#neovim_sticky#reopen_window = 1
+        let test#neovim_sticky#kill_previous = 1
       ]])
   end
 }

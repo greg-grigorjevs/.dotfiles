@@ -44,7 +44,12 @@ local plugins = {
   },
   'andymass/vim-matchup',                        -- significatly expands % functionality
   'JoosepAlviste/nvim-ts-context-commentstring', -- support for jsx commenting
-  'mattn/emmet-vim',
+  {
+    'mattn/emmet-vim',
+    config = function()
+      vim.g.user_emmet_mode = 'a' -- enable in all modes
+    end
+  },
   'tpope/vim-surround',
   'kyazdani42/nvim-web-devicons',
 
