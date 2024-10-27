@@ -10,6 +10,7 @@ local servers = {
   'svelte',
   'tailwindcss',
   'clojure_lsp',
+  'nixpkgs-fmt'
   -- 'pest_ls'
 }
 require('mason').setup()

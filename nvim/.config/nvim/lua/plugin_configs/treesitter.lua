@@ -12,7 +12,7 @@ return {
         'css',
         'markdown',
         'javascript',
-        -- 'blade',
+        'nix',
       },
       highlight = {
         enable = true,
@@ -23,7 +23,8 @@ return {
         disable = { "conf" },
 
         -- fixes indentation in react files
-        additional_vim_regex_highlighting = { "jsx", "tsx", "js", "javascript", "javascriptreact", "typescriptreact", "svelte" },
+        additional_vim_regex_highlighting = { "jsx", "tsx", "js", "javascript", "javascriptreact", "typescriptreact",
+          "svelte" },
 
       },
       indent = { enable = { 'php', 'blade', 'yaml', 'svelte', 'jsx', 'tsx', 'blade', 'markdown' } },
@@ -33,7 +34,7 @@ return {
       },
       rainbow = {
         enable = true,
-        disable = { "php" },  -- list of languages you want to disable the plugin for
+        disable = { "php" }, -- list of languages you want to disable the plugin for
         extended_mode = true, -- Also highlight non-bracket delimiters like html tags, boolean or table: lang -> boolean
         max_file_lines = nil, -- Do not enable for files with more than n lines, int
         -- colors = {}, -- table of hex strings
@@ -105,7 +106,8 @@ return {
         enable_close = true,
         enable_close_on_slash = true,
         filetypes = {
-          'html', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'svelte', 'vue', 'tsx', 'jsx', 'rescript',
+          'html', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'svelte', 'vue', 'tsx', 'jsx',
+          'rescript',
           'xml',
           'php', 'blade',
           'markdown',
