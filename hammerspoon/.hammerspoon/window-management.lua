@@ -69,6 +69,20 @@ hs.hotkey.bind({ "cmd", "ctrl" }, "/", function()
   win:setFrame(f, 0)
 end)
 
+-- Left 2/3
+hs.hotkey.bind({ "cmd", "ctrl" }, ".", function()
+  local win = hs.window.focusedWindow()
+  local f = win:frame()
+  local screen = win:screen()
+  local max = screen:frame()
+
+  f.x = 0
+  f.y = max.y
+  f.w = max.w * 0.66
+  f.h = max.h
+  win:setFrame(f, 0)
+end)
+
 
 hs.hotkey.bind({ "cmd", "ctrl" }, "d", function()
   local laptopScreen = "Built-in Retina Display"
