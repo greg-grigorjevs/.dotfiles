@@ -14,8 +14,7 @@
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, nixpkgs-stable }:
     let
-      user = "gregg";
-      host = "CRS-MAC-01";
+      user = builtins.getEnv "USER";
       stable-pkgs = import nixpkgs-stable { system = "aarch64-darwin"; config.allowBroken = false; };
       #stable-pkgs = nixpkgs-stable.legacyPackages."aarch64-darwin";
       configuration = { pkgs, ... }: rec {
@@ -117,11 +116,8 @@
             ".config/lazygit".source = mkOutOfStoreSymlink ~/.dotfiles/lazygit/.config/lazygit;
             ".config/starship.toml".source = mkOutOfStoreSymlink ~/.dotfiles/starship/.config/starship.toml;
             ".hammerspoon".source = mkOutOfStoreSymlink ~/.dotfiles/hammerspoon/.hammerspoon;
-            # ".config/zellij".source = mkOutOfStoreSymlink ~/dotfiles/zellij;
             ".config/nvim".source = mkOutOfStoreSymlink ~/.dotfiles/nvim/.config/nvim;
             ".config/kitty".source = mkOutOfStoreSymlink ../kitty/.config/kitty;
-            # ".config/nix".source = mkOutOfStoreSymlink ~/dotfiles/nix;
-            # ".config/nix-darwin".source = mkOutOfStoreSymlink ~/dotfiles/nix-darwin;
             ".tmux.conf".source = mkOutOfStoreSymlink ~/.dotfiles/tmux/.tmux.conf;
           };
 
@@ -149,7 +145,7 @@
         };
     in
     {
-      darwinConfigurations.${host} = nix-darwin.lib.darwinSystem rec {
+      darwinConfigurations."default" = nix-darwin.lib.darwinSystem rec {
         system = "aarch64-darwin";
         modules = [
           configuration
@@ -168,6 +164,6 @@
       };
 
       # Expose the package set, including overlays, for convenience.
-      darwinPackages = self.darwinConfigurations.${host}.pkgs;
+      darwinPackages = self.darwinConfigurations."default".pkgs;
     };
 }

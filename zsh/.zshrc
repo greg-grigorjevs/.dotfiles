@@ -23,7 +23,7 @@ alias copyhistory="fc -ln 0 | fzf --tac --no-sort | tr -d \\\n | pbcopy"
 alias kmonadon="tmux new-session -ds kmonad kmonadrun"
 alias kmonadoff="tmux kill-session -t kmonad"
 alias kmonadrestart="kmonadoff && kmonadon"
-alias nixrebuild="/run/current-system/sw/bin/nix run  --extra-experimental-features 'nix-command flakes' nix-darwin -- switch --flake ~/.dotfiles/nix --impure"
+alias nixrebuild="/run/current-system/sw/bin/nix run  --extra-experimental-features 'nix-command flakes' nix-darwin -- switch --flake ~/.dotfiles/nix#default --impure"
 
 # Functions
 gswf() {
