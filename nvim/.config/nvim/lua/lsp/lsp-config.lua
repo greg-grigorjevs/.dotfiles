@@ -10,12 +10,17 @@ local servers = {
   'svelte',
   'tailwindcss',
   'clojure_lsp',
-  'nixpkgs-fmt'
   -- 'pest_ls'
 }
 require('mason').setup()
 require('mason-lspconfig').setup({
   ensure_installed = servers,
+})
+require('mason-null-ls').setup({
+  ensure_installed = {
+    'nixpkgs-fmt',
+    'blade-formatter',
+  }
 })
 
 local opts = { noremap = true, silent = true }

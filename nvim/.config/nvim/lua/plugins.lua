@@ -56,6 +56,8 @@ local plugins = {
   -- LSP
   "williamboman/mason.nvim",
   "williamboman/mason-lspconfig.nvim",
+  "jay-babu/mason-null-ls.nvim",
+  "nvimtools/none-ls.nvim",
   'neovim/nvim-lspconfig',
   'hrsh7th/cmp-nvim-lsp',
   'hrsh7th/cmp-buffer',

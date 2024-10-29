@@ -4,7 +4,8 @@ return {
     local conform = require('conform')
     conform.setup({
       formatters_by_ft = {
-        blade = { { 'prettierd', 'prettier' } },
+        -- blade = { { 'prettierd', 'prettier' } },
+        blade = { 'blade-formatter' },
         nix = { 'nixpkgs_fmt' }
       },
       format_on_save = {
