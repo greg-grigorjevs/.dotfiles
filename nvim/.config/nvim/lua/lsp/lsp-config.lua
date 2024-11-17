@@ -90,6 +90,7 @@ for _, server in ipairs(servers) do
     lspconfig[server].setup {
       on_attach = on_attach,
       capabilities = capabilities,
+      single_file_support = true,
       settings = {
         intelephense = {
           environment = {

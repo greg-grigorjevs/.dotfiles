@@ -24,6 +24,7 @@
   "kmonad-vim": { "branch": "master", "commit": "37978445197ab00edeb5b731e9ca90c2b141723f" },
   "lazy.nvim": { "branch": "main", "commit": "077102c5bfc578693f12377846d427f49bc50076" },
   "lazydev.nvim": { "branch": "main", "commit": "491452cf1ca6f029e90ad0d0368848fac717c6d2" },
+  "leetcode.nvim": { "branch": "master", "commit": "6a2e54ff13027fb3ce46b61a0e721eccc020ec80" },
   "log-highlight.nvim": { "branch": "main", "commit": "2867afe132b1c94c454f95758409da320ab4b084" },
   "lualine.nvim": { "branch": "master", "commit": "b431d228b7bbcdaea818bdc3e25b8cdbe861f056" },
   "mason-lspconfig.nvim": { "branch": "main", "commit": "1c55991321d1a861537e32446affc5de5d9a6eaf" },
