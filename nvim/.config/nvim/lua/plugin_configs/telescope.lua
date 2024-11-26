@@ -1,3 +1,8 @@
+local harpoon = require('harpoon.mark')
+local actions = require('telescope.actions')
+local state = require('telescope.actions.state')
+local utils = require('telescope.actions.utils')
+
 return {
   {
     'nvim-telescope/telescope.nvim',
@@ -14,6 +19,25 @@ return {
           mappings = {
             i = {
               ["<esc>"] = require('telescope.actions').close,
+              ["<C-h>"] = function(prompt_bufnr)
+                -- Get the currently selected entries (multiple files)
+                local selections = {}
+                utils.map_selections(prompt_bufnr, function(selection)
+                  selections[selection.index] = selection.value
+                end)
+                -- Iterate over all selected entries and add them to Harpoon
+                for _, path in ipairs(selections) do
+                  harpoon.add_file(path)
+                end
+
+                if #selections == 0 then
+                  harpoon.add_file(state.get_selected_entry().value)
+                  actions.select_default(prompt_bufnr)
+                else
+                  actions.close(prompt_bufnr)
+                  require('harpoon.ui').toggle_quick_menu()
+                end
+              end
             }
           },
           path_display = { 'truncate' },
@@ -31,6 +55,7 @@ return {
             "vendor/*",
             "%.lock",
             "__pycache__/*",
+            "goaccess/daily/*",
             "%.sqlite3",
             "%.ipynb",
             "node_modules/*",
