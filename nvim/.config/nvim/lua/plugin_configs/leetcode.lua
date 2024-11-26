@@ -1,3 +1,5 @@
+local leet_arg = 'leetcode'
+
 return {
   "kawre/leetcode.nvim",
   build = ":TSUpdate html",
@@ -11,8 +13,10 @@ return {
     "rcarriga/nvim-notify",
     "nvim-tree/nvim-web-devicons",
   },
+  lazy = leet_arg ~= vim.fn.argv()[1],
   opts = {
     -- configuration goes here
-    lang = 'php'
+    lang = 'php',
+    arg = leet_arg
   },
 }
