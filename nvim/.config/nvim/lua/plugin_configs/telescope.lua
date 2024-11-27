@@ -23,17 +23,17 @@ return {
                 -- Get the currently selected entries (multiple files)
                 local selections = {}
                 utils.map_selections(prompt_bufnr, function(selection)
-                  selections[selection.index] = selection.value
+                  table.insert(selections, selection.value)
                 end)
-                -- Iterate over all selected entries and add them to Harpoon
-                for _, path in ipairs(selections) do
-                  harpoon.add_file(path)
-                end
 
                 if #selections == 0 then
                   harpoon.add_file(state.get_selected_entry().value)
                   actions.select_default(prompt_bufnr)
                 else
+                  -- Iterate over all selected entries and add them to Harpoon
+                  for _, path in ipairs(selections) do
+                    harpoon.add_file(path)
+                  end
                   actions.close(prompt_bufnr)
                   require('harpoon.ui').toggle_quick_menu()
                 end
