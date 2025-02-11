@@ -30,12 +30,12 @@ return {
       })
 
       ls.add_snippets('php', {
-        s({ trig = 'dd', snippetType = 'autosnippet' }, fmt([[
+        s('dd', fmt([[
   dd(${});
   ]],
           { i(1, 'variable') })
         ),
-        s({ trig = 'dump', snippetType = 'autosnippet' }, fmt([[
+        s('dump', fmt([[
   dump(${});
   ]],
           { i(1, 'variable') })
