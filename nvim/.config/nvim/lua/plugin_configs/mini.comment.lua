@@ -12,6 +12,8 @@ return {
           -- vim.print(lang)
           if lang == 'php' or lang == 'php_only' or lang == 'javascript' then
             return '// %s'
+          elseif lang == 'css' then
+            return '/* %s */'
           end
           return '{{-- %s --}}'
         elseif vim.bo.filetype == 'php' then
