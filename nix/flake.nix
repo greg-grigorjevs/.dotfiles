@@ -61,6 +61,7 @@
         homebrew.casks = [
           # "kitty"
           "hammerspoon"
+          # "docker"
           #"obsidian"
           #"google-chrome"
           # "raycast"
@@ -103,6 +104,7 @@
             cargo
             tree
             yazi
+            btop
             #composer
             git
             #stable-pkgs.kanata
