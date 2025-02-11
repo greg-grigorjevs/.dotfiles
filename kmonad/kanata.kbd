@@ -79,8 +79,8 @@ empty layer for reference
 ;; p is for semicolon on colemak 
   _    _    _    _    _    _    _    _    _    _    _    _    _
   _    _    _    _    _    _    _    _    _    _    _    _    _    _
-  _    _    _    _    @$    _    _    ,    '    S-'    S-;    _    _    _
-  _    _    [    S-[    S-9   _    =    S-0   S-]    ]    ;    _    _
+  _    _    _    @$   _    _    _    ,    '    S-'    S-;    _    _    _
+  _    _    [    S-[  S-9  -    =    S-0   S-]    ]    ;    _    _
   _    _    _    _    _    _    -    S--   S-,    S-.    _    _    _
   _    _    _    _              _              @lsw _    _    _    _
 )
