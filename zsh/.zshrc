@@ -20,9 +20,9 @@ alias pat="php artisan test"
 alias patf="php artisan test --filter"
 alias dotfiles="cd ~/.dotfiles && nvim . -c 'Telescope find_files hidden=true'"
 alias copyhistory="fc -ln 0 | fzf --tac --no-sort | tr -d \\\n | pbcopy"
-alias kmonadon="tmux new-session -ds kmonad kmonadrun"
-alias kmonadoff="tmux kill-session -t kmonad"
-alias kmonadrestart="kmonadoff && kmonadon"
+alias kanataon="tmux new-session -ds kanata 'sudo kanata --cfg ~/.dotfiles/kmonad/kanata.kbd'"
+alias kanataoff="tmux kill-session -t kanata"
+alias kanatarestart="kanataoff && kanataon"
 alias nixrebuild="/run/current-system/sw/bin/nix run  --extra-experimental-features 'nix-command flakes' nix-darwin -- switch --flake ~/.dotfiles/nix#default --impure"
 
 # Functions
