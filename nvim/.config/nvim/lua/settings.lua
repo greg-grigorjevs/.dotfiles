@@ -6,10 +6,10 @@
 -- stop from auto inserting comments on the next line
 vim.cmd("autocmd FileType * set formatoptions-=cro")
 vim.api.nvim_set_keymap("", "<Space>", "<Nop>", { noremap = true, silent = true })
-vim.cmd("set clipboard+=unnamedplus") -- use system clipboard
-vim.o.mouse = "a" -- use mouse
+vim.cmd("set clipboard+=unnamedplus")       -- use system clipboard
+vim.o.mouse = "a"                           -- use mouse
 vim.o.wrap = false
-vim.o.startofline = true -- don't know what this does
+vim.o.startofline = true                    -- don't know what this does
 vim.o.completeopt = 'menu,menuone,noselect' -- completion window behaviour
 vim.o.swapfile = false
 
@@ -36,7 +36,7 @@ vim.o.sidescrolloff = 5
 -- signcolumn = auto
 -- signcolumn = auto
 -- vim.wo.signcolumn="yes"
-vim.o.number = true -- shows line number
+vim.o.number = true   -- shows line number
 vim.o.numberwidth = 2 -- always reserve 3 spaces for line number
 
 -- Search
@@ -50,11 +50,12 @@ vim.o.formatoptions =
 vim.o.smartindent = true
 vim.o.expandtab = true
 vim.o.smarttab = true
-vim.o.tabstop = 2 -- 1 tab = 2 spaces
+vim.o.tabstop = 2     -- 1 tab = 2 spaces
 vim.o.shiftwidth = 2
 vim.o.undofile = true -- save undo history
 vim.o.splitbelow = true
 vim.o.splitright = true
+vim.opt.formatoptions:remove { "c", "r", "o" }
 
 -- Bracket colors
 -- hi MatchParen cterm=NONE guibg=NONE ctermbg=NONE gui=NONE
@@ -118,7 +119,6 @@ vim.cmd [[
 vim.cmd [[ autocmd BufReadPost * if @% !~# '\.git[\/\\]COMMIT_EDITMSG$' && line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif  ]]
 
 -- Autocommands
-
 -- Custom Commands
 
 
@@ -140,7 +140,7 @@ vim.api.nvim_create_user_command('ReloadBrowser', function()
             \tell app \"System events\"\<cr> keystroke \"r\" using command down\<cr>
             \end tell'"
     silent exe "!osascript -e 'tell app \"Kitty\" to activate'"
-]] )
+]])
 end, { nargs = '*' })
 
 vim.treesitter.language.register('bash', 'zsh')
