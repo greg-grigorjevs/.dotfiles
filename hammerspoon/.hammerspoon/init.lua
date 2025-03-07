@@ -25,6 +25,7 @@ end)
 
 
 require('window-management')
+require('test')
 
 -- enable/disable kmonad when connecting/disconnecting my keyboards
 hs.usb.watcher.new(function(data)
