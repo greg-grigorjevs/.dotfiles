@@ -33,7 +33,7 @@ return {
         }
       })
     end, { desc = "Flash Forward Search" })
-    vim.keymap.set({ "n", "x", "o" }, "S", function()
+    vim.keymap.set({ "n" }, "S", function()
       flash.jump({
         search = {
           forward = false,
