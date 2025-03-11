@@ -1,5 +1,5 @@
-local hyper = { 'cmd', 'ctrl', 'alt', 'shift' }
-local meh   = { 'ctrl', 'alt', 'shift' }
+Hyper     = { 'cmd', 'ctrl', 'alt', 'shift' }
+local meh = { 'ctrl', 'alt', 'shift' }
 
 -- hs.loadSpoon('EmmyLua')
 hs.loadSpoon('SpoonInstall')
@@ -8,12 +8,11 @@ spoon.SpoonInstall:andUse('EmmyLua')
 
 spoon.SpoonInstall:andUse('AppWindowSwitcher', {
   hotkeys = {
-    ["Google Chrome"] = { hyper, "g" },
-    ['Music'] = { hyper, "m" },
-    ['Microsoft Teams'] = { hyper, 'c' },
-    ['TablePlus'] = { hyper, 'd' },
-    ['kitty'] = { hyper, 't' },
-
+    ["Google Chrome"] = { Hyper, "g" },
+    ['Music'] = { Hyper, "m" },
+    ['Microsoft Teams'] = { Hyper, 'c' },
+    ['TablePlus'] = { Hyper, 'd' },
+    ['kitty'] = { Hyper, 't' },
   }
 })
 
@@ -25,7 +24,7 @@ end)
 
 
 require('window-management')
-require('test')
+require('screen1-switcher')
 
 -- enable/disable kmonad when connecting/disconnecting my keyboards
 hs.usb.watcher.new(function(data)
