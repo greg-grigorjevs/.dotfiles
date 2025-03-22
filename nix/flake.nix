@@ -3,8 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixpkgs-24.05-darwin";
-    nix-darwin.url = "github:LnL7/nix-darwin";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixpkgs-24.11-darwin";
+    nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-24.11";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -59,15 +59,16 @@
         # Homebrew needs to be installed on its own!
         homebrew.enable = true;
         homebrew.casks = [
-          # "kitty"
+          "kitty"
           "hammerspoon"
+          "insomnia"
           # "docker"
-          #"obsidian"
-          #"google-chrome"
-          # "raycast"
-          # "vlc"
-          # "transmission"
-          # "appcleaner"
+          "obsidian"
+          "google-chrome"
+          "raycast"
+          "vlc"
+          "transmission"
+          "appcleaner"
         ];
         homebrew.brews = [
         ];
@@ -75,6 +76,7 @@
       home-config = { config, lib, pkgs, stable-pkgs, ... }:
         let
           inherit (config.lib.file) mkOutOfStoreSymlink;
+          # unstable-pkgs = nixpkgs.legacyPackages.aarch64-darwin;
         in
         {
           home.username = user;
@@ -90,6 +92,8 @@
           # Makes sense for user specific applications that shouldn't be available system-wide
           home.packages = with pkgs; [
             ansible
+            atac
+            # nixpkgs.superfile
             neovim
             ripgrep
             lazygit
