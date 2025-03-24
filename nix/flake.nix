@@ -95,7 +95,7 @@
             AppleInterfaceStyle = "Dark";
             AppleScrollerPagingBehavior = true;
             InitialKeyRepeat = 10;
-            KeyRepeat = 10;
+            KeyRepeat = 1;
             NSAutomaticSpellingCorrectionEnabled = false;
           };
           controlcenter = {
@@ -207,7 +207,7 @@
 
               $git -C $HOME/.dotfiles config user.name "Greg Grigorjevs"
               $git -C $HOME/.dotfiles config user.email "ggrigorjevs@icloud.com"
-              ${pkgs.git}/bin/git -C $HOME/.dotfiles remote set-url origin git@github.com:greg-grigorjevs/.dotfiles.git
+              $git -C $HOME/.dotfiles remote set-url origin git@github.com:greg-grigorjevs/.dotfiles.git
 
               if [ ! -d $HOME/ansible ]; then
                 $git clone $mygithub/ansible $HOME/ansible
