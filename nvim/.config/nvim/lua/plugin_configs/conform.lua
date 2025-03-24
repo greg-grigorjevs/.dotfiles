@@ -7,7 +7,8 @@ return {
         -- blade = { { 'prettierd', 'prettier' } },
         blade = { 'blade-formatter' },
         nix = { 'nixpkgs_fmt' },
-        html = { 'prettierd' }
+        html = { 'prettierd' },
+        javascript = { 'prettierd' }
       },
       format_on_save = {
         -- I recommend these options. See :help conform.format for details.

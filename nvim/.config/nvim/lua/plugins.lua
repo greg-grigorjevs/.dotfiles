@@ -93,7 +93,6 @@ local plugins = {
       require('log-highlight').setup {}
     end,
   },
-  'windwp/nvim-ts-autotag',
   'nvim-treesitter/playground',
   'kmonad/kmonad-vim',
   'mbbill/undotree',

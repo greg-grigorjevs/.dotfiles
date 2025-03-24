@@ -101,20 +101,6 @@ return {
           --[[ include_surrounding_whitespace = true, ]]
         },
       },
-      autotag = {
-        enable = true,
-        enable_rename = true,
-        enable_close = true,
-        enable_close_on_slash = true,
-        filetypes = {
-          'html', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'svelte', 'vue', 'tsx', 'jsx',
-          'rescript',
-          'xml',
-          'php', 'blade',
-          'markdown',
-          'astro', 'glimmer', 'handlebars', 'hbs'
-        }
-      },
     }
 
     local parser_config = require "nvim-treesitter.parsers".get_parser_configs()

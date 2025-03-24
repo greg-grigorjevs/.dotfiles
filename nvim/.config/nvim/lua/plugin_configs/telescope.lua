@@ -52,7 +52,7 @@ return {
           },
           cache_picker = { num_pickers = 5 },
           file_ignore_patterns = {
-            "vendor/*",
+            "^vendor/*",
             "%.lock",
             "__pycache__/*",
             "goaccess/daily/*",
@@ -93,6 +93,7 @@ return {
             "smalljre_*/*",
             ".vale/",
             "public/js/app.js",
+            "cwp_stats/",
             ".hammerspoon/Spoons/"
           },
         },
