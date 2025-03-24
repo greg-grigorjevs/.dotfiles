@@ -8,7 +8,7 @@ spoon.SpoonInstall:andUse('EmmyLua')
 
 spoon.SpoonInstall:andUse('AppWindowSwitcher', {
   hotkeys = {
-    ["Google Chrome"] = { Hyper, "g" },
+    ["Google Chrome"] = { Hyper, "h" },
     ['Music'] = { Hyper, "m" },
     ['Microsoft Teams'] = { Hyper, 'c' },
     ['TablePlus'] = { Hyper, 'd' },
