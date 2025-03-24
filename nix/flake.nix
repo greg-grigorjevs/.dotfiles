@@ -112,9 +112,16 @@
           "transmission"
           "appcleaner"
           "karabiner-elements"
+          "microsoft-teams"
+          "microsoft-outlook"
         ];
+
         homebrew.brews = [
         ];
+
+        homebrew.masApps = {
+          "Amphetamine" = 937984704; # App Store ID for Amphetamine
+        };
       };
 
       home-config = { config, lib, pkgs, stable-pkgs, unstable-pkgs, pkgs-latest, ... }:
@@ -160,12 +167,29 @@
             ".config/nvim".source = mkOutOfStoreSymlink ~/.dotfiles/nvim/.config/nvim;
             ".config/kitty".source = mkOutOfStoreSymlink ../kitty/.config/kitty;
             ".tmux.conf".source = mkOutOfStoreSymlink ~/.dotfiles/tmux/.tmux.conf;
+            ".local/bin".source = mkOutOfStoreSymlink ~/.dotfiles/scripts/.local/bin;
           };
 
           # Add an activation script to create the screenshots folder
           home.activation = {
             createScreenshotsFolder = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
               $DRY_RUN_CMD mkdir -p $HOME/Desktop/screenshots
+            '';
+
+            setupGitRepos = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+              mkdir -p $HOME/dev
+              mygithub="https://github.com/greg-grigorjevs/"
+              git="${pkgs.git}/bin/git"
+
+              $git -C $HOME/.dotfiles config user.name "Greg Grigorjevs"
+              $git -C $HOME/.dotfiles config user.email "ggrigorjevs@icloud.com"
+              ${pkgs.git}/bin/git -C $HOME/.dotfiles remote set-url origin git@github.com:greg-grigorjevs/.dotfiles.git
+
+              if [ ! -d $HOME/ansible ]; then
+                $git clone $mygithub/ansible $HOME/ansible
+                $git -C $HOME/ansible config user.name "Greg Grigorjevs"
+                $git -C $HOME/ansible config user.email "ggrigorjevs@icloud.com"
+              fi
             '';
           };
 
@@ -185,6 +209,17 @@
             initExtra = ''
               source ~/.zshrc
             '';
+          };
+
+          programs.git = {
+            enable = true;
+            userEmail = "gregg@coeouk.com";
+            userName = "Greg Grigorjevs";
+            extraConfig = {
+              pull.rebase = true;
+              core.excludesfile = "~/.config/git/.gitignore";
+              rebase.autostash = true;
+            };
           };
 
           programs.starship = {
