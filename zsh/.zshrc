@@ -62,6 +62,7 @@ export PATH="/Applications/kitty.app/Contents/MacOS":$PATH # makes kitty command
 export PATH="$HOME/.local/bin":$PATH
 export PATH="~/bin":$PATH
 export PATH="$HOME/.composer/vendor/bin":$PATH
+export PATH="$HOME/.config/composer/vendor/bin":$PATH
 export PATH="$HOME/.dotfiles/bin":$PATH
 export PATH="$HOME/.cargo/bin":$PATH
 
