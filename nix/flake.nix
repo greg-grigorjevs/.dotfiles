@@ -4,19 +4,35 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixpkgs-24.11-darwin";
-    nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-24.11";
+    nix-darwin.url = "github:LnL7/nix-darwin/master";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nixpkgs-latest.url = "github:NixOS/nixpkgs/a84ebe20c6bc2ecbcfb000a50776219f48d134cc";
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, nixpkgs-stable }:
+  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, nixpkgs-stable, nixpkgs-latest }:
     let
       user = builtins.getEnv "USER";
-      stable-pkgs = import nixpkgs-stable { system = "aarch64-darwin"; config.allowBroken = false; };
-      #stable-pkgs = nixpkgs-stable.legacyPackages."aarch64-darwin";
+      system = "aarch64-darwin";
+
+      overlays = [
+        (final: prev: {
+          latest = import nixpkgs-latest {
+            system = prev.system;
+            config.allowUnfree = true;
+          };
+
+          stable = import nixpkgs-stable {
+            system = prev.system;
+            config.allowUnfree = true;
+          };
+        })
+      ];
+
       configuration = { pkgs, ... }: rec {
         # List packages installed in system profile. To search by name, run:
         # $ nix-env -qaP | grep wget
@@ -24,14 +40,21 @@
           [
           ];
 
-        fonts.packages = [ (pkgs.nerdfonts.override { fonts = [ "SourceCodePro" ]; }) ];
+        security.sudo.extraConfig = ''
+          ${user} ALL=(ALL) NOPASSWD: ${pkgs.latest.kanata}/bin/kanata, \
+          /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager
+        '';
+        nixpkgs.overlays = overlays;
+
+        fonts.packages = [ pkgs.nerd-fonts.sauce-code-pro ];
+        ids.gids.nixbld = 350;
+
 
         system.keyboard = {
           enableKeyMapping = true;
           remapCapsLockToControl = true;
         };
 
-        services.nix-daemon.enable = true;
         nix.settings.experimental-features = "nix-command flakes";
         programs.zsh = {
           enable = true; # default shell on catalina
@@ -39,7 +62,13 @@
         system.configurationRevision = self.rev or self.dirtyRev or null;
         system.stateVersion = 4;
         nixpkgs.hostPlatform = "aarch64-darwin";
-        security.pam.enableSudoTouchIdAuth = true;
+
+        security.pam.services.sudo_local = {
+          enable = true;
+          reattach = true;
+          touchIdAuth = true;
+          watchIdAuth = true;
+        };
 
         users.users.${user}.home = "/Users/${user}";
         home-manager.backupFileExtension = "backup";
@@ -55,6 +84,19 @@
           # screensaver.askForPasswordDelay = 10;
         };
 
+        # Configure launchd to manage the Karabiner daemon from the nix store
+        launchd.daemons.karabiner-daemon = {
+          serviceConfig = {
+            Program = "/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon";
+            KeepAlive = true;
+            RunAtLoad = true;
+          };
+        };
+
+        system.activationScripts.postActivation.text = ''
+          # Activate Karabiner VirtualHIDDevice
+          sudo /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager activate || true
+        '';
 
         # Homebrew needs to be installed on its own!
         homebrew.enable = true;
@@ -69,31 +111,25 @@
           "vlc"
           "transmission"
           "appcleaner"
+          "karabiner-elements"
         ];
         homebrew.brews = [
         ];
       };
-      home-config = { config, lib, pkgs, stable-pkgs, ... }:
+
+      home-config = { config, lib, pkgs, stable-pkgs, unstable-pkgs, pkgs-latest, ... }:
         let
           inherit (config.lib.file) mkOutOfStoreSymlink;
-          # unstable-pkgs = nixpkgs.legacyPackages.aarch64-darwin;
         in
         {
           home.username = user;
           home.homeDirectory = nixpkgs.lib.mkForce "/Users/${user}";
           home.stateVersion = "24.05"; # Please read the comment before changing.
-          # home.activation.installKanata = lib.hm.dag.entryAfter [ "installPackages" ] ''
-          #   echo "installig Kanata"
-          #   export PATH="$HOME/.nix-profile/bin:$PATH"
-          #   cargo install kanata --version=1.6.1 --force
-          # '';
-
 
           # Makes sense for user specific applications that shouldn't be available system-wide
           home.packages = with pkgs; [
             ansible
             atac
-            # nixpkgs.superfile
             neovim
             ripgrep
             lazygit
@@ -101,6 +137,7 @@
             nodePackages.prettier
             prettierd
             starship
+            nodejs_22
             yarn
             fd
             fzf
@@ -109,11 +146,9 @@
             tree
             yazi
             btop
-            #composer
             git
-            #stable-pkgs.kanata
+            latest.kanata
           ];
-
 
           # Home Manager is pretty good at managing dotfiles. The primary way to manage
           # plain files is through 'home.file'.
@@ -125,6 +160,13 @@
             ".config/nvim".source = mkOutOfStoreSymlink ~/.dotfiles/nvim/.config/nvim;
             ".config/kitty".source = mkOutOfStoreSymlink ../kitty/.config/kitty;
             ".tmux.conf".source = mkOutOfStoreSymlink ~/.dotfiles/tmux/.tmux.conf;
+          };
+
+          # Add an activation script to create the screenshots folder
+          home.activation = {
+            createScreenshotsFolder = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+              $DRY_RUN_CMD mkdir -p $HOME/Desktop/screenshots
+            '';
           };
 
           home.sessionVariables = { };
@@ -157,7 +199,6 @@
           configuration
           home-manager.darwinModules.home-manager
           {
-            home-manager.extraSpecialArgs = { inherit stable-pkgs; };
             home-manager.useGlobalPkgs = true;
             # changing this to false fixed installed packages not available
             # why ? 
