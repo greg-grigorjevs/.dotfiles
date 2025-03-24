@@ -75,12 +75,34 @@
         # nix.configureBuildUsers = true;
 
         system.defaults = {
-          dock.autohide = true;
-          dock.autohide-delay = 0.0;
-          dock.mru-spaces = false;
-          finder.AppleShowAllExtensions = true;
-          finder.FXPreferredViewStyle = "Nlsv";
+          dock = {
+            autohide = true;
+            autohide-delay = 0.0;
+            mru-spaces = false;
+            magnification = true;
+            largesize = 86;
+            scroll-to-open = true;
+          };
+          finder = {
+            AppleShowAllExtensions = true;
+            FXPreferredViewStyle = "Nlsv";
+            AppleShowAllFiles = true;
+            ShowPathbar = true;
+          };
+          magicmouse.MouseButtonMode = "TwoButton";
           screencapture.location = "~/Desktop/screenshots";
+          NSGlobalDomain = {
+            AppleInterfaceStyle = "Dark";
+            AppleScrollerPagingBehavior = true;
+            InitialKeyRepeat = 10;
+            KeyRepeat = 10;
+            NSAutomaticSpellingCorrectionEnabled = false;
+          };
+          controlcenter = {
+            BatteryShowPercentage = true;
+            Bluetooth = true;
+            Sound = true;
+          };
           # screensaver.askForPasswordDelay = 10;
         };
 
@@ -117,6 +139,8 @@
         ];
 
         homebrew.brews = [
+          "php"
+          "composer"
         ];
 
         homebrew.masApps = {
