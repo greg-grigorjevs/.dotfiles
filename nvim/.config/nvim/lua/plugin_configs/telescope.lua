@@ -92,7 +92,8 @@ return {
             "%.met",
             "smalljre_*/*",
             ".vale/",
-            "public/js/app.js"
+            "public/js/app.js",
+            ".hammerspoon/Spoons/"
           },
         },
         extensions = {
