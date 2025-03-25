@@ -95,7 +95,7 @@
             AppleInterfaceStyle = "Dark";
             AppleScrollerPagingBehavior = true;
             InitialKeyRepeat = 10;
-            KeyRepeat = 1;
+            KeyRepeat = 10;
             NSAutomaticSpellingCorrectionEnabled = false;
           };
           controlcenter = {
@@ -125,6 +125,7 @@
         homebrew.casks = [
           "kitty"
           "hammerspoon"
+          "monitorcontrol"
           "insomnia"
           # "docker"
           "obsidian"
@@ -168,7 +169,7 @@
             nodePackages.prettier
             prettierd
             starship
-            nodejs_22
+            nodejs_23
             yarn
             fd
             fzf
