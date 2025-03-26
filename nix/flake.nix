@@ -94,8 +94,8 @@
           NSGlobalDomain = {
             AppleInterfaceStyle = "Dark";
             AppleScrollerPagingBehavior = true;
-            InitialKeyRepeat = 10;
-            KeyRepeat = 10;
+            # InitialKeyRepeat = 100;
+            # KeyRepeat = 3;
             NSAutomaticSpellingCorrectionEnabled = false;
           };
           controlcenter = {
@@ -188,6 +188,7 @@
             ".zshrc".source = mkOutOfStoreSymlink ~/.dotfiles/zsh/.zshrc;
             ".config/lazygit".source = mkOutOfStoreSymlink ~/.dotfiles/lazygit/.config/lazygit;
             ".config/starship.toml".source = mkOutOfStoreSymlink ~/.dotfiles/starship/.config/starship.toml;
+            ".config/yazi".source = mkOutOfStoreSymlink ~/.dotfiles/yazi;
             ".hammerspoon".source = mkOutOfStoreSymlink ~/.dotfiles/hammerspoon/.hammerspoon;
             ".config/nvim".source = mkOutOfStoreSymlink ~/.dotfiles/nvim/.config/nvim;
             ".config/kitty".source = mkOutOfStoreSymlink ../kitty/.config/kitty;
