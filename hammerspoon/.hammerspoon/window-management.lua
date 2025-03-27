@@ -70,7 +70,7 @@ hs.hotkey.bind({ "cmd", "ctrl" }, "/", function()
 end)
 
 -- Left 2/3
-hs.hotkey.bind({ "cmd", "ctrl" }, ".", function()
+hs.hotkey.bind({ "cmd", "ctrl" }, "b", function()
   local win = hs.window.focusedWindow()
   local f = win:frame()
   local screen = win:screen()

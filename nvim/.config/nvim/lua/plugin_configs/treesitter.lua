@@ -14,6 +14,7 @@ return {
         'javascript',
         'nix',
         'bash',
+        'xml'
       },
       highlight = {
         enable = true,
