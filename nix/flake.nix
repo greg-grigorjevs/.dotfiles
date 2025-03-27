@@ -107,13 +107,34 @@
         };
 
         # Configure launchd to manage the Karabiner daemon from the nix store
-        launchd.daemons.karabiner-daemon = {
-          serviceConfig = {
-            Program = "/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon";
-            KeepAlive = true;
-            RunAtLoad = true;
+        launchd.daemons = {
+          karabiner-daemon = {
+            serviceConfig = {
+              Program = "/Library/Application Support/org.pqrs/Karabiner-DriverKit-VirtualHIDDevice/Applications/Karabiner-VirtualHIDDevice-Daemon.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Daemon";
+              KeepAlive = true;
+              RunAtLoad = true;
+            };
+
+          };
+          # manually add kanata binary to Input Monitoring after first build
+          kanata = {
+            serviceConfig = {
+              ProgramArguments = [
+                "/Users/${user}/.nix-profile/bin/kanata"
+                "-c"
+                "/Users/${user}/.dotfiles/kmonad/kanata.kbd"
+                "-d"
+                "-t"
+              ];
+              KeepAlive = false;
+              RunAtLoad = true;
+              StandardOutPath = "/Users/${user}/kanata.stdout.log"; # Change to user dir
+              StandardErrorPath = "/Users/${user}/kanata.stderr.log";
+            };
           };
         };
+
+        launchd.user.agents = { };
 
         system.activationScripts.postActivation.text = ''
           # Activate Karabiner VirtualHIDDevice
