@@ -42,6 +42,8 @@
 
         security.sudo.extraConfig = ''
           ${user} ALL=(ALL) NOPASSWD: ${pkgs.latest.kanata}/bin/kanata, \
+          /usr/bin/launchctl start org.nixos.kanata, \
+          /usr/bin/launchctl stop org.nixos.kanata, \
           /Applications/.Karabiner-VirtualHIDDevice-Manager.app/Contents/MacOS/Karabiner-VirtualHIDDevice-Manager
         '';
         nixpkgs.overlays = overlays;
@@ -123,8 +125,8 @@
                 "/Users/${user}/.nix-profile/bin/kanata"
                 "-c"
                 "/Users/${user}/.dotfiles/kmonad/kanata.kbd"
-                "-d"
-                "-t"
+                # "-d"
+                # "-t"
               ];
               KeepAlive = false;
               RunAtLoad = true;
