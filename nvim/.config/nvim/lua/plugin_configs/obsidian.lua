@@ -1,6 +1,6 @@
 return {
   "epwalsh/obsidian.nvim",
-  version = "*",   -- recommended, latest release instead of latest commit
+  version = "*", -- recommended, latest release instead of latest commit
   dependencies = {
     -- Required.
     "nvim-lua/plenary.nvim",
@@ -27,10 +27,22 @@ return {
       new_notes_location = "notes_subdir",
       follow_url_func = function(url)
         -- Open the URL in the default web browser.
-        vim.fn.jobstart({ "open", url })   -- Mac OS
+        vim.fn.jobstart({ "open", url }) -- Mac OS
         -- vim.fn.jobstart({"xdg-open", url})  -- linux
       end,
       open_app_foreground = true,
+
+      note_id_func = function(title)
+        return title .. ".md"
+      end,
+
+      ui = {
+        enable = false,
+        checkboxes = {
+          [" "] = { char = "󰄱", hl_group = "ObsidianTodo", order = 1 },
+          ["x"] = { char = "", hl_group = "ObsidianDone", order = 2 },
+        }
+      }
 
     })
 

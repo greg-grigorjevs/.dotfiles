@@ -77,6 +77,19 @@ vim.g.gruvbox_baby_highlights = {
   GitSignsDelete = { fg = colors.red },
   --[[ FlashLabel = { bg = colors.bright_yellow, fg = colors.dark }, ]]
   FlashLabel = { bg = colors.milk, fg = colors.dark },
+
+  -- Markdown
+  RenderMarkdownH2Bg = { style = 'bold', fg = colors.bright_yellow },
+  RenderMarkdownH2 = { style = 'bold', fg = colors.light_blue },
+  RenderMarkdownChecked = { fg = colors.dark_gray },
+  RenderMarkdownUnchecked = { fg = colors.magenta },
+  RenderMarkdownLink = { fg = colors.blue_gray },
+  RenderMarkdownBullet = { fg = colors.blue_gray },
+  ["@keyword.directive.markdown"] = { fg = colors.blue_gray },
+  ["@markup.link.label.markdown_inline"] = { fg = colors.blue_gray },
+  ["@markup.heading"] = { fg = colors.milk },
+
+  -- Blade
   ["@tag"] = { fg = "#ff8715" },
   ["@tag.attribute"] = { fg = colors.light_blue },
   ["@tag.delimiter"] = { fg = colors.foreground },

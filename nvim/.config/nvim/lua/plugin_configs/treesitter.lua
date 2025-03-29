@@ -11,6 +11,7 @@ return {
         'html',
         'css',
         'markdown',
+        'markdown_inline',
         'javascript',
         'nix',
         'bash',
