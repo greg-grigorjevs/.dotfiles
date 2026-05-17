@@ -83,6 +83,48 @@ hs.hotkey.bind({ "cmd", "ctrl" }, "b", function()
   win:setFrame(f, 0)
 end)
 
+hs.hotkey.bind({ "cmd", "ctrl" }, "right", function()
+  local win = hs.window.focusedWindow()
+  local f = win:frame()
+  local screen = win:screen()
+  local max = screen:frame()
+
+  f.x = f.x + 20
+  win:setFrame(f, 0)
+end)
+
+hs.hotkey.bind({ "cmd", "ctrl" }, "left", function()
+  local win = hs.window.focusedWindow()
+  local f = win:frame()
+  local screen = win:screen()
+  local max = screen:frame()
+
+  f.x = f.x - 20
+  win:setFrame(f, 0)
+end)
+
+hs.hotkey.bind({ "cmd", "ctrl" }, "up", function()
+  local win = hs.window.focusedWindow()
+  local f = win:frame()
+  local screen = win:screen()
+  local max = screen:frame()
+
+  f.w = f.w + 20
+  f.x = f.x - 10
+  win:setFrame(f, 0)
+end)
+
+hs.hotkey.bind({ "cmd", "ctrl" }, "down", function()
+  local win = hs.window.focusedWindow()
+  local f = win:frame()
+  local screen = win:screen()
+  local max = screen:frame()
+
+  f.w = f.w - 20
+  f.x = f.x + 10
+  win:setFrame(f, 0)
+end)
+
 
 hs.hotkey.bind({ "cmd", "ctrl" }, "d", function()
   local laptopScreen = "Built-in Retina Display"
