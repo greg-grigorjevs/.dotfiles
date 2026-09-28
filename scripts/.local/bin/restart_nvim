@@ -1,0 +1,11 @@
+#!/bin/bash
+
+PANE_TTY=$(tmux display-message -p '#{pane_tty}')
+
+# Get the PID of the nvim process running in this tty
+NVIM_PID=$(ps -o pid=,comm= -t "$PANE_TTY" | grep 'nvim' | awk '{print $1}')
+
+if [ -n "$NVIM_PID" ]; then
+  kill -9 $NVIM_PID
+  tmux send-keys "nvim" C-m
+fi
