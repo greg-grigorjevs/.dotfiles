@@ -20,10 +20,10 @@ alias pat="php artisan test"
 alias patf="php artisan test --filter"
 alias dotfiles="cd ~/.dotfiles && nvim . -c 'Telescope find_files hidden=true'"
 alias copyhistory="fc -ln 0 | fzf --tac --no-sort | tr -d \\\n | pbcopy"
-# alias kanataon="tmux new-session -ds kanata 'sudo kanata --cfg ~/.dotfiles/kmonad/kanata.kbd'"
-# alias kanataoff="tmux kill-session -t kanata"
-alias kanataon="sudo launchctl start org.nixos.kanata"
-alias kanataoff="sudo launchctl stop org.nixos.kanata"
+alias kanataon="tmux new-session -ds kanata 'sudo /opt/homebrew/bin/kanata --cfg ~/.dotfiles/kmonad/kanata.kbd'"
+alias kanataoff="tmux kill-session -t kanata"
+# alias kanataon="sudo launchctl start org.nixos.kanata"
+# alias kanataoff="sudo launchctl stop org.nixos.kanata"
 alias kanatacheck="kanata --cfg ~/.dotfiles/kmonad/kanata.kbd --check"
 
 alias kanatarestart="kanataoff && kanataon"
@@ -59,9 +59,16 @@ function yy() {
 	rm -f -- "$tmp"
 }
 
+function tcd() {
+  local name
+  name=$(basename "$1")
+  tmux new-session -ds $name -c $(realpath $1)
+  tmux switch-client -t $name
+}
 
 # PATH
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin":$PATH
+export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 export PATH="/Applications/kitty.app/Contents/MacOS":$PATH # makes kitty command work
 export PATH="$HOME/.local/bin":$PATH
 export PATH="~/bin":$PATH
@@ -94,3 +101,11 @@ export HERD_PHP_82_INI_SCAN_DIR="/Users/mbp-greg/Library/Application Support/Her
 export HERD_PHP_74_INI_SCAN_DIR="/Users/mbp-greg/Library/Application Support/Herd/config/php/74/"
 
 
+export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+
+# bun completions
+[ -s "/Users/gregg/.bun/_bun" ] && source "/Users/gregg/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
