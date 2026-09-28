@@ -37,6 +37,10 @@ return {
                   actions.close(prompt_bufnr)
                   require('harpoon.ui').toggle_quick_menu()
                 end
+              end,
+              ["<C-l>"] = require('custom.telescope').delete_file,
+              ["<C-y>"] = function(prompt_bufnr)
+                vim.fn.setreg('+', state.get_selected_entry().value)
               end
             }
           },
@@ -53,6 +57,11 @@ return {
           cache_picker = { num_pickers = 5 },
           file_ignore_patterns = {
             "^vendor/*",
+            ".next/*",
+            "public/ckeditor/*",
+            "^public/.+%.js$",
+            "resources/js/bootstrap.bundle.js",
+            "debugbar/*",
             "%.lock",
             "__pycache__/*",
             "goaccess/daily/*",
