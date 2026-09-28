@@ -53,6 +53,21 @@ return {
         },
       },
       textobjects = {
+        move = {
+          enable = true,
+          goto_next_start = {
+            ["]a"] = "@parameter.inner"
+          },
+          goto_previous_start = {
+            ["[a"] = "@parameter.inner"
+          }
+        },
+        swap = {
+          enable = true,
+          swap_next = {
+            ["<leader>a"] = "@parameter.inner"
+          }
+        },
         select = {
           enable = true,
 
@@ -69,7 +84,10 @@ return {
             ["ii"] = "@conditional.inner",
             ["ai"] = "@conditional.outer",
             ["al"] = "@loop.outer",
-            ["il"] = "@loop.inner"
+            ["il"] = "@loop.inner",
+            ["as"] = "@statement.outer",
+            ["aa"] = "@parameter.inner",
+            ["aA"] = "@parameter.outer",
 
             -- You can optionally set descriptions to the mappings (used in the desc parameter of
             -- nvim_buf_set_keymap) which plugins like which-key display
@@ -77,43 +95,28 @@ return {
             --[[ ["ic"] = { query = "@class.inner", desc = "Select inner part of a class region" }, ]]
             -- You can also use captures from other query groups like `locals.scm`
             --[[ ["as"] = { query = "@scope", query_group = "locals", desc = "Select language scope" }, ]]
+
           },
-          selection_modes = 'V'
-          -- You can choose the select mode (default is charwise 'v')
-          --
-          -- Can also be a function which gets passed a table with the keys
-          -- * query_string: eg '@function.inner'
-          -- * method: eg 'v' or 'o'
-          -- and should return the mode ('v', 'V', or '<c-v>') or a table
-          -- mapping query_strings to modes.
-          --[[ selection_modes = { ]]
-          --[[   ['@parameter.outer'] = 'v', -- charwise ]]
-          --[[   ['@function.outer'] = 'V', -- linewise ]]
-          --[[   ['@class.outer'] = '<c-v>', -- blockwise ]]
-          --[[ }, ]]
-          -- If you set this to `true` (default is `false`) then any textobject is
-          -- extended to include preceding or succeeding whitespace. Succeeding
-          -- whitespace has priority in order to act similarly to eg the built-in
-          -- `ap`.
-          --
-          -- Can also be a function which gets passed a table with the keys
-          -- * query_string: eg '@function.inner'
-          -- * selection_mode: eg 'v'
-          -- and should return true of false
-          --[[ include_surrounding_whitespace = true, ]]
+          selection_modes = function(event, stuff)
+            if event['query_string'] == '@parameter.inner' or event['query_string'] == '@parameter.outer' then
+              return 'v'
+            else
+              return 'V'
+            end
+          end
         },
       },
     }
+    local ts_repeat_move = require "nvim-treesitter.textobjects.repeatable_move"
 
-    local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
-    parser_config.blade = {
-      install_info = {
-        url = "https://github.com/EmranMR/tree-sitter-blade",
-        files = { "src/parser.c" },
-        branch = "main",
-      },
-      filetype = "blade"
-    }
+    -- Repeat movement with ; and ,
+    -- ensure ; goes forward and , goes backward regardless of the last direction
+    -- vim.keymap.set({ "n", "x", "o" }, ";", ts_repeat_move.repeat_last_move_next)
+    -- vim.keymap.set({ "n", "x", "o" }, ",", ts_repeat_move.repeat_last_move_previous)
+
+    -- vim way: ; goes to the direction you were moving.
+    vim.keymap.set({ "n", "x", "o" }, ";", ts_repeat_move.repeat_last_move)
+    vim.keymap.set({ "n", "x", "o" }, ",", ts_repeat_move.repeat_last_move_opposite)
 
     require('ts_context_commentstring').setup {
       enable = true,
