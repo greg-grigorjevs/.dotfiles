@@ -47,10 +47,13 @@ return {
       { "<leader>gr",  "<cmd>lua require 'gitsigns'.reset_hunk()<cr>",                              desc = "Reset Hunk" },
       { "<leader>gR",  "<cmd>lua require 'gitsigns'.reset_buffer()<cr>",                            desc = "Reset Buffer" },
       { "<leader>gs",  "<cmd>lua require 'gitsigns'.stage_hunk()<cr>",                              desc = "Stage Hunk" },
-      { "<leader>gs",  "<cmd>'<,'>Gitsigns stage_hunk<cr>",                                         mode = { 'v' },                                 desc = "Stage Hunk" },
+      { "<leader>gS",  "<cmd>lua require 'gitsigns'.stage_buffer()<cr>",                            desc = "Stage Buffer" },
+      { "<leader>gs",  "<cmd>'<,'>Gitsigns stage_hunk<cr>",                                         mode = { "x", "v" },                            desc = "Stage Hunk Visual" },
+      { "<leader>gs",  "<cmd>Gitsigns stage_hunk<cr>",                                              mode = "n",                                     desc = "Stage Hunk" },
       { "<leader>gu",  "<cmd>lua require 'gitsigns'.undo_stage_hunk()<cr>",                         desc = "Undo Stage Hunk" },
       { "<leader>gB",  "<cmd>Telescope git_branches<cr>",                                           desc = "Checkout branch" },
-      { "<leader>gc",  "<cmd>Telescope git_commits<cr>",                                            desc = "Checkout commit" },
+      -- { "<leader>gc",  "<cmd>Telescope git_commits<cr>",                                            desc = "Checkout commit" },
+      { "<leader>gc",  ':G commit -m "',                                                            desc = "Checkout commit" },
       { "<leader>gd",  group = "DiffView" },
       { "<leader>gdd", "<cmd>Gitsigns diffthis HEAD<cr>",                                           desc = "Diff" },
       { "<leader>gdo", "<cmd>DiffviewOpen<cr>",                                                     desc = "open" },
@@ -69,44 +72,47 @@ return {
         "<cmd>FloatermNew --autoclose=2 --name=lazygit lazygit --use-config-file=\"$HOME/.dotfiles/lazygit/.config/lazygit/config.yml\"<cr>",
         desc = "lazygit"
       },
-      { "<leader>tK", "<cmd>FloatermKill!<cr>",                                    desc = "Kill all terminals" },
-      { "<leader>tt", "<cmd>FloatermShow lazygit<cr>",                             desc = "[T]oggle existing lazygit if exists" },
-      { "<leader>tn", "<cmd>TestNearest<cr>",                                      desc = "Run Nearest [T]est" },
-      { "<leader>tl", "<cmd>TestLast<cr>",                                         desc = "Run [L]ast test" },
+      { "<leader>ty", "<cmd>FloatermNew yazi<cr>",                             desc = "yazi file explorer" },
+      { "<leader>tK", "<cmd>FloatermKill!<cr>",                                desc = "Kill all terminals" },
+      { "<leader>tt", "<cmd>FloatermShow lazygit<cr>",                         desc = "[T]oggle existing lazygit if exists" },
+      { "<leader>tn", "<cmd>TestNearest<cr>",                                  desc = "Run Nearest [T]est" },
+      { "<leader>tl", "<cmd>TestLast<cr>",                                     desc = "Run [L]ast test" },
+      { "<leader>tf", "<cmd>TestFile<cr>",                                     desc = "Run [F]ile test" },
 
 
-      { '<leader>rr', "<cmd>ReloadBrowser<cr>",                                    desc = 'Reload Browser' },
+      { '<leader>rr', "<cmd>ReloadBrowser<cr>",                                desc = 'Reload Browser' },
 
       { "<leader>h",  group = "Harpoon/Format" },
-      { "<leader>hp", "<cmd>Prettier<cr>",                                         desc = "Prettier" },
-      { "<leader>ha", "<cmd>lua require 'harpoon.mark'.add_file()<cr>",            desc = "Add file to bookmarks" },
-      { "<leader>ht", "<cmd>lua require 'harpoon.ui'.toggle_quick_menu()<cr>",     desc = "Toggle harpoon" },
+      { "<leader>hp", "<cmd>Prettier<cr>",                                     desc = "Prettier" },
+      { "<leader>ha", "<cmd>lua require 'harpoon.mark'.add_file()<cr>",        desc = "Add file to bookmarks" },
+      { "<leader>ht", "<cmd>lua require 'harpoon.ui'.toggle_quick_menu()<cr>", desc = "Toggle harpoon" },
 
       { "<leader>x",  group = "Trouble" },
-      { "<leader>xx", "<cmd>Trouble<cr>",                                          desc = "Toggle Trouble" },
-      { "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>",                    desc = "Workspace Diagnostics" },
-      { "<leader>xd", "<cmd>Trouble document_diagnostics<cr>",                     desc = "Document Diagnostics" },
-      { "<leader>xr", "<cmd>Trouble lsp_references<cr>",                           desc = "LSP References" },
+      { "<leader>xx", "<cmd>Trouble<cr>",                                      desc = "Toggle Trouble" },
+      { "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>",                desc = "Workspace Diagnostics" },
+      { "<leader>xd", "<cmd>Trouble document_diagnostics<cr>",                 desc = "Document Diagnostics" },
+      -- { "<leader>xr", "<cmd>Trouble lsp_references win.position=left<cr>",     desc = "LSP References" },
+      { "<leader>xr", "<cmd>Trouble lsp_references<cr>",                       desc = "LSP References" },
 
 
 
       { '<leader>s',  group = 'Session' },
-      { "<leader>sw", function() require('persistence').save() end,                desc = "Save" },
-      { "<leader>sr", function() require('persistence').load({ last = true }) end, desc = "Restore" },
+      { "<leader>sw", function() require('persistence').save() end,            desc = "Save" },
+      { "<leader>sr", function() require('persistence').load() end,            desc = "Restore" },
 
 
 
       { '<leader>y',  group = 'Yank' },
-      { "<leader>yf", "<cmd>let @* = expand('%:t')<CR>",                           desc = "Current buffer's filename" },
-      { "<leader>yp", "<cmd>let @* = expand('%')<CR>",                             desc = "Current buffer's relative path" },
-      { "<leader>yP", "<cmd>let @* = expand('%:p')<CR>",                           desc = "Current buffer's full path" },
+      { "<leader>yf", "<cmd>let @* = expand('%:t')<CR>",                       desc = "Current buffer's filename" },
+      { "<leader>yp", "<cmd>let @* = expand('%')<CR>",                         desc = "Current buffer's relative path" },
+      { "<leader>yP", "<cmd>let @* = expand('%:p')<CR>",                       desc = "Current buffer's full path" },
 
-      { "<leader>w",  "<cmd>w<cr>",                                                desc = "Save File" },
-      { "<leader>W",  "<cmd>wa<cr>",                                               desc = "Save All Files" },
-      { "<leader>q",  "<cmd>q<cr>",                                                desc = "Close File" },
-      { "<leader>Q",  "<cmd>qa!<cr>",                                              desc = "Quit Nvim" },
+      { "<leader>w",  "<cmd>w<cr>",                                            desc = "Save File" },
+      { "<leader>W",  "<cmd>wa<cr>",                                           desc = "Save All Files" },
+      { "<leader>q",  "<cmd>q<cr>",                                            desc = "Close File" },
+      { "<leader>Q",  "<cmd>qa!<cr>",                                          desc = "Quit Nvim" },
 
-      { "<leader>%",  "<cmd>w<bar>so %<cr>",                                       desc = "Save and source current file" },
+      { "<leader>%",  "<cmd>w<bar>so %<cr>",                                   desc = "Save and source current file" },
 
     })
 
@@ -139,7 +145,9 @@ return {
     -- quickfix list mappings
     wk.add({
       { "<M-s>", "<cmd>tabnext<cr>", desc = "Next tab" },
-      { "<M-b>", "<cmd>tabprev<cr>", desc = "Previous tab" }
+      { "<M-b>", "<cmd>tabprev<cr>", desc = "Previous tab" },
+      { "<M-h>", "<cmd>cnext<cr>",   desc = "Quickfix next" },
+      { "<M-t>", "<cmd>cprev<cr>",   desc = "Quickfix prev" }
     })
 
     -- visual mode mappings
