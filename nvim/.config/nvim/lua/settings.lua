@@ -35,7 +35,7 @@ vim.o.sidescrolloff = 5
 -- vim.wo.signcolumn='yes'
 -- signcolumn = auto
 -- signcolumn = auto
--- vim.wo.signcolumn="yes"
+vim.wo.signcolumn = "yes:2"
 vim.o.number = true   -- shows line number
 vim.o.numberwidth = 2 -- always reserve 3 spaces for line number
 
@@ -93,6 +93,7 @@ vim.g.gruvbox_baby_highlights = {
   ["@tag"] = { fg = "#ff8715" },
   ["@tag.attribute"] = { fg = colors.light_blue },
   ["@tag.delimiter"] = { fg = colors.foreground },
+  ["@tag.blade"] = { fg = colors.red },
   ["@variable.member"] = { fg = colors.blue_gray },
 
 }
@@ -120,6 +121,7 @@ vim.g.material_style = 'palenight'
 -- vim.g.matchup_enabled = 0
 vim.g.matchup_matchparen_enabled = 0
 
+vim.g.tmux_navigator_no_mappings = 1
 vim.cmd('highlight Matchparen guibg=none gui=bold,underline')
 
 vim.cmd [[autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab]]
