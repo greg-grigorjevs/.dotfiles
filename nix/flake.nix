@@ -253,6 +253,7 @@
 
           programs.zsh = {
             enable = true;
+            completionInit = "autoload -U compinit && compinit -C";
             dotDir = ".config/nixzsh";
             syntaxHighlighting.enable = true;
             initExtra = ''
