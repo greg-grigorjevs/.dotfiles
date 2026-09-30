@@ -1,8 +1,18 @@
+if vim.loader then
+  vim.loader.enable()
+end
+
 require('autocommands')
 require('plugins')
 require('settings')
 require('mappings')
-require('lsp')
+
+vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufNewFile' }, {
+  once = true,
+  callback = function()
+    require('lsp')
+  end,
+})
 
 
 --[[

@@ -8,6 +8,10 @@ return {
       { 'nvim-telescope/telescope-fzf-native.nvim',    build = 'make' },
     },
     config = function()
+      local harpoon = require('harpoon.mark')
+      local actions = require('telescope.actions')
+      local state = require('telescope.actions.state')
+      local utils = require('telescope.actions.utils')
       local lga_actions = require("telescope-live-grep-args.actions")
       local harpoon = require('harpoon.mark')
       local actions = require('telescope.actions')
