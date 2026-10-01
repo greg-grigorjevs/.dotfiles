@@ -15,7 +15,24 @@ return {
         javascript = { 'prettierd' }
       },
       format_on_save = function()
-        if vim.b.disable_autoformat == true then
+        -- disable autosafe for php and js at zabbix
+        local work_dir = vim.fs.normalize(vim.fn.expand("~/work"))
+        local file_path = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
+
+        local file_is_in_work = file_path ~= ""
+            and (
+              file_path == work_dir
+              or vim.startswith(file_path, work_dir .. "/")
+            )
+
+        local disabled_filetype = vim.tbl_contains({
+          "php",
+          "javascript",
+          "javascriptreact",
+        }, vim.bo.filetype)
+
+        if vim.b.disable_autoformat
+            or (file_is_in_work and disabled_filetype) then
           return
         end
 
