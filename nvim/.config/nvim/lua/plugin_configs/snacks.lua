@@ -2,12 +2,14 @@ return {
   "folke/snacks.nvim",
   priority = 1000,
   lazy = false,
-  config = function()
+  config = function(_, opts)
+    require('snacks').setup(opts)
     _G.dd = function(...)
       Snacks.debug.inspect(...)
     end
   end,
   opts = {
+    picker = { enabled = true },
     -- your configuration comes here
     -- or leave it empty to use the default settings
     -- refer to the configuration section below

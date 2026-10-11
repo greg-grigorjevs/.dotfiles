@@ -1,11 +1,7 @@
-local harpoon = require('harpoon.mark')
-local actions = require('telescope.actions')
-local state = require('telescope.actions.state')
-local utils = require('telescope.actions.utils')
-
 return {
   {
     'nvim-telescope/telescope.nvim',
+    enabled = false,
     dependencies = {
       { 'nvim-lua/plenary.nvim' },
       { 'nvim-telescope/telescope-live-grep-args.nvim' },
@@ -13,6 +9,11 @@ return {
     },
     config = function()
       local lga_actions = require("telescope-live-grep-args.actions")
+      local harpoon = require('harpoon.mark')
+      local actions = require('telescope.actions')
+      local state = require('telescope.actions.state')
+      local utils = require('telescope.actions.utils')
+
 
       require('telescope').setup({
         defaults = {
