@@ -1,2 +1,4 @@
 os:
   edit: '~/.dotfiles/bin/floaterm {{filename}}'
+gui:
+  scrollHeight: 20
