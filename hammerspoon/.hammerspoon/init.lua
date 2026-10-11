@@ -13,6 +13,7 @@ spoon.SpoonInstall:andUse('AppWindowSwitcher', {
     ['Microsoft Teams'] = { Hyper, 'c' },
     ['TablePlus'] = { Hyper, 'd' },
     ['kitty'] = { Hyper, 't' },
+    ['Obsidian'] = { Hyper, 'o' },
   }
 })
 
