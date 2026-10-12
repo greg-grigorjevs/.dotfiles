@@ -16,7 +16,8 @@
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, nixpkgs-stable, nixpkgs-latest }:
     let
-      user = builtins.getEnv "USER";
+      user = "grigorijs.grigorjevs";
+      homeDir = "/Users/${user}";
       system = "aarch64-darwin";
 
       overlays = [
@@ -72,7 +73,8 @@
           watchIdAuth = true;
         };
 
-        users.users.${user}.home = "/Users/${user}";
+        system.primaryUser = user;
+        users.users.${user}.home = homeDir;
         home-manager.backupFileExtension = "backup";
         # nix.configureBuildUsers = true;
 
@@ -148,18 +150,18 @@
         homebrew.casks = [
           "kitty"
           "hammerspoon"
-          "monitorcontrol"
+          #  "monitorcontrol"
           "insomnia"
           # "docker"
           "obsidian"
-          "google-chrome"
-          "raycast"
+          # "google-chrome"
+          # "raycast"
           "vlc"
           "transmission"
           "appcleaner"
           "karabiner-elements"
-          "microsoft-teams"
-          "microsoft-outlook"
+          #  "microsoft-teams"
+          #  "microsoft-outlook"
         ];
 
         homebrew.brews = [
@@ -168,7 +170,7 @@
         ];
 
         homebrew.masApps = {
-          "Amphetamine" = 937984704; # App Store ID for Amphetamine
+          #  "Amphetamine" = 937984704; # App Store ID for Amphetamine
         };
       };
 
@@ -178,7 +180,7 @@
         in
         {
           home.username = user;
-          home.homeDirectory = nixpkgs.lib.mkForce "/Users/${user}";
+          home.homeDirectory = homeDir;
           home.stateVersion = "24.05"; # Please read the comment before changing.
 
           # Makes sense for user specific applications that shouldn't be available system-wide
@@ -189,15 +191,16 @@
             ripgrep
             lazygit
             tmux
-            nodePackages.prettier
+            prettier
             prettierd
             starship
-            nodejs_23
+            nodejs_24
             yarn
             fd
             fzf
             gcc
             cargo
+            tree-sitter
             tree
             yazi
             btop
@@ -208,15 +211,16 @@
           # Home Manager is pretty good at managing dotfiles. The primary way to manage
           # plain files is through 'home.file'.
           home.file = {
-            ".zshrc".source = mkOutOfStoreSymlink ~/.dotfiles/zsh/.zshrc;
-            ".config/lazygit".source = mkOutOfStoreSymlink ~/.dotfiles/lazygit/.config/lazygit;
-            ".config/starship.toml".source = mkOutOfStoreSymlink ~/.dotfiles/starship/.config/starship.toml;
-            ".config/yazi".source = mkOutOfStoreSymlink ~/.dotfiles/yazi;
-            ".hammerspoon".source = mkOutOfStoreSymlink ~/.dotfiles/hammerspoon/.hammerspoon;
-            ".config/nvim".source = mkOutOfStoreSymlink ~/.dotfiles/nvim/.config/nvim;
-            ".config/kitty".source = mkOutOfStoreSymlink ../kitty/.config/kitty;
-            ".tmux.conf".source = mkOutOfStoreSymlink ~/.dotfiles/tmux/.tmux.conf;
-            ".local/bin".source = mkOutOfStoreSymlink ~/.dotfiles/scripts/.local/bin;
+            ".zshrc".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/zsh/.zshrc";
+            ".config/lazygit".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/lazygit/.config/lazygit";
+            ".config/starship.toml".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/starship/.config/starship.toml";
+            ".config/yazi".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/yazi";
+            ".config/nvim".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/nvim/.config/nvim";
+            ".config/kitty".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/kitty/.config/kitty";
+            ".config/opencode/tui.json".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/opencode/tui.json";
+            ".hammerspoon".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/hammerspoon/.hammerspoon";
+            ".tmux.conf".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/tmux/.tmux.conf";
+            ".local/bin".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/scripts/.local/bin";
           };
 
           # Add an activation script to create the screenshots folder

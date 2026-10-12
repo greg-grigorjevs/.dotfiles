@@ -21,6 +21,12 @@ vim.opt.rtp:prepend(lazypath)
 vim.g.mapleader = " "
 vim.g.maplocalleader = ""
 
+-- Dadbod UI merges these nested icon tables into its defaults at load time.
+vim.g.db_ui_icons = vim.g.db_ui_icons or {
+  expanded = { db = '▾' },
+  collapsed = { db = '▸' },
+}
+
 local plugins = {
 
   -- Colorschemes,
@@ -84,16 +90,11 @@ local plugins = {
   'nvim-treesitter/nvim-treesitter-context',
   "b0o/schemastore.nvim",
   {
-    "nvim-treesitter/nvim-treesitter-textobjects",
-    dependencies = "nvim-treesitter/nvim-treesitter",
-  },
-  {
     'fei6409/log-highlight.nvim',
     config = function()
       require('log-highlight').setup {}
     end,
   },
-  'nvim-treesitter/playground',
   'kmonad/kmonad-vim',
   'mbbill/undotree',
   'stevearc/dressing.nvim',
