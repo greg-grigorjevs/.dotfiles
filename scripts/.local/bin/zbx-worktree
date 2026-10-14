@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  printf 'Usage: zbx-worktree <branch-name>\n' >&2
+}
+
+die() {
+  printf 'zbx-worktree: %s\n' "$*" >&2
+  exit 1
+}
+
+if [[ $# -ne 1 ]]; then
+  usage
+  exit 2
+fi
+
+branch=$1
+
+if [[ "$branch" == */* ]] || ! git check-ref-format --branch "$branch" >/dev/null 2>&1; then
+  die "invalid branch name: $branch"
+fi
+
+if [[ "$branch" =~ -([0-9]+)\.([0-9]+)$ ]]; then
+  major=${BASH_REMATCH[1]}
+  minor=${BASH_REMATCH[2]}
+else
+  die 'branch name must end with a version, e.g. ZBX-27998-7.4'
+fi
+
+if [[ "$major" == 7 && "$minor" == 0 ]]; then
+  base_ref=origin/release/7.0
+elif [[ "$major" == 7 && "$minor" == 4 ]]; then
+  base_ref=origin/release/7.4
+else
+  major_num=$((10#$major))
+  minor_num=$((10#$minor))
+  if (( major_num > 7 || (major_num == 7 && minor_num > 4) )); then
+    base_ref=origin/master
+  else
+    die "unsupported release suffix: $major.$minor (use 7.0, 7.4, or a version greater than 7.4)"
+  fi
+fi
+
+command -v tmux >/dev/null 2>&1 || die 'tmux is required but was not found in PATH'
+
+repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || die 'run this command from inside a Git worktree'
+repo_root=$(cd "$repo_root" && pwd -P)
+worktree_path="$(dirname "$repo_root")/$branch"
+remote=origin
+
+git -C "$repo_root" remote get-url "$remote" >/dev/null 2>&1 || die "Git remote '$remote' is not configured"
+
+printf 'Fetching %s...\n' "$remote"
+git -C "$repo_root" fetch "$remote"
+git -C "$repo_root" rev-parse --verify --quiet "${base_ref}^{commit}" >/dev/null \
+  || die "base ref '$base_ref' is unavailable"
+
+if [[ -e "$worktree_path" ]]; then
+  existing_root=$(git -C "$worktree_path" rev-parse --show-toplevel 2>/dev/null || true)
+  existing_branch=$(git -C "$worktree_path" branch --show-current 2>/dev/null || true)
+  if [[ "$existing_root" != "$worktree_path" || "$existing_branch" != "$branch" ]]; then
+    die "path already exists and is not the '$branch' worktree: $worktree_path"
+  fi
+  printf 'Using existing worktree: %s\n' "$worktree_path"
+elif git -C "$repo_root" show-ref --verify --quiet "refs/heads/$branch"; then
+  printf 'Adding existing branch %s as a worktree...\n' "$branch"
+  git -C "$repo_root" worktree add "$worktree_path" "$branch"
+else
+  printf 'Creating %s from %s...\n' "$branch" "$base_ref"
+  git -C "$repo_root" worktree add -b "$branch" "$worktree_path" "$base_ref"
+fi
+
+printf 'Pushing to %s/feature/%s...\n' "$remote" "$branch"
+git -C "$worktree_path" push --set-upstream "$remote" \
+  "refs/heads/$branch:refs/heads/feature/$branch"
+
+# Dots are treated specially in tmux targets, so use underscores in session names.
+session=${branch//./_}
+if ! tmux has-session -t "=$session" 2>/dev/null; then
+  tmux new-session -d -s "$session" -c "$worktree_path"
+fi
+
+if [[ -n ${TMUX:-} ]]; then
+  tmux switch-client -t "=$session"
+else
+  tmux attach-session -t "=$session"
+fi
