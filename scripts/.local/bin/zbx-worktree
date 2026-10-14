@@ -2,7 +2,8 @@
 set -euo pipefail
 
 usage() {
-  printf 'Usage: zbx-worktree <branch-name>\n' >&2
+  printf 'Usage: zbx-worktree [branch-name]\n' >&2
+  printf '       zbx-worktree  # pick one of your assigned ZBX tickets\n' >&2
 }
 
 die() {
@@ -10,35 +11,172 @@ die() {
   exit 1
 }
 
-if [[ $# -ne 1 ]]; then
+jira_tmp_dir=''
+jira_curl_config=''
+
+cleanup_jira_credentials() {
+  if [[ -n ${jira_curl_config:-} ]]; then
+    rm -f "$jira_curl_config" || true
+  fi
+  if [[ -n ${jira_tmp_dir:-} ]]; then
+    rmdir "$jira_tmp_dir" 2>/dev/null || true
+  fi
+  jira_curl_config=''
+  jira_tmp_dir=''
+}
+
+trap cleanup_jira_credentials EXIT
+
+set_base_ref() {
+  local major minor major_num minor_num
+  major=$1
+  minor=$2
+  release_suffix="$major.$minor"
+
+  if [[ "$major" == 7 && "$minor" == 0 ]]; then
+    base_ref=origin/release/7.0
+  elif [[ "$major" == 7 && "$minor" == 4 ]]; then
+    base_ref=origin/release/7.4
+  else
+    major_num=$((10#$major))
+    minor_num=$((10#$minor))
+    if (( major_num > 7 || (major_num == 7 && minor_num > 4) )); then
+      base_ref=origin/master
+    else
+      die "unsupported release suffix: $major.$minor (use 7.0, 7.4, or a version greater than 7.4)"
+    fi
+  fi
+}
+
+select_assigned_ticket() {
+  local jira_url jql start_at total page page_count all_issues tickets_json issue_options selected_issue
+  local issue_json issue_type versions_json version_count version_options selected_version
+  local dependency jira_keychain_service jira_user jira_token
+
+  for dependency in curl jq fzf; do
+    command -v "$dependency" >/dev/null 2>&1 || die "$dependency is required to select an assigned Jira ticket"
+  done
+
+  jira_url=${ZBX_JIRA_URL:-https://support.zabbix.com}
+  jira_url=${jira_url%/}
+  jira_user=${ZBX_JIRA_USER:-ggrigorjevs}
+  jira_keychain_service=${ZBX_JIRA_KEYCHAIN_SERVICE:-jira-support.zabbix.com}
+
+  # Reuse the Jira Personal Access Token lookup from ~/bin/jenkins-test.
+  command -v security >/dev/null 2>&1 || die 'macOS security is required to read the Jira token from Keychain'
+  if ! jira_token=$(security find-generic-password \
+    -s "$jira_keychain_service" \
+    -a "$jira_user" \
+    -w); then
+    die "could not read the Jira token from Keychain (service '$jira_keychain_service', account '$jira_user')"
+  fi
+
+  jira_tmp_dir=$(mktemp -d) || die 'could not create a temporary directory for Jira credentials'
+  chmod 700 "$jira_tmp_dir" || die 'could not secure the temporary Jira credentials directory'
+  jira_curl_config="$jira_tmp_dir/jira-curl.conf"
+  if ! printf 'header = "Authorization: Bearer %s"\n' "$jira_token" > "$jira_curl_config"; then
+    die 'could not prepare Jira authentication for curl'
+  fi
+  unset jira_token
+  chmod 600 "$jira_curl_config" || die 'could not secure the temporary Jira curl config'
+
+  jql='project = ZBX AND assignee = currentUser() ORDER BY updated DESC'
+  start_at=0
+  total=0
+  all_issues='[]'
+
+  while :; do
+    # Jira REST's `versions` field is the Affects Version/s field.
+    if ! page=$(curl --config "$jira_curl_config" --fail --silent --show-error --get \
+      --data-urlencode "jql=$jql" \
+      --data-urlencode 'fields=summary,issuetype,versions' \
+      --data-urlencode "startAt=$start_at" \
+      --data-urlencode 'maxResults=100' \
+      "$jira_url/rest/api/2/search"); then
+      die "could not fetch assigned Jira tickets from $jira_url (check network access and the Jira Keychain token)"
+    fi
+
+    if ! page_count=$(jq -er '.issues | length' <<< "$page") || ! total=$(jq -er '.total' <<< "$page"); then
+      die 'Jira returned an unexpected response while fetching assigned tickets'
+    fi
+    if (( page_count == 0 )); then
+      break
+    fi
+
+    if ! all_issues=$(jq -cn --argjson current "$all_issues" --argjson page "$page" '$current + $page.issues'); then
+      die 'could not parse Jira issue results'
+    fi
+    start_at=$((start_at + page_count))
+    if (( start_at >= total )); then
+      break
+    fi
+  done
+
+  cleanup_jira_credentials
+
+  tickets_json=$(jq -cn --argjson issues "$all_issues" '{issues: $issues}')
+  if [[ $(jq -r '.issues | length' <<< "$tickets_json") -eq 0 ]]; then
+    die "no assigned ZBX tickets found for '$jira_user' (check the Jira Keychain token and account)"
+  fi
+
+  issue_options=$(jq -r '.issues[] | [.key, (.fields.summary // ""), (.fields.issuetype.name // "Unknown type")] | @tsv' <<< "$tickets_json")
+  if ! selected_issue=$(printf '%s\n' "$issue_options" | fzf --delimiter=$'\t' --with-nth=1,2,3 --prompt='Assigned ZBX ticket> '); then
+    exit 0
+  fi
+  issue_key=${selected_issue%%$'\t'*}
+  issue_json=$(jq -ce --arg key "$issue_key" '.issues[] | select(.key == $key)' <<< "$tickets_json") \
+    || die "could not read selected Jira ticket: $issue_key"
+  issue_type=$(jq -r '.fields.issuetype.name // ""' <<< "$issue_json")
+
+  if [[ "$issue_type" == 'Problem report' ]]; then
+    versions_json=$(jq -c '[.fields.versions[]?.name // empty]' <<< "$issue_json")
+    version_count=$(jq -r 'length' <<< "$versions_json")
+    if (( version_count == 0 )); then
+      die "$issue_key is a Problem report but has no Affected Version/s"
+    elif (( version_count == 1 )); then
+      selected_version=$(jq -r '.[0]' <<< "$versions_json")
+    else
+      version_options=$(jq -r '.[]' <<< "$versions_json")
+      if ! selected_version=$(printf '%s\n' "$version_options" | fzf --prompt='Affected Version/s> '); then
+        exit 0
+      fi
+    fi
+
+    if [[ "$selected_version" =~ ^([0-9]+)\.([0-9]+)([.-].*|[[:space:]].*|$)$ ]]; then
+      set_base_ref "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+      branch="$issue_key-$release_suffix"
+    else
+      die "unsupported Affected Version/s value '$selected_version' on $issue_key"
+    fi
+  else
+    # Non-problem tickets have no meaningful Affected Version/s; start them from trunk.
+    branch=$issue_key
+    base_ref=origin/master
+  fi
+
+  printf 'Selected %s (%s); using %s\n' "$issue_key" "${issue_type:-unknown type}" "$base_ref"
+}
+
+if [[ $# -gt 1 ]]; then
   usage
   exit 2
 fi
 
-branch=$1
+if [[ $# -eq 0 ]]; then
+  select_assigned_ticket
+else
+  branch=$1
+fi
 
 if [[ "$branch" == */* ]] || ! git check-ref-format --branch "$branch" >/dev/null 2>&1; then
   die "invalid branch name: $branch"
 fi
 
-if [[ "$branch" =~ -([0-9]+)\.([0-9]+)$ ]]; then
-  major=${BASH_REMATCH[1]}
-  minor=${BASH_REMATCH[2]}
-else
-  die 'branch name must end with a version, e.g. ZBX-27998-7.4'
-fi
-
-if [[ "$major" == 7 && "$minor" == 0 ]]; then
-  base_ref=origin/release/7.0
-elif [[ "$major" == 7 && "$minor" == 4 ]]; then
-  base_ref=origin/release/7.4
-else
-  major_num=$((10#$major))
-  minor_num=$((10#$minor))
-  if (( major_num > 7 || (major_num == 7 && minor_num > 4) )); then
-    base_ref=origin/master
+if [[ $# -eq 1 ]]; then
+  if [[ "$branch" =~ -([0-9]+)\.([0-9]+)$ ]]; then
+    set_base_ref "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
   else
-    die "unsupported release suffix: $major.$minor (use 7.0, 7.4, or a version greater than 7.4)"
+    die 'branch name must end with a version, e.g. ZBX-27998-7.4'
   fi
 fi
 
@@ -51,8 +189,10 @@ remote=origin
 
 git -C "$repo_root" remote get-url "$remote" >/dev/null 2>&1 || die "Git remote '$remote' is not configured"
 
-printf 'Fetching %s...\n' "$remote"
-git -C "$repo_root" fetch "$remote"
+base_branch=${base_ref#"$remote"/}
+printf 'Fetching %s/%s...\n' "$remote" "$base_branch"
+git -C "$repo_root" fetch "$remote" \
+  "+refs/heads/$base_branch:refs/remotes/$remote/$base_branch"
 git -C "$repo_root" rev-parse --verify --quiet "${base_ref}^{commit}" >/dev/null \
   || die "base ref '$base_ref' is unavailable"
 
