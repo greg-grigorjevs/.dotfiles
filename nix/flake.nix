@@ -79,6 +79,13 @@
         # nix.configureBuildUsers = true;
 
         system.defaults = {
+          CustomUserPreferences."com.apple.symbolichotkeys".AppleSymbolicHotKeys = {
+            "32".enabled = false; # Control-Up: Mission Control
+            "35".enabled = false; # Control-Down: Application windows
+            "79".enabled = false; # Control-Left: Move left a space
+            "81".enabled = false; # Control-Right: Move right a space
+          };
+
           dock = {
             autohide = true;
             autohide-delay = 0.0;
@@ -187,6 +194,13 @@
           home.packages = with pkgs; [
             ansible
             atac
+            bat
+            eza
+            television
+            zoxide
+            sesh
+            worktrunk
+            delta
             neovim
             ripgrep
             lazygit
@@ -217,7 +231,7 @@
             ".config/yazi".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/yazi";
             ".config/nvim".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/nvim/.config/nvim";
             ".config/kitty".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/kitty/.config/kitty";
-            ".config/opencode/tui.json".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/opencode/tui.json";
+            ".config/opencode".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/opencode";
             ".hammerspoon".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/hammerspoon/.hammerspoon";
             ".tmux.conf".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/tmux/.tmux.conf";
             ".local/bin".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/scripts/.local/bin";
@@ -258,7 +272,8 @@
           programs.zsh = {
             enable = true;
             completionInit = "autoload -U compinit && compinit -C";
-            dotDir = ".config/nixzsh";
+            dotDir = "${homeDir}/.config/nixzsh";
+            history.path = "${homeDir}/.zsh_history";
             syntaxHighlighting.enable = true;
             initExtra = ''
               source ~/.zshrc
@@ -267,9 +282,9 @@
 
           programs.git = {
             enable = true;
-            userEmail = "gregg@coeouk.com";
-            userName = "Greg Grigorjevs";
-            extraConfig = {
+            # userEmail = "gregg@coeouk.com";
+            # userName = "Greg Grigorjevs";
+            settings = {
               pull.rebase = true;
               core.excludesfile = "~/.config/git/.gitignore";
               rebase.autostash = true;
