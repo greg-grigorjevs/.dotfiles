@@ -2,3 +2,6 @@ os:
   edit: '~/.dotfiles/bin/floaterm {{filename}}'
 gui:
   scrollHeight: 20
+git:
+  diffRenderers:
+    - command: delta --{{colorScheme}} --paging=never
