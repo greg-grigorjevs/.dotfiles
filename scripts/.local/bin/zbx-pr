@@ -1,0 +1,968 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEFAULT_REVIEWER='HunterCRS'
+TRANSLATION_COMMENT='(1) No translation string changes'
+
+usage() {
+  cat <<'EOF'
+Usage: zb pr [--current|--all] [--jenkins] [--reviewer USER|--pick-reviewer] [--dry-run]
+
+Create a Bitbucket pull request for the current version, or for every matching
+version worktree of the current ZBX ticket. Use --jenkins to rerun builds
+without changing pull requests. The default reviewer is HunterCRS.
+
+Options:
+  -c, --current        Process only the current version (the default)
+  -a, --all            Process all checked-out version worktrees for this ticket
+                       (also works with --jenkins)
+  -j, --jenkins        Only rerun Jenkins builds; skip pull-request operations
+  -r, --reviewer USER  Use a specific Bitbucket username instead of HunterCRS
+  -p, --pick-reviewer  Fuzzy-pick a reviewer from Bitbucket's user list
+      --dry-run        Show selected branches (and PR titles) without creating
+                       PRs, Jira comments, or Jenkins builds (fetches base refs
+                       in PR mode)
+  -h, --help           Show this help
+
+PR descriptions are left empty. Bitbucket and Jira PATs can be supplied with
+ZBX_BITBUCKET_TOKEN and ZBX_JIRA_TOKEN, or read from macOS Keychain services
+git.zabbix.com and jira-support.zabbix.com (account ggrigorjevs by default).
+Set ZBX_PR_INSECURE_TLS=0 to use curl's normal certificate verification.
+EOF
+}
+
+die() {
+  printf 'zbx-pr: %s\n' "$*" >&2
+  exit 1
+}
+
+say_error() {
+  printf 'zbx-pr: %s\n' "$*" >&2
+}
+
+set_target_branch() {
+  local version=$1 major minor major_num minor_num
+
+  case "$version" in
+    7.0) target_branch='release/7.0' ;;
+    7.4) target_branch='release/7.4' ;;
+    *)
+      if [[ ! "$version" =~ ^([0-9]+)\.([0-9]+)$ ]]; then
+        return 1
+      fi
+
+      major=${BASH_REMATCH[1]}
+      minor=${BASH_REMATCH[2]}
+      major_num=$((10#$major))
+      minor_num=$((10#$minor))
+
+      if (( major_num > 7 || (major_num == 7 && minor_num > 4) )); then
+        target_branch='master'
+      else
+        return 1
+      fi
+      ;;
+  esac
+}
+
+add_candidate() {
+  local path=$1 branch=$2 normalized_branch version major minor major_num minor_num
+
+  normalized_branch=${branch#feature/}
+  if [[ ! "$normalized_branch" =~ ^(ZBX-[0-9]+)-([0-9]+\.[0-9]+)$ ]]; then
+    return 0
+  fi
+
+  if [[ "${BASH_REMATCH[1]}" != "$ticket_key" ]]; then
+    return 0
+  fi
+
+  version=${BASH_REMATCH[2]}
+  if [[ ! "$version" =~ ^([0-9]+)\.([0-9]+)$ ]]; then
+    die "could not parse version from branch: $branch"
+  fi
+  major=${BASH_REMATCH[1]}
+  minor=${BASH_REMATCH[2]}
+
+  if ! set_target_branch "$version"; then
+    die "unsupported version in branch '$branch'"
+  fi
+
+  major_num=$((10#$major))
+  minor_num=$((10#$minor))
+  printf '%04d\t%04d\t%s\t%s\n' \
+    "$major_num" "$minor_num" "$path" "$branch" >> "$candidate_file"
+}
+
+api_request() {
+  local config=$1 method=$2 url=$3 body_file=$4 response_file=$5
+  local -a args
+
+  args=(curl)
+  if (( insecure_tls )); then
+    args+=(--insecure)
+  fi
+  args+=(
+    --config "$config"
+    --silent
+    --show-error
+    --connect-timeout 10
+    --max-time 30
+    --output "$response_file"
+    --write-out '%{http_code}'
+    --request "$method"
+    --header 'Accept: application/json'
+  )
+
+  if [[ -n "$body_file" ]]; then
+    args+=(--header 'Content-Type: application/json' --data-binary "@$body_file")
+  fi
+
+  "${args[@]}" "$url"
+}
+
+load_tokens() {
+  local bitbucket_token jira_token
+
+  if [[ -n ${ZBX_BITBUCKET_TOKEN:-} ]]; then
+    bitbucket_token=$ZBX_BITBUCKET_TOKEN
+  else
+    command -v security >/dev/null 2>&1 \
+      || die 'macOS security is needed to read the Bitbucket PAT from Keychain'
+    if ! bitbucket_token=$(security find-generic-password \
+      -s "$bitbucket_keychain_service" -a "$bitbucket_user" -w 2>/dev/null); then
+      die "could not read the Bitbucket PAT from Keychain (service '$bitbucket_keychain_service', account '$bitbucket_user'); set ZBX_BITBUCKET_TOKEN to override"
+    fi
+  fi
+
+  if [[ -n ${ZBX_JIRA_TOKEN:-} ]]; then
+    jira_token=$ZBX_JIRA_TOKEN
+  else
+    command -v security >/dev/null 2>&1 \
+      || die 'macOS security is needed to read the Jira PAT from Keychain'
+    if ! jira_token=$(security find-generic-password \
+      -s "$jira_keychain_service" -a "$jira_user" -w 2>/dev/null); then
+      die "could not read the Jira PAT from Keychain (service '$jira_keychain_service', account '$jira_user'); set ZBX_JIRA_TOKEN to override"
+    fi
+  fi
+
+  [[ -n "$bitbucket_token" ]] || die 'the Bitbucket PAT is empty'
+  [[ -n "$jira_token" ]] || die 'the Jira PAT is empty'
+
+  printf 'header = "Authorization: Bearer %s"\n' "$bitbucket_token" \
+    > "$tmp_dir/bitbucket-curl.conf"
+  printf 'header = "Authorization: Bearer %s"\n' "$jira_token" \
+    > "$tmp_dir/jira-curl.conf"
+  chmod 600 "$tmp_dir/bitbucket-curl.conf" "$tmp_dir/jira-curl.conf"
+  unset bitbucket_token jira_token
+}
+
+load_open_pull_requests() {
+  local start next_start is_last status response_file url page_records_file
+
+  start=0
+  response_file="$tmp_dir/open-pr-page.json"
+  page_records_file="$tmp_dir/open-pr-records.jsonl"
+  : > "$page_records_file"
+
+  while :; do
+    url="$bitbucket_url/rest/api/1.0/projects/$bitbucket_project/repos/$bitbucket_repo/pull-requests?state=OPEN&limit=1000&start=$start"
+    if ! status=$(api_request "$tmp_dir/bitbucket-curl.conf" GET \
+      "$url" '' "$response_file"); then
+      die 'could not query open pull requests from Bitbucket'
+    fi
+    [[ "$status" == 200 ]] \
+      || die "Bitbucket open-pull-request lookup failed (HTTP $status): $(cat "$response_file")"
+
+    if ! jq -e '.values | type == "array"' "$response_file" >/dev/null; then
+      die 'Bitbucket returned an invalid pull-request list'
+    fi
+    if ! jq -c '.values[]' "$response_file" >> "$page_records_file"; then
+      die 'could not append Bitbucket pull-request page'
+    fi
+
+    is_last=$(jq -r '.isLastPage // true' "$response_file")
+    [[ "$is_last" == true ]] && break
+
+    next_start=$(jq -r '.nextPageStart // empty' "$response_file")
+    [[ "$next_start" =~ ^[0-9]+$ ]] \
+      || die 'Bitbucket returned an invalid pagination cursor for pull requests'
+    start=$next_start
+  done
+
+  jq -s '.' "$page_records_file" > "$tmp_dir/open-prs.json" \
+    || die 'could not combine Bitbucket pull-request pages'
+}
+
+fetch_jira_comments() {
+  local all_comments page start total page_count status response_file url
+
+  all_comments='[]'
+  start=0
+  response_file="$tmp_dir/jira-comments-page.json"
+
+  while :; do
+    url="$jira_url/rest/api/2/issue/$ticket_key/comment?startAt=$start&maxResults=100"
+    if ! status=$(api_request "$tmp_dir/jira-curl.conf" GET \
+      "$url" '' "$response_file"); then
+      say_error "could not retrieve Jira comments for $ticket_key"
+      return 1
+    fi
+    if [[ "$status" != 200 ]]; then
+      say_error "Jira comment lookup failed (HTTP $status): $(cat "$response_file")"
+      return 1
+    fi
+
+    if ! jq -e '.comments | type == "array"' "$response_file" >/dev/null; then
+      say_error 'Jira returned an invalid comments response'
+      return 1
+    fi
+    page=$(jq -c '.comments' "$response_file")
+    all_comments=$(jq -cn --argjson all "$all_comments" --argjson page "$page" '$all + $page') \
+      || {
+        say_error 'could not combine Jira comment pages'
+        return 1
+      }
+
+    total=$(jq -r '.total // 0' "$response_file")
+    page_count=$(jq -r '.comments | length' "$response_file")
+    if [[ ! "$total" =~ ^[0-9]+$ || ! "$page_count" =~ ^[0-9]+$ ]]; then
+      say_error 'Jira returned invalid comment pagination details'
+      return 1
+    fi
+
+    start=$((start + page_count))
+    if (( page_count == 0 || start >= total )); then
+      break
+    fi
+  done
+
+  printf '%s\n' "$all_comments" > "$tmp_dir/jira-comments.json"
+}
+
+list_bitbucket_users() {
+  local all_users page start next_start is_last status response_file url
+
+  all_users='[]'
+  start=0
+  response_file="$tmp_dir/bitbucket-users-page.json"
+
+  while :; do
+    url="$bitbucket_url/rest/api/1.0/admin/users?limit=1000&start=$start"
+    if ! status=$(api_request "$tmp_dir/bitbucket-curl.conf" GET \
+      "$url" '' "$response_file"); then
+      die 'could not retrieve Bitbucket users for reviewer selection'
+    fi
+    [[ "$status" == 200 ]] \
+      || die "Bitbucket user lookup failed (HTTP $status): $(cat "$response_file")"
+
+    if ! page=$(jq -ce '.values | if type == "array" then . else error("missing values") end' "$response_file"); then
+      die 'Bitbucket returned an invalid user list'
+    fi
+    all_users=$(jq -cn --argjson all "$all_users" --argjson page "$page" '$all + $page') \
+      || die 'could not combine Bitbucket user pages'
+
+    is_last=$(jq -r '.isLastPage // true' "$response_file")
+    [[ "$is_last" == true ]] && break
+
+    next_start=$(jq -r '.nextPageStart // empty' "$response_file")
+    [[ "$next_start" =~ ^[0-9]+$ ]] \
+      || die 'Bitbucket returned an invalid pagination cursor for users'
+    start=$next_start
+  done
+
+  printf '%s\n' "$all_users" > "$tmp_dir/bitbucket-users.json"
+}
+
+pick_reviewer() {
+  local user_options selection
+
+  command -v fzf >/dev/null 2>&1 \
+    || die 'fzf is required for --pick-reviewer'
+  list_bitbucket_users
+
+  user_options=$(jq -r '
+    .[] |
+    select(.active != false) |
+    [(.slug // .name // ""), (.displayName // .name // "")] |
+    @tsv
+  ' "$tmp_dir/bitbucket-users.json")
+  [[ -n "$user_options" ]] || die 'Bitbucket returned no active users to choose from'
+
+  if ! selection=$(printf '%s\n' "$user_options" |
+    fzf --delimiter=$'\t' --with-nth=1,2 --prompt='PR reviewer> '); then
+    printf 'Reviewer selection cancelled; no pull requests were created.\n'
+    exit 0
+  fi
+
+  reviewer=${selection%%$'\t'*}
+  [[ -n "$reviewer" ]] || die 'the selected Bitbucket reviewer has no username'
+}
+
+validate_reviewer() {
+  local encoded_reviewer status response_file
+
+  [[ "$reviewer" =~ ^[A-Za-z0-9._~-]+$ ]] \
+    || die "invalid Bitbucket reviewer username: $reviewer"
+
+  encoded_reviewer=$(jq -rn --arg value "$reviewer" '$value | @uri')
+  response_file="$tmp_dir/reviewer.json"
+  if ! status=$(api_request "$tmp_dir/bitbucket-curl.conf" GET \
+    "$bitbucket_url/rest/api/1.0/users/$encoded_reviewer" '' "$response_file"); then
+    die "could not validate Bitbucket reviewer '$reviewer'"
+  fi
+  [[ "$status" == 200 ]] \
+    || die "Bitbucket reviewer '$reviewer' was not found (HTTP $status)"
+
+  reviewer_name=$(jq -r '.name // .slug // empty' "$response_file")
+  reviewer_slug=$(jq -r '.slug // .name // empty' "$response_file")
+  reviewer_display=$(jq -r '.displayName // .name // .slug // empty' "$response_file")
+  [[ -n "$reviewer_name" && -n "$reviewer_slug" ]] \
+    || die "Bitbucket returned incomplete account details for reviewer '$reviewer'"
+  [[ $(jq -r '.active // true' "$response_file") != false ]] \
+    || die "Bitbucket reviewer '$reviewer' is inactive"
+}
+
+find_existing_pull_request() {
+  local source_ref=$1 target_ref=$2
+
+  jq -r --arg source "$source_ref" --arg target "$target_ref" '
+    [.[] | select(.fromRef.id == $source and .toRef.id == $target)] |
+    if length == 0 then empty else (.[-1].id | tostring) end
+  ' "$tmp_dir/open-prs.json"
+}
+
+ensure_existing_reviewer() {
+  local pull_request_id=$1 url status response_file payload_file
+
+  url="$bitbucket_url/rest/api/1.0/projects/$bitbucket_project/repos/$bitbucket_repo/pull-requests/$pull_request_id/participants"
+  response_file="$tmp_dir/pr-participants-$pull_request_id.json"
+  if ! status=$(api_request "$tmp_dir/bitbucket-curl.conf" GET \
+    "$url" '' "$response_file"); then
+    say_error "could not check reviewers on existing pull request #$pull_request_id"
+    return 1
+  fi
+  if [[ "$status" != 200 ]]; then
+    say_error "could not check reviewers on existing pull request #$pull_request_id (HTTP $status): $(cat "$response_file")"
+    return 1
+  fi
+
+  if jq -e --arg name "$reviewer_name" --arg slug "$reviewer_slug" '
+    any(.values[]?;
+      (.role == "REVIEWER") and
+      ((.user.name // "") == $name or (.user.slug // "") == $slug)
+    )
+  ' "$response_file" >/dev/null; then
+    return 0
+  fi
+
+  payload_file="$tmp_dir/pr-participant-$pull_request_id.json"
+  jq -n --arg name "$reviewer_name" \
+    '{user: {name: $name}, role: "REVIEWER"}' > "$payload_file"
+  if ! status=$(api_request "$tmp_dir/bitbucket-curl.conf" POST \
+    "$url" "$payload_file" "$response_file"); then
+    say_error "could not add reviewer '$reviewer_name' to pull request #$pull_request_id"
+    return 1
+  fi
+  case "$status" in
+    200|201|204) ;;
+    *)
+      say_error "could not add reviewer '$reviewer_name' to pull request #$pull_request_id (HTTP $status): $(cat "$response_file")"
+      return 1
+      ;;
+  esac
+}
+
+make_pull_request() {
+  local index=$1 source_ref=$2 target_ref=$3 payload_file=$4 response_file=$5 status
+
+  jq -n \
+    --arg title "${selected_titles[$index]}" \
+    --arg source "$source_ref" \
+    --arg target "$target_ref" \
+    --arg project "$bitbucket_project" \
+    --arg repository "$bitbucket_repo" \
+    --arg reviewer "$reviewer_name" \
+    '{
+      title: $title,
+      description: "",
+      state: "OPEN",
+      open: true,
+      closed: false,
+      fromRef: {
+        id: $source,
+        repository: {slug: $repository, name: null, project: {key: $project}}
+      },
+      toRef: {
+        id: $target,
+        repository: {slug: $repository, name: null, project: {key: $project}}
+      },
+      reviewers: [{user: {name: $reviewer}}]
+    }' > "$payload_file" || return 1
+
+  if ! status=$(api_request "$tmp_dir/bitbucket-curl.conf" POST \
+    "$bitbucket_url/rest/api/1.0/projects/$bitbucket_project/repos/$bitbucket_repo/pull-requests" \
+    "$payload_file" "$response_file"); then
+    say_error "could not create pull request for ${selected_branches[$index]}"
+    return 1
+  fi
+
+  case "$status" in
+    200|201) ;;
+    *)
+      say_error "could not create pull request for ${selected_branches[$index]} (HTTP $status): $(cat "$response_file")"
+      return 1
+      ;;
+  esac
+
+  pull_request_id=$(jq -r '.id // empty' "$response_file")
+  [[ "$pull_request_id" =~ ^[0-9]+$ ]] || {
+    say_error "Bitbucket created a pull request for ${selected_branches[$index]} but returned no valid ID"
+    return 1
+  }
+
+  return 0
+}
+
+build_pr_link_records() {
+  local index pull_request_id encoded_path diff_url
+
+  : > "$tmp_dir/current-pr-records.tsv"
+  for ((index = 0; index < ${#selected_paths[@]}; index++)); do
+    [[ "${selected_success[$index]}" == yes ]] || continue
+    pull_request_id=${selected_pr_ids[$index]}
+    diff_url="$bitbucket_url/projects/$bitbucket_project/repos/$bitbucket_repo/pull-requests/$pull_request_id/diff"
+    if [[ -n "${selected_diff_paths[$index]}" ]]; then
+      encoded_path=$(jq -rn --arg path "${selected_diff_paths[$index]}" '$path | @uri')
+      diff_url="$diff_url#$encoded_path"
+    fi
+
+    printf '%s\t%s\t%s\t%s\t%s\n' \
+      "${selected_sort_major[$index]}" \
+      "${selected_sort_minor[$index]}" \
+      "${selected_versions[$index]}" \
+      "${selected_source_branches[$index]}" \
+      "$diff_url" >> "$tmp_dir/current-pr-records.tsv"
+  done
+}
+
+build_pr_comment() {
+  local existing_body=$1 line link_regex version branch url old_major old_minor
+  local merged_file sorted_file unique_file line_count label
+
+  merged_file="$tmp_dir/merged-pr-records.tsv"
+  sorted_file="$tmp_dir/sorted-pr-records.tsv"
+  unique_file="$tmp_dir/unique-pr-records.tsv"
+  : > "$merged_file"
+
+  link_regex="\\[(feature/${ticket_key}-([0-9]+\\.[0-9]+))\\|([^]]+)\\]"
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ $link_regex ]]; then
+      branch=${BASH_REMATCH[1]}
+      version=${BASH_REMATCH[2]}
+      url=${BASH_REMATCH[3]}
+      if grep -F -q $'\t'"$version"$'\t' "$tmp_dir/current-pr-records.tsv"; then
+        continue
+      fi
+      IFS=. read -r old_major old_minor <<< "$version"
+      printf '%04d\t%04d\t%s\t%s\t%s\n' \
+        "$((10#$old_major))" "$((10#$old_minor))" "$version" "$branch" "$url" \
+        >> "$merged_file"
+    fi
+  done <<< "$existing_body"
+
+  cat "$tmp_dir/current-pr-records.tsv" >> "$merged_file"
+  LC_ALL=C sort -t $'\t' -k1,1n -k2,2n "$merged_file" > "$sorted_file"
+  awk -F '\t' '!seen[$3]++' "$sorted_file" > "$unique_file"
+  line_count=$(wc -l < "$unique_file" | tr -d '[:space:]')
+  (( line_count > 0 )) || return 1
+
+  if (( line_count == 1 )); then
+    IFS=$'\t' read -r _ _ version label url < "$unique_file"
+    printf 'fixed in development branch [%s|%s]\n' "$label" "$url" \
+      > "$tmp_dir/pr-comment.txt"
+  else
+    printf 'fixed in development branches' > "$tmp_dir/pr-comment.txt"
+    while IFS=$'\t' read -r _ _ version label url; do
+      printf '\n - [%s|%s]' "$label" "$url" >> "$tmp_dir/pr-comment.txt"
+    done < "$unique_file"
+  fi
+}
+
+write_jira_comment() {
+  local method=$1 url=$2 body=$3 expected_status=$4 response_file status payload_file
+
+  payload_file="$tmp_dir/jira-comment-payload.json"
+  response_file="$tmp_dir/jira-comment-response.json"
+  jq -n --arg body "$body" '{body: $body}' > "$payload_file"
+
+  if ! status=$(api_request "$tmp_dir/jira-curl.conf" "$method" \
+    "$url" "$payload_file" "$response_file"); then
+    say_error 'could not write a Jira comment'
+    return 1
+  fi
+  if [[ "$status" != "$expected_status" ]]; then
+    say_error "Jira comment write failed (HTTP $status): $(cat "$response_file")"
+    return 1
+  fi
+}
+
+update_pr_jira_comment() {
+  local existing comment_id old_body comment_url method expected_status comment_body
+
+  if [[ ! -s "$tmp_dir/current-pr-records.tsv" ]]; then
+    return 0
+  fi
+
+  if ! fetch_jira_comments; then
+    return 1
+  fi
+  existing=$(jq -c --arg user "$jira_user" '
+    [.[] |
+      select((.body // "") | startswith("fixed in development branch")) |
+      select((.author.name // .author.key // "") == $user)
+    ] | last // empty
+  ' "$tmp_dir/jira-comments.json")
+
+  comment_id=''
+  old_body=''
+  if [[ -n "$existing" ]]; then
+    comment_id=$(jq -r '.id // empty | tostring' <<< "$existing")
+    old_body=$(jq -r '.body // ""' <<< "$existing")
+  fi
+
+  if ! build_pr_comment "$old_body"; then
+    say_error 'could not build the Jira pull-request comment'
+    return 1
+  fi
+  comment_body=$(cat "$tmp_dir/pr-comment.txt")
+
+  if [[ -n "$comment_id" ]]; then
+    method=PUT
+    expected_status=200
+    comment_url="$jira_url/rest/api/2/issue/$ticket_key/comment/$comment_id"
+    printf 'Updating existing Jira PR-links comment #%s.\n' "$comment_id"
+  else
+    method=POST
+    expected_status=201
+    comment_url="$jira_url/rest/api/2/issue/$ticket_key/comment"
+    printf 'Adding Jira PR-links comment.\n'
+  fi
+
+  printf '%s\n' "$comment_body"
+  write_jira_comment "$method" "$comment_url" "$comment_body" "$expected_status"
+}
+
+add_translation_comment_if_needed() {
+  if jq -e --arg note "$TRANSLATION_COMMENT" \
+    'any(.[]?; (.body // "") == $note)' "$tmp_dir/jira-comments.json" >/dev/null; then
+    printf 'Jira translation note already exists; not adding a duplicate.\n'
+    return 0
+  fi
+
+  printf 'Adding Jira comment: %s\n' "$TRANSLATION_COMMENT"
+  write_jira_comment POST \
+    "$jira_url/rest/api/2/issue/$ticket_key/comment" \
+    "$TRANSLATION_COMMENT" 201
+}
+
+cleanup() {
+  if [[ -n ${tmp_dir:-} && -d "$tmp_dir" ]]; then
+    rm -rf "$tmp_dir"
+  fi
+}
+
+mode='current'
+mode_set=0
+jenkins_only=0
+dry_run=0
+pick_reviewer=0
+reviewer=${ZBX_PR_REVIEWER:-$DEFAULT_REVIEWER}
+reviewer_option_set=0
+
+# Expand grouped short flags that take no value (for example -ja -> -j -a).
+# Flags that take a value (-r) must be passed separately.
+declare -a normalized_args=()
+for argument in "$@"; do
+  if [[ "$argument" =~ ^-[A-Za-z][A-Za-z]+$ ]]; then
+    for ((i = 1; i < ${#argument}; i++)); do
+      flag=${argument:i:1}
+      case "$flag" in
+        c|a|j|p|h) normalized_args+=("-$flag") ;;
+        *) die "unknown option: $argument (see 'zb pr --help')" ;;
+      esac
+    done
+  else
+    normalized_args+=("$argument")
+  fi
+done
+set -- "${normalized_args[@]}"
+
+while (($#)); do
+  case "$1" in
+    -c|--current)
+      (( mode_set == 0 )) || die 'choose only one of --current and --all'
+      mode='current'
+      mode_set=1
+      shift
+      ;;
+    -a|--all)
+      (( mode_set == 0 )) || die 'choose only one of --current and --all'
+      mode='all'
+      mode_set=1
+      shift
+      ;;
+    -j|--jenkins)
+      jenkins_only=1
+      shift
+      ;;
+    -r|--reviewer)
+      (($# >= 2)) || die '--reviewer requires a Bitbucket username'
+      (( reviewer_option_set == 0 && pick_reviewer == 0 )) \
+        || die 'use only one of --reviewer and --pick-reviewer'
+      reviewer=$2
+      reviewer_option_set=1
+      shift 2
+      ;;
+    -p|--pick-reviewer|--select-reviewer)
+      (( reviewer_option_set == 0 && pick_reviewer == 0 )) \
+        || die 'use only one of --reviewer and --pick-reviewer'
+      pick_reviewer=1
+      shift
+      ;;
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      die "unknown option: $1 (see 'zb pr --help')"
+      ;;
+  esac
+done
+
+if (( jenkins_only && (reviewer_option_set || pick_reviewer) )); then
+  die '--reviewer and --pick-reviewer cannot be used with --jenkins'
+fi
+
+if (( dry_run && pick_reviewer )); then
+  die '--pick-reviewer cannot be used with --dry-run; use --reviewer USER instead'
+fi
+
+for dependency in git sort; do
+  command -v "$dependency" >/dev/null 2>&1 || die "$dependency is required"
+done
+if (( ! jenkins_only )); then
+  for dependency in curl jq awk; do
+    command -v "$dependency" >/dev/null 2>&1 || die "$dependency is required"
+  done
+fi
+
+current_root=$(git rev-parse --show-toplevel 2>/dev/null) \
+  || die 'run this command from inside a Git worktree'
+current_root=$(cd "$current_root" && pwd -P)
+current_branch=$(git -C "$current_root" branch --show-current 2>/dev/null) \
+  || die 'could not determine the current Git branch'
+[[ -n "$current_branch" ]] || die 'cannot determine a version branch from a detached HEAD'
+
+normalized_current_branch=${current_branch#feature/}
+if [[ ! "$normalized_current_branch" =~ ^(ZBX-[0-9]+)-([0-9]+\.[0-9]+)$ ]]; then
+  die "current branch must contain a ZBX issue key and version, for example ZBX-27915-7.0: $current_branch"
+fi
+ticket_key=${BASH_REMATCH[1]}
+
+tmp_dir=$(mktemp -d) || die 'could not create a temporary directory'
+chmod 700 "$tmp_dir"
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+candidate_file="$tmp_dir/candidates.tsv"
+sorted_candidate_file="$tmp_dir/sorted-candidates.tsv"
+: > "$candidate_file"
+
+if [[ "$mode" == current ]]; then
+  add_candidate "$current_root" "$current_branch"
+else
+  candidate_path=''
+  candidate_branch=''
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    case "$line" in
+      'worktree '*) candidate_path=${line#worktree } ;;
+      'branch refs/heads/'*) candidate_branch=${line#branch refs/heads/} ;;
+      '')
+        if [[ -n "$candidate_path" && -n "$candidate_branch" ]]; then
+          add_candidate "$candidate_path" "$candidate_branch"
+        fi
+        candidate_path=''
+        candidate_branch=''
+        ;;
+    esac
+  done < <(git -C "$current_root" worktree list --porcelain)
+  if [[ -n "$candidate_path" && -n "$candidate_branch" ]]; then
+    add_candidate "$candidate_path" "$candidate_branch"
+  fi
+fi
+
+[[ -s "$candidate_file" ]] \
+  || die "no checked-out version branches found for $ticket_key"
+LC_ALL=C sort -t $'\t' -k1,1n -k2,2n "$candidate_file" > "$sorted_candidate_file"
+
+declare -a selected_paths selected_branches selected_versions selected_targets
+declare -a selected_source_branches selected_titles selected_diff_paths
+declare -a selected_sort_major selected_sort_minor selected_success selected_pr_ids selected_pr_urls
+fetched_targets=''
+
+while IFS=$'\t' read -r sort_major sort_minor path branch; do
+  [[ -n "$path" && -n "$branch" ]] || continue
+  normalized_branch=${branch#feature/}
+  if [[ ! "$normalized_branch" =~ ^(ZBX-[0-9]+)-([0-9]+\.[0-9]+)$ ]]; then
+    die "invalid matching branch in worktree list: $branch"
+  fi
+  version=${BASH_REMATCH[2]}
+  set_target_branch "$version" || die "unsupported version in branch '$branch'"
+
+  selected_paths+=("$path")
+  selected_branches+=("$branch")
+  selected_versions+=("$version")
+  selected_targets+=("$target_branch")
+  selected_sort_major+=("$sort_major")
+  selected_sort_minor+=("$sort_minor")
+  selected_success+=(no)
+  selected_pr_ids+=('')
+  selected_pr_urls+=('')
+
+  if [[ "$branch" == feature/* ]]; then
+    selected_source_branches+=("$branch")
+  else
+    selected_source_branches+=("feature/$branch")
+  fi
+done < "$sorted_candidate_file"
+
+(( ${#selected_paths[@]} > 0 )) || die "no checked-out version branches found for $ticket_key"
+
+if (( jenkins_only )); then
+  if (( dry_run )); then
+    printf 'Would rerun Jenkins builds for %s on:\n' "$ticket_key"
+    for ((index = 0; index < ${#selected_paths[@]}; index++)); do
+      printf '  %s\n' "${selected_branches[$index]}"
+    done
+    printf '\nDry run complete. No Jenkins builds were started.\n'
+    exit 0
+  fi
+
+  jenkins_test_command=$(command -v jenkins-test) \
+    || die "required command not found in PATH: jenkins-test"
+
+  overall_errors=0
+  for ((index = 0; index < ${#selected_paths[@]}; index++)); do
+    printf '\nRerunning Jenkins builds for %s...\n' "${selected_branches[$index]}"
+    if ! (cd "${selected_paths[$index]}" && "$jenkins_test_command"); then
+      say_error "jenkins-test failed for ${selected_branches[$index]}"
+      overall_errors=1
+    fi
+  done
+
+  if (( overall_errors != 0 )); then
+    die 'Jenkins rerun finished with one or more errors; review the output above'
+  fi
+
+  printf '\nJenkins builds rerun for %s.\n' "$ticket_key"
+  exit 0
+fi
+
+if (( ! dry_run )); then
+  command -v open >/dev/null 2>&1 || die "macOS 'open' command was not found in PATH"
+  jenkins_test_command=$(command -v jenkins-test) \
+    || die "required command not found in PATH: jenkins-test"
+fi
+
+bitbucket_url=${ZBX_BITBUCKET_URL:-https://git.zabbix.com}
+bitbucket_url=${bitbucket_url%/}
+bitbucket_project=${ZBX_BITBUCKET_PROJECT:-ZBX}
+bitbucket_repo=${ZBX_BITBUCKET_REPOSITORY:-zabbix}
+bitbucket_user=${ZBX_BITBUCKET_USER:-ggrigorjevs}
+bitbucket_keychain_service=${ZBX_BITBUCKET_KEYCHAIN_SERVICE:-git.zabbix.com}
+jira_url=${ZBX_JIRA_URL:-${JIRA_URL:-https://support.zabbix.com}}
+jira_url=${jira_url%/}
+jira_user=${ZBX_JIRA_USER:-ggrigorjevs}
+jira_keychain_service=${ZBX_JIRA_KEYCHAIN_SERVICE:-jira-support.zabbix.com}
+
+# Match the existing jenkins-test script's temporary workaround for internal TLS.
+insecure_tls=1
+if [[ ${ZBX_PR_INSECURE_TLS:-1} == 0 ]]; then
+  insecure_tls=0
+fi
+
+for ((index = 0; index < ${#selected_paths[@]}; index++)); do
+  path=${selected_paths[$index]}
+  branch=${selected_branches[$index]}
+  version=${selected_versions[$index]}
+  target=${selected_targets[$index]}
+
+  if ! git -C "$path" remote get-url origin >/dev/null 2>&1; then
+    die "Git remote 'origin' is not configured in $path"
+  fi
+  if ! dirty=$(git -C "$path" status --porcelain); then
+    die "could not check Git status in $path"
+  fi
+  if [[ -n "$dirty" ]]; then
+    printf 'Uncommitted changes in %s:\n%s\n' "$path" "$dirty" >&2
+    die 'commit or stash changes in every selected worktree before opening pull requests'
+  fi
+
+target_was_fetched=0
+case ":$fetched_targets:" in
+  *":$target:"*) target_was_fetched=1 ;;
+esac
+if (( ! target_was_fetched )); then
+  printf 'Fetching origin/%s...\n' "$target"
+  git -C "$path" fetch origin "+refs/heads/$target:refs/remotes/origin/$target" \
+    || die "could not fetch origin/$target"
+  fetched_targets="${fetched_targets}${fetched_targets:+:}$target"
+fi
+
+  target_ref="refs/remotes/origin/$target"
+  git -C "$path" rev-parse --verify --quiet "${target_ref}^{commit}" >/dev/null \
+    || die "base ref '$target_ref' is unavailable"
+  git -C "$path" rev-parse --verify --quiet "refs/heads/$branch^{commit}" >/dev/null \
+    || die "local branch '$branch' is unavailable in $path"
+
+  if ! subjects=$(git -C "$path" log --no-merges --format=%s --reverse \
+    "$target_ref..refs/heads/$branch"); then
+    die "could not read commits for $branch"
+  fi
+
+  summary=''
+  subject_count=0
+  while IFS= read -r subject || [[ -n "$subject" ]]; do
+    [[ -n "$subject" ]] || continue
+    subject=$(printf '%s\n' "$subject" | sed -E \
+      's/^([.A-Z]{10}[[:space:]]+)//; s/^\[[A-Z]+-[0-9]+\][[:space:]]*//')
+    subject=$(printf '%s' "$subject" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
+    [[ -n "$subject" ]] || continue
+
+    subject_count=$((subject_count + 1))
+    if (( subject_count == 1 )); then
+      summary=$subject
+    else
+      summary="$summary; $subject"
+    fi
+  done <<< "$subjects"
+
+  (( subject_count > 0 )) || die "no non-merge commits found between $target and $branch"
+  selected_titles+=("[$ticket_key] $summary")
+
+  if ! changed_files=$(git -C "$path" diff --name-only \
+    "$target_ref...refs/heads/$branch"); then
+    die "could not determine changed files for $branch"
+  fi
+  diff_path=$(printf '%s\n' "$changed_files" | sed -n '1p')
+  selected_diff_paths+=("$diff_path")
+
+  printf 'Prepared %s -> %s; title: %s\n' \
+    "${selected_source_branches[$index]}" "$target" "${selected_titles[$index]}"
+done
+
+if (( dry_run )); then
+  printf '\nReviewer: %s\n' "$reviewer"
+  printf 'Jira ticket: %s\n' "$ticket_key"
+  printf 'Translation note: %s\n' "$TRANSLATION_COMMENT"
+  printf '\nDry run complete. No PRs, Jira comments, or Jenkins builds were created.\n'
+  exit 0
+fi
+
+load_tokens
+
+if (( pick_reviewer )); then
+  pick_reviewer
+fi
+validate_reviewer
+printf 'Reviewer: %s (%s)\n' "$reviewer_display" "$reviewer_name"
+
+# Validate API access before pushing any branches or creating pull requests.
+load_open_pull_requests
+if ! fetch_jira_comments; then
+  die "could not verify Jira access for $ticket_key"
+fi
+
+overall_errors=0
+: > "$tmp_dir/current-pr-records.tsv"
+
+for ((index = 0; index < ${#selected_paths[@]}; index++)); do
+  path=${selected_paths[$index]}
+  branch=${selected_branches[$index]}
+  source_branch=${selected_source_branches[$index]}
+  source_ref="refs/heads/$source_branch"
+  target_ref="refs/heads/${selected_targets[$index]}"
+
+  printf '\nPushing %s...\n' "$source_branch"
+  if ! git -C "$path" push origin "$branch:$source_ref"; then
+    say_error "could not push $branch to origin/$source_branch"
+    overall_errors=1
+    continue
+  fi
+
+  pull_request_id=$(find_existing_pull_request "$source_ref" "$target_ref")
+  if [[ -n "$pull_request_id" ]]; then
+    printf 'Reusing existing open pull request #%s for %s.\n' \
+      "$pull_request_id" "$source_branch"
+    if ! ensure_existing_reviewer "$pull_request_id"; then
+      overall_errors=1
+    fi
+  else
+    payload_file="$tmp_dir/create-pr-$index.json"
+    response_file="$tmp_dir/create-pr-response-$index.json"
+    if ! make_pull_request "$index" "$source_ref" "$target_ref" \
+      "$payload_file" "$response_file"; then
+      overall_errors=1
+      continue
+    fi
+    printf 'Created pull request #%s for %s.\n' "$pull_request_id" "$source_branch"
+  fi
+
+  selected_success[$index]=yes
+  selected_pr_ids[$index]=$pull_request_id
+  selected_pr_urls[$index]="$bitbucket_url/projects/$bitbucket_project/repos/$bitbucket_repo/pull-requests/$pull_request_id/overview"
+done
+
+build_pr_link_records
+
+if [[ -s "$tmp_dir/current-pr-records.tsv" ]]; then
+  if ! update_pr_jira_comment; then
+    overall_errors=1
+  fi
+  if ! add_translation_comment_if_needed; then
+    overall_errors=1
+  fi
+else
+  say_error 'no pull requests were available to add to the Jira ticket; skipping PR-link and translation comments'
+  overall_errors=1
+fi
+
+for ((index = 0; index < ${#selected_paths[@]}; index++)); do
+  [[ "${selected_success[$index]}" == yes ]] || continue
+  printf 'Opening %s\n' "${selected_pr_urls[$index]}"
+  if ! open "${selected_pr_urls[$index]}"; then
+    say_error "could not open pull request #${selected_pr_ids[$index]}"
+    overall_errors=1
+  fi
+done
+
+for ((index = 0; index < ${#selected_paths[@]}; index++)); do
+  [[ "${selected_success[$index]}" == yes ]] || continue
+  printf '\nRunning jenkins-test for %s...\n' "${selected_branches[$index]}"
+  if ! (cd "${selected_paths[$index]}" && "$jenkins_test_command"); then
+    say_error "jenkins-test failed for ${selected_branches[$index]}"
+    overall_errors=1
+  fi
+done
+
+if (( overall_errors != 0 )); then
+  die 'pull-request workflow finished with one or more errors; review the output above'
+fi
+
+printf '\nPull-request workflow completed for %s.\n' "$ticket_key"

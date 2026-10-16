@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: zb <command> [arguments...]
+
+Commands:
+  w [branch-name]  Create or open a Zabbix worktree
+  o [*|-a]         Open the current checkout's UI
+  j                Run Jenkins tests for the current branch
+  pr [options]     Create pull requests and run Jenkins tests
+  i, jira          Open the current branch's Jira issue
+  -h, --help       Show this help
+EOF
+}
+
+die() {
+  printf 'zb: %s\n' "$*" >&2
+  exit 1
+}
+
+open_current_jira() {
+  local branch issue_key jira_url
+
+  branch=$(git branch --show-current 2>/dev/null) \
+    || die 'run this command from inside a Git checkout'
+  [[ -n "$branch" ]] || die 'cannot determine the Jira issue from a detached HEAD'
+
+  if [[ "$branch" =~ (ZBX-[0-9]+) ]]; then
+    issue_key=${BASH_REMATCH[1]}
+  else
+    die "could not find a ZBX issue key in the current branch: $branch"
+  fi
+
+  command -v open >/dev/null 2>&1 || die "macOS 'open' command was not found in PATH"
+
+  jira_url=${ZBX_JIRA_URL:-${JIRA_URL:-https://support.zabbix.com}}
+  jira_url=${jira_url%/}
+  printf 'Opening %s/browse/%s\n' "$jira_url" "$issue_key"
+  open "$jira_url/browse/$issue_key"
+}
+
+if (($# == 0)); then
+  usage >&2
+  exit 2
+fi
+
+subcommand=$1
+shift
+
+case "$subcommand" in
+  w) command_name=zbx-worktree ;;
+  o) command_name=zbx-ui ;;
+  j) command_name=jenkins-test ;;
+  pr|pull-request) command_name=zbx-pr ;;
+  i|jira)
+    if (($# != 0)); then
+      printf 'Usage: zb i (or zb jira)\n' >&2
+      exit 2
+    fi
+    open_current_jira
+    exit
+    ;;
+  -h|--help|help)
+    usage
+    exit 0
+    ;;
+  *)
+    printf 'zb: unknown command: %s\n\n' "$subcommand" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+
+if ! command_path=$(command -v "$command_name"); then
+  printf 'zb: required command not found in PATH: %s\n' "$command_name" >&2
+  exit 127
+fi
+
+exec "$command_path" "$@"
