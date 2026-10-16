@@ -253,8 +253,19 @@
               mygithub="https://github.com/greg-grigorjevs/"
               git="${pkgs.git}/bin/git"
 
-              $git -C $HOME/.dotfiles config user.name "Greg Grigorjevs"
-              $git -C $HOME/.dotfiles config user.email "ggrigorjevs@icloud.com"
+              # Create ~/.gitconfig once if missing. This file is NOT managed
+              # by nix: machine-specific overrides go here (it wins over the
+              # nix-managed ~/.config/git/config), and `git config --global`
+              # writes land here instead of clobbering the nix store symlink
+              # at ~/.config/git/config.
+              if [ ! -e $HOME/.gitconfig ]; then
+                $DRY_RUN_CMD sh -c 'printf "%s\n" "# Machine-local git config. Not managed by nix; overrides ~/.config/git/config." > $HOME/.gitconfig'
+              fi
+
+              # Only set the repo-local identity if it is not set yet, so
+              # per-machine customizations survive rebuilds.
+              $git -C $HOME/.dotfiles config --local --get user.name >/dev/null 2>&1 || $git -C $HOME/.dotfiles config user.name "Greg Grigorjevs"
+              $git -C $HOME/.dotfiles config --local --get user.email >/dev/null 2>&1 || $git -C $HOME/.dotfiles config user.email "ggrigorjevs@icloud.com"
               $git -C $HOME/.dotfiles remote set-url origin git@github.com:greg-grigorjevs/.dotfiles.git
 
               if [ ! -d $HOME/ansible ]; then
@@ -287,14 +298,35 @@
 
           programs.git = {
             enable = true;
-            # userEmail = "gregg@coeouk.com";
-            # userName = "Greg Grigorjevs";
+            # Defaults for every machine. To customize on a specific machine,
+            # edit ~/.gitconfig instead (not managed by nix, and it takes
+            # precedence over this file).
             settings = {
+              user = {
+                name = "Greg Grigorjevs";
+                email = "ggrigorjevs@icloud.com";
+              };
+              init.defaultBranch = "master";
               pull.rebase = true;
               push.default = "upstream";
               core.excludesfile = "~/.config/git/.gitignore";
               rebase.autostash = true;
             };
+            # Work identity for Zabbix repos. Includes are appended after the
+            # settings above, so they take precedence inside ~/work/zbx (and
+            # only there). Note: values in the machine-local ~/.gitconfig are
+            # read last, so a personal user.* override there would still win.
+            includes = [
+              {
+                condition = "gitdir:~/work/zbx/";
+                contents = {
+                  user = {
+                    name = "Grigorijs Grigorjevs";
+                    email = "grigorijs.grigorjevs@zabbix.com";
+                  };
+                };
+              }
+            ];
           };
 
           programs.starship = {
