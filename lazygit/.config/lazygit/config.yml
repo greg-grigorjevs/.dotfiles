@@ -2,6 +2,7 @@ os:
   edit: '~/.dotfiles/bin/floaterm {{filename}}'
 gui:
   scrollHeight: 20
+promptToReturnFromSubprocess: false
 git:
   diffRenderers:
     - command: >-

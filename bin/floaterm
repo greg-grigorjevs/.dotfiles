@@ -28,4 +28,6 @@ absolute_path() {
 
 name="$(absolute_path """$1""")"
 
-eval $FLOATERM $name
+# $FLOATERM is set by vim-floaterm in its terminals and opens the file in the
+# host nvim instance. Anywhere else (plain shells), fall back to a regular nvim.
+eval ${FLOATERM:-nvim} "$name"
