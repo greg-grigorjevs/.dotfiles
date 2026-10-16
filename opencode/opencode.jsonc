@@ -1,0 +1,28 @@
+{
+	"$schema": "https://opencode.ai/config.json",
+	"permissions": [
+		{
+			"action": "external_directory",
+			"resource": "*",
+			"effect": "allow"
+		},
+		{
+			"action": "websearch",
+			"resource": "*",
+			"effect": "allow"
+		},
+		{
+			"action": "read",
+			"resource": "*.env",
+			"effect": "deny"
+		},
+		{
+			"action": "read",
+			"resource": "*.env.*",
+			"effect": "deny"
+		}
+	],
+	"plugins": [
+		"/Users/grigorijs.grigorjevs/.config/opencode/plugins/zbx-jira-context"
+	]
+}

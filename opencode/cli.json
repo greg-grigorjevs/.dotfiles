@@ -1,0 +1,27 @@
+{
+	"$schema": "https://opencode.ai/v2/cli.json",
+	"keybinds": {
+		"session.message.user.previous": "alt+t",
+		"session.message.user.next": "alt+h",
+		"prompt.skills": "ctrl+alt+h",
+		"session.list": "ctrl+alt+s",
+		"session.new": "ctrl+n",
+		"session.half.page.down": "ctrl+d",
+		"session.half.page.up": "ctrl+u",
+		"app.exit": "ctrl+c",
+		"input.newline": "ctrl+j,shift+return"
+	},
+	"tabs": {
+		"layout": "vertical"
+	},
+	"attention": {
+		"sound": true,
+		"volume": 0.1
+  },
+  "theme": {
+    "name": "opencode"
+  },
+  "session": {
+    "sidebar": "hide"
+  }
+}
