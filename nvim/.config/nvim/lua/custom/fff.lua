@@ -96,6 +96,24 @@ function M.copy_path()
   vim.notify('Copied path: ' .. path, vim.log.levels.INFO)
 end
 
+function M.create_file()
+  local picker, state = active_picker()
+  if not picker then return end
+
+  local item = state.filtered_items[state.cursor]
+  local path = item and absolute_path(item.relative_path)
+  local base_dir
+  if path then
+    base_dir = vim.fn.isdirectory(path) == 1 and path or vim.fs.dirname(path)
+  else
+    base_dir = require('fff.conf').get().base_path or vim.fn.getcwd()
+  end
+
+  require('custom.create_file').from_picker(base_dir, function()
+    picker.close()
+  end)
+end
+
 function M.yank_history()
   local ok, storage = pcall(require, 'neoclip.storage')
   if not ok then

@@ -3,9 +3,12 @@ return {
   lazy = false,
   -- enabled = false,
   config = function()
+    -- Newer Neovim versions may not create netrw's legacy augroup.
+    vim.api.nvim_create_augroup('FileExplorer', { clear = false })
     require('nvim-tree').setup({
       filters = {
         dotfiles = false,
+        git_ignored = false,
         custom = { '.gitignore' }
       },
       view = {

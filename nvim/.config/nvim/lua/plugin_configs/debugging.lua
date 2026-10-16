@@ -9,7 +9,11 @@ return {
   },
   config = function()
     local dap = require('dap')
-    require('telescope').load_extension('dap')
+    -- Telescope is optional; keep DAP usable when another picker is active.
+    local has_telescope, telescope = pcall(require, 'telescope')
+    if has_telescope then
+      telescope.load_extension('dap')
+    end
 
     dap.adapters.php = {
       type = "executable",

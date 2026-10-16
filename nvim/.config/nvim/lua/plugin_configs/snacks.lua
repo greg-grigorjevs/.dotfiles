@@ -9,7 +9,27 @@ return {
     end
   end,
   opts = {
-    picker = { enabled = true },
+    picker = {
+      enabled = true,
+      sources = {
+        files = {
+          actions = {
+            create_file = function(picker)
+              require('custom.create_file').from_picker(picker:dir(), function()
+                picker:close()
+              end)
+            end,
+          },
+          win = {
+            input = {
+              keys = {
+                ['<M-n>'] = { 'create_file', mode = { 'i', 'n' }, desc = 'Create file or directory' },
+              },
+            },
+          },
+        },
+      },
+    },
     -- your configuration comes here
     -- or leave it empty to use the default settings
     -- refer to the configuration section below

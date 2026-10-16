@@ -1,2 +1,4 @@
 .lsp/
 .clj-kondo/
+opencode/service.json
+.DS_Store

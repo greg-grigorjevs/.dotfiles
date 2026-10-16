@@ -48,6 +48,10 @@ return {
         },
       },
     })
-    require('telescope').load_extension('neoclip')
+    -- Telescope is optional (it may be disabled in favor of another picker).
+    local has_telescope, telescope = pcall(require, 'telescope')
+    if has_telescope then
+      telescope.load_extension('neoclip')
+    end
   end
 }

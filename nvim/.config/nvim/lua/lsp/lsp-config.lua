@@ -15,6 +15,7 @@ local servers = {
 require('mason').setup()
 require('mason-lspconfig').setup({
   ensure_installed = servers,
+  automatic_enable = false,
 })
 require('mason-null-ls').setup({
   ensure_installed = {
@@ -58,57 +59,46 @@ end
 
 local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
-local lspconfig = require('lspconfig');
 for _, server in ipairs(servers) do
+  local server_config = {
+    on_attach = on_attach,
+    capabilities = capabilities,
+  }
+
   if server == 'lua_ls' then
-    lspconfig[server].setup {
-      on_attach = on_attach,
-      capabilities = capabilities,
-      settings = {
-        Lua = {
-          diagnostics = {
-            globals = { 'vim', 'use' }
-          }
+    server_config.settings = {
+      Lua = {
+        diagnostics = {
+          globals = { 'vim', 'use' }
         }
       }
     }
   elseif server == 'cssls' then
-    lspconfig[server].setup {
-      on_attach = on_attach,
-      capabilities = { textDocument = { completion = { completionItem = { snippetSupport = true } } } },
-      filetypes = { 'html', 'css', 'scss', 'less' }
+    server_config.capabilities = {
+      textDocument = { completion = { completionItem = { snippetSupport = true } } }
     }
+    server_config.filetypes = { 'html', 'css', 'scss', 'less' }
   elseif server == 'html' then
-    lspconfig[server].setup {
-      on_attach = on_attach,
-      capabilities = capabilities,
-      filetypes = { "html", "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact",
-        "typescript.tsx", "svelte", 'blade' },
-    }
+    server_config.filetypes = { "html", "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact",
+      "typescript.tsx", "svelte", 'blade' }
   elseif server == 'intelephense' then
-    lspconfig[server].setup {
-      on_attach = on_attach,
-      capabilities = capabilities,
-      single_file_support = true,
-      settings = {
-        intelephense = {
-          environment = {
-            include_paths = {
-              "./vendor/pestphp",
-              "./vendor/phpunit/phpunit",
-              -- "./vendor/laravel" -- messes up with the lsp for some reason
-            }
+    server_config.single_file_support = true
+    server_config.settings = {
+      intelephense = {
+        environment = {
+          include_paths = {
+            "./vendor/pestphp",
+            "./vendor/phpunit/phpunit",
+            -- "./vendor/laravel" -- messes up with the lsp for some reason
           }
         }
       }
     }
-  else
-    lspconfig[server].setup {
-      on_attach = on_attach,
-      capabilities = capabilities,
-    }
   end
+
+  vim.lsp.config(server, server_config)
 end
+vim.lsp.enable(servers)
 
 -- For some reason intelephense does not attach to a blade file
 -- when it is the FIRST buffer that is opened after nvim is openned

@@ -13,6 +13,18 @@ end
 
 -- Mappings
 --[[ imap("dj", "<ESC>") ]]
+imap("<M-Left>", "<C-o>b")
+imap("<M-Right>", "<C-o>w")
+-- Handle Alt+Left/Right when the terminal or tmux reports them as Alt+B/F.
+imap("<M-b>", "<C-o>b")
+imap("<M-f>", "<C-o>w")
+imap("<M-BS>", "<C-w>")
+imap("<M-Del>", "<C-o>dw")
+-- Kitty sends Alt+Left/Right as Esc-b/Esc-f.
+imap("<Esc>b", "<C-o>b")
+imap("<Esc>f", "<C-o>w")
+-- Kitty sends macOS Option+Delete (backspace) as Esc followed by DEL.
+imap("\27\127", "<C-w>")
 
 -- bufferline shortcuts navigation
 --[[ nmap("<Tab>", ":BufferLineCycleNext<CR>") ]]
@@ -45,6 +57,10 @@ vim.cmd [[
 " stay at the bottom of the yanked text after yanking 
 xnoremap y ygv<ESC>
 ]]
+
+-- Paste over a visual selection without yanking the replaced text.
+vim.keymap.set("x", "p", '"_dP', { desc = "Paste without yanking replaced text" })
+vim.keymap.set("x", "P", '"_dP', { desc = "Paste without yanking replaced text" })
 
 -- horizontal scroll
 nmap("<C-L>", "20zl")

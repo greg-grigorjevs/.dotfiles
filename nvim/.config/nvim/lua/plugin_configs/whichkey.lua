@@ -11,33 +11,60 @@ return {
   config = function()
     local Snacks = require("snacks")
     local wk = require("which-key")
+
+    local function copy_opencode_location(is_visual)
+      local path = vim.fn.expand("%:p:.")
+      if path == "" or vim.bo.buftype ~= "" then
+        vim.notify("No file path for current buffer", vim.log.levels.WARN)
+        return
+      end
+
+      local start_line = vim.fn.line(".")
+      local end_line = start_line
+      if is_visual then
+        start_line = vim.fn.line("v")
+        end_line = vim.fn.line(".")
+        if start_line > end_line then
+          start_line, end_line = end_line, start_line
+        end
+      end
+
+      local location = ("@%s#%d"):format(path, start_line)
+      if end_line > start_line then
+        location = location .. "-" .. end_line
+      end
+
+      vim.fn.setreg("+", location)
+      vim.notify("Copied " .. location)
+    end
+
     wk.add({
       { "<leader>e",   "<cmd>NvimTreeFindFileToggle<cr>",                                           desc = "File Tree" },
 
       { "<leader>f",   group = "Find" },
-      { "<leader>fa",  function() require('fff').find_files() end,                                   desc = "Find Files" },
-      { "<leader>fb",  function() Snacks.picker.buffers({ sort_lastused = true }) end,               desc = "Buffers" },
-      { "<leader>fc",  function() Snacks.picker.command_history() end,                               desc = "Command History" },
+      { "<leader>fa",  function() require('fff').find_files() end,                                  desc = "Find Files" },
+      { "<leader>fb",  function() Snacks.picker.buffers({ sort_lastused = true }) end,              desc = "Buffers" },
+      { "<leader>fc",  function() Snacks.picker.command_history() end,                              desc = "Command History" },
       { "<leader>fd",  function() require('dap').list_breakpoints(true) end,                        desc = "Debugging Breakpoints" },
-      { "<leader>fs",  function() require('fff').live_grep() end,                                    desc = "Grep Search" },
-      { "<leader>fS",  function() require('fff').live_grep({ grep = { modes = { 'regex' } } }) end,  desc = "Regex Grep" },
-      { "<leader>fh",  function() Snacks.picker.help() end,                                          desc = "Help Tags" },
+      { "<leader>fs",  function() require('fff').live_grep() end,                                   desc = "Grep Search" },
+      { "<leader>fS",  function() require('fff').live_grep({ grep = { modes = { 'regex' } } }) end, desc = "Regex Grep" },
+      { "<leader>fh",  function() Snacks.picker.help() end,                                         desc = "Help Tags" },
       { "<leader>fg",  function() Snacks.picker.git_status() end,                                   desc = "Git Status" },
       { "<leader>fy",  function() require('custom.fff').yank_history() end,                         desc = "Yank History" },
-      { "<leader>fr",  function() require('fff').resume() end,                                       desc = "Last Search" },
+      { "<leader>fr",  function() require('fff').resume() end,                                      desc = "Last Search" },
       { "<leader>fo",  function() Snacks.picker.pickers() end,                                      desc = "List Available Pickers" },
-      { "<leader>fu",  function() Snacks.picker.recent({ filter = { cwd = true } }) end,             desc = "Recently Opened Files" },
-      { "<leader>fp",  function() require('harpoon.ui').toggle_quick_menu() end,                   desc = "Har[p]oon" },
+      { "<leader>fu",  function() Snacks.picker.recent({ filter = { cwd = true } }) end,            desc = "Recently Opened Files" },
+      { "<leader>fp",  function() require('harpoon.ui').toggle_quick_menu() end,                    desc = "Har[p]oon" },
       { "<leader>fj",  function() Snacks.picker.jumps() end,                                        desc = "[J]umplist" },
       { "<leader>f/",  function() Snacks.picker.lines() end,                                        desc = "Search Current File" },
       { "<leader>fl",  group = "LSP" },
       { "<leader>fls", function() Snacks.picker.lsp_symbols() end,                                  desc = "Document Symbols" },
       { "<leader>flS", function() Snacks.picker.lsp_workspace_symbols() end,                        desc = "Workspace Symbols" },
       { "<leader>flr", function() Snacks.picker.lsp_references() end,                               desc = "LSP References" },
-      { "<leader>fld", function() Snacks.picker.diagnostics() end,                                 desc = "LSP Diagnostics" },
+      { "<leader>fld", function() Snacks.picker.diagnostics() end,                                  desc = "LSP Diagnostics" },
       { "<leader>fm",  group = "Bookmarks" },
-      { "<leader>fma", "<cmd>BookmarkShowAll<cr>",                                                desc = "Show [A]ll bookmarks" },
-      { "<leader>fmc", "<cmd>BookmarkNext<cr>",                                                   desc = "Next [c]urrent-file bookmark" },
+      { "<leader>fma", "<cmd>BookmarkShowAll<cr>",                                                  desc = "Show [A]ll bookmarks" },
+      { "<leader>fmc", "<cmd>BookmarkNext<cr>",                                                     desc = "Next [c]urrent-file bookmark" },
 
       { "<leader>g",   group = "Git" },
       { "<leader>gj",  "<cmd>lua require 'gitsigns'.next_hunk()<cr>",                               desc = "Next Hunk" },
@@ -49,8 +76,8 @@ return {
       { "<leader>gR",  "<cmd>lua require 'gitsigns'.reset_buffer()<cr>",                            desc = "Reset Buffer" },
       { "<leader>gs",  "<cmd>lua require 'gitsigns'.stage_hunk()<cr>",                              desc = "Stage Hunk" },
       { "<leader>gS",  "<cmd>lua require 'gitsigns'.stage_buffer()<cr>",                            desc = "Stage Buffer" },
-      { "<leader>gs",  "<cmd>'<,'>Gitsigns stage_hunk<cr>",                                         mode = { "x", "v" },                            desc = "Stage Hunk Visual" },
-      { "<leader>gs",  "<cmd>Gitsigns stage_hunk<cr>",                                              mode = "n",                                     desc = "Stage Hunk" },
+      { "<leader>gs",  "<cmd>'<,'>Gitsigns stage_hunk<cr>",                                         mode = { "x", "v" },                  desc = "Stage Hunk Visual" },
+      { "<leader>gs",  "<cmd>Gitsigns stage_hunk<cr>",                                              mode = "n",                           desc = "Stage Hunk" },
       { "<leader>gu",  "<cmd>lua require 'gitsigns'.undo_stage_hunk()<cr>",                         desc = "Undo Stage Hunk" },
       { "<leader>gB",  function() Snacks.picker.git_branches() end,                                 desc = "Checkout branch" },
       { "<leader>gc",  ':G commit -m "',                                                            desc = "Checkout commit" },
@@ -60,16 +87,10 @@ return {
       { "<leader>gdc", "<cmd>DiffviewClose<cr>",                                                    desc = "close" },
       { "<leader>gdm", "<cmd>DiffviewOpen master<cr>",                                              desc = "compare with master" },
 
-      { "<leader>o",   group = "Obsidian" },
-      { "<leader>on",  ":ObsidianNew ",                                                             desc = "[N]ew Obsidian Note" },
-      { "<leader>op",  "<cmd>ObsidianOpen<CR>",                                                     desc = "O[p]en current note" },
-      { "<leader>ot",  "<cmd>ObsidianToday<CR>",                                                    desc = "New Note for [T]oday" },
-
-
       { "<leader>t",   group = "Terminal/Test" },
       {
         "<leader>tg",
-        "<cmd>FloatermNew --autoclose=2 --name=lazygit lazygit --use-config-file=\"$HOME/.dotfiles/lazygit/.config/lazygit/config.yml\"<cr>",
+        "<cmd>FloatermNew --autoclose=always --name=lazygit lazygit --use-config-file=\"$HOME/.dotfiles/lazygit/.config/lazygit/config.yml\"<cr>",
         desc = "lazygit"
       },
       { "<leader>ty", "<cmd>FloatermNew yazi<cr>",                             desc = "yazi file explorer" },
@@ -106,23 +127,33 @@ return {
       { "<leader>yf", "<cmd>let @* = expand('%:t')<CR>",                       desc = "Current buffer's filename" },
       { "<leader>yp", "<cmd>let @* = expand('%')<CR>",                         desc = "Current buffer's relative path" },
       { "<leader>yP", "<cmd>let @* = expand('%:p')<CR>",                       desc = "Current buffer's full path" },
+      {
+        "<leader>yc",
+        function() copy_opencode_location(false) end,
+        mode = "n",
+        desc = "Copy OpenCode location",
+      },
+      {
+        "<leader>yc",
+        function() copy_opencode_location(true) end,
+        mode = "x",
+        desc = "Copy OpenCode location",
+      },
 
-      { "<leader>w",  "<cmd>w<cr>",                                            desc = "Save File" },
-      { "<leader>W",  "<cmd>wa<cr>",                                           desc = "Save All Files" },
-      { "<leader>q",  "<cmd>q<cr>",                                            desc = "Close File" },
-      { "<leader>Q",  "<cmd>qa!<cr>",                                          desc = "Quit Nvim" },
+      { "<leader>w", "<cmd>w<cr>",          desc = "Save File" },
+      { "<leader>W", "<cmd>wa<cr>",         desc = "Save All Files" },
+      { "<leader>q", "<cmd>q<cr>",          desc = "Close File" },
+      { "<leader>Q", "<cmd>qa!<cr>",        desc = "Quit Nvim" },
 
-      { "<leader>%",  "<cmd>w<bar>so %<cr>",                                   desc = "Save and source current file" },
+      { "<leader>%", "<cmd>w<bar>so %<cr>", desc = "Save and source current file" },
 
     })
 
 
     wk.add({
-      { "<M-o>",  "<cmd>ObsidianQuickSwitch<CR>",                             desc = "[O]bsidian notes search" },
-      { "<M-O>",  "<cmd>ObsidianSearch<CR>",                                  desc = "[O]bsidian notes grep search" },
-      { "<C-\\>", "<cmd>FloatermToggle ft1 --width=0.9 --height=0.9<cr>",     desc = "Toggle Terminal" },
-      { "<C-P>",  function() require('fff').find_files() end,                                       desc = "Find files" },
-      { "<M-p>",  function() Snacks.picker.files({ hidden = true, ignored = true }) end,            desc = "Find all files" },
+      { "<C-\\>", "<cmd>FloatermToggle ft1 --width=0.9 --height=0.9<cr>",                desc = "Toggle Terminal" },
+      { "<C-P>",  function() require('fff').find_files() end,                            desc = "Find files" },
+      { "<M-p>",  function() Snacks.picker.files({ hidden = true, ignored = true }) end, desc = "Find all files" },
     })
 
 
@@ -174,7 +205,8 @@ return {
   tnoremap <C-\> <C-\><C-n>:FloatermToggle<cr>
   tnoremap ah <C-\><C-n>
 
-  tnoremap   <silent>   <M-b>    <C-\><C-n>:FloatermPrev<CR>
+  " Free Alt+B for word-left in terminal apps (Kitty maps Alt+Left to Esc-b).
+  tnoremap   <silent>   <M-S-b>  <C-\><C-n>:FloatermPrev<CR>
   tnoremap   <silent>   <M-s>    <C-\><C-n>:FloatermNext<CR>
   tnoremap   <silent>   <M-x>    <C-\><C-n>:FloatermKill<CR>
 

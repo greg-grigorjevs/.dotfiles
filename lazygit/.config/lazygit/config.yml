@@ -4,4 +4,12 @@ gui:
   scrollHeight: 20
 git:
   diffRenderers:
-    - command: delta --{{colorScheme}} --paging=never
+    - command: >-
+        delta --{{colorScheme}} --paging=never --syntax-theme=ansi
+        --line-numbers --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
+        --minus-style='red' --minus-emph-style='black red'
+        --plus-style='green' --plus-emph-style='black green'
+        --line-numbers-minus-style='red' --line-numbers-plus-style='green' --line-numbers-zero-style='brightblack'
+    - type: extDiff
+      name: difftastic
+      command: difft --color=always --background={{colorScheme}} --context={{diffContext}}

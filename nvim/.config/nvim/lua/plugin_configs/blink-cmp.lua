@@ -1,5 +1,6 @@
 return { -- optional blink completion source for require statements and module annotations
   "saghen/blink.cmp",
+  enabled = false, -- keep nvim-cmp as the active completion engine
   version = '1.*',
   ---@module 'blink.cmp'
   ---@type blink.cmp.Config

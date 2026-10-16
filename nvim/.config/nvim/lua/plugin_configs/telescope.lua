@@ -23,6 +23,14 @@ return {
         defaults = {
           mappings = {
             i = {
+              -- Telescope uses <M-f> for horizontal result scrolling by default.
+              -- Override it so Kitty's Alt+Right (Esc-f) moves the prompt cursor.
+              ["<M-Left>"] = { "<C-o>b", type = "command" },
+              ["<M-Right>"] = { "<C-o>w", type = "command" },
+              ["<M-b>"] = { "<C-o>b", type = "command" },
+              ["<M-f>"] = { "<C-o>w", type = "command" },
+              ["<Esc>b"] = { "<C-o>b", type = "command" },
+              ["<Esc>f"] = { "<C-o>w", type = "command" },
               ["<esc>"] = require('telescope.actions').close,
               ["<C-h>"] = function(prompt_bufnr)
                 -- Get the currently selected entries (multiple files)
@@ -50,12 +58,6 @@ return {
             }
           },
           path_display = { 'truncate' },
-          pickers = {
-            --[[ jumplist = {show_line = false}, -- doesn't work ?! ]]
-            lsp_dynamic_workspace_symbols = { show_line = false, fname_width = 100 },
-            lsp_document_symbols = { show_line = false, trim_text = true },
-            lsp_references = { show_line = false, trim_text = true },
-          },
           layout_config = {
             horizontal = { width = 0.99, height = 0.99, preview_width = 0.5 }
           },
@@ -110,6 +112,13 @@ return {
             "cwp_stats/",
             ".hammerspoon/Spoons/"
           },
+        },
+        pickers = {
+          find_files = { hidden = true, no_ignore = true },
+          --[[ jumplist = {show_line = false}, -- doesn't work ?! ]]
+          lsp_dynamic_workspace_symbols = { show_line = false, fname_width = 100 },
+          lsp_document_symbols = { show_line = false, trim_text = true },
+          lsp_references = { show_line = false, trim_text = true },
         },
         extensions = {
           file_browser = {

@@ -6,6 +6,14 @@ export EDITOR='nvim'
 
 # custom bindings
 bindkey -s ^f "tmux_sessionizer\n"
+_fzf_nvim() {
+  local file
+  file=$(find . -type f | fzf) || return
+  [[ -n "$file" ]] && nvim -- "$file"
+}
+zle -N _fzf_nvim
+bindkey '^[f' _fzf_nvim
+bindkey '^[[1;3C' forward-word
 
 # Aliases
 alias zshconf="nvim ~/.zshrc"
@@ -14,7 +22,9 @@ alias kittyconfig="nvim ~/.config/kitty/kitty.conf"
 alias reload="source ~/.zshrc"
 alias tmuxconf="nvim ~/.tmux.conf"
 alias c="clear"
+alias v="nvim"
 alias lg="lazygit"
+alias op="opencode"
 alias pa="php artisan"
 alias pat="php artisan test"
 alias patf="php artisan test --filter"
@@ -27,7 +37,7 @@ alias kanataoff="tmux kill-session -t kanata"
 alias kanatacheck="kanata --cfg ~/.dotfiles/kmonad/kanata.kbd --check"
 
 alias kanatarestart="kanataoff && kanataon"
-alias nixrebuild="/run/current-system/sw/bin/nix run  --extra-experimental-features 'nix-command flakes' nix-darwin -- switch --flake ~/.dotfiles/nix#default --impure"
+alias nixrebuild="sudo /run/current-system/sw/bin/nix run  --extra-experimental-features 'nix-command flakes' nix-darwin -- switch --flake ~/.dotfiles/nix#default --impure"
 
 # Functions
 gswf() {
@@ -60,10 +70,31 @@ function yy() {
 }
 
 function tcd() {
-  local name
-  name=$(basename "$1")
-  tmux new-session -ds $name -c $(realpath $1)
-  tmux switch-client -t $name
+  if (( $# != 1 )); then
+    print -u2 'Usage: tcd <directory>'
+    return 2
+  fi
+
+  local path name
+  path=$(realpath -- "$1") || return
+  if [[ ! -d $path ]]; then
+    print -u2 "tcd: not a directory: $1"
+    return 1
+  fi
+
+  name=${path:t}
+  # Dots in tmux target names are interpreted as window/pane separators.
+  name=${name//./_}
+
+  if ! tmux has-session -t "=$name" 2>/dev/null; then
+    tmux new-session -d -s "$name" -c "$path" || return
+  fi
+
+  if [[ -n ${TMUX:-} ]]; then
+    tmux switch-client -t "=$name"
+  else
+    tmux attach-session -t "=$name"
+  fi
 }
 
 # PATH
@@ -71,11 +102,14 @@ export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin":$PATH
 export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 export PATH="/Applications/kitty.app/Contents/MacOS":$PATH # makes kitty command work
 export PATH="$HOME/.local/bin":$PATH
-export PATH="~/bin":$PATH
+export PATH="$HOME/bin":$PATH
 export PATH="$HOME/.composer/vendor/bin":$PATH
 export PATH="$HOME/.config/composer/vendor/bin":$PATH
 export PATH="$HOME/.dotfiles/bin":$PATH
 export PATH="$HOME/.cargo/bin":$PATH
+
+# lazygit
+export XDG_CONFIG_HOME="$HOME/.config"
 
 # fzf config
 export FZF_DEFAULT_COMMAND="fd --exclude 'node_modules'"

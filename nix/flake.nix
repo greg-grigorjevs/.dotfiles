@@ -201,6 +201,7 @@
             sesh
             worktrunk
             delta
+            difftastic
             neovim
             ripgrep
             lazygit
@@ -286,6 +287,7 @@
             # userName = "Greg Grigorjevs";
             settings = {
               pull.rebase = true;
+              push.default = "upstream";
               core.excludesfile = "~/.config/git/.gitignore";
               rebase.autostash = true;
             };

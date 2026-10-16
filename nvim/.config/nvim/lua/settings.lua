@@ -48,10 +48,10 @@ vim.o.smartcase = true
 vim.o.formatoptions =
 'qnj1' -- q  - comment formatting; n - numbered lists; j - remove comment when joining lines; 1 - don't break after one-letter word
 vim.o.smartindent = true
-vim.o.expandtab = true
-vim.o.smarttab = true
-vim.o.tabstop = 2     -- 1 tab = 2 spaces
-vim.o.shiftwidth = 2
+vim.opt.expandtab = false
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.softtabstop = 4
 vim.o.undofile = true -- save undo history
 vim.o.splitbelow = true
 vim.o.splitright = true
@@ -78,13 +78,6 @@ vim.g.gruvbox_baby_highlights = {
   --[[ FlashLabel = { bg = colors.bright_yellow, fg = colors.dark }, ]]
   FlashLabel = { bg = colors.milk, fg = colors.dark },
 
-  -- Markdown
-  RenderMarkdownH2Bg = { style = 'bold', fg = colors.bright_yellow },
-  RenderMarkdownH2 = { style = 'bold', fg = colors.light_blue },
-  RenderMarkdownChecked = { fg = colors.dark_gray },
-  RenderMarkdownUnchecked = { fg = colors.magenta },
-  RenderMarkdownLink = { fg = colors.blue_gray },
-  RenderMarkdownBullet = { fg = colors.blue_gray },
   ["@keyword.directive.markdown"] = { fg = colors.blue_gray },
   ["@markup.link.label.markdown_inline"] = { fg = colors.blue_gray },
   ["@markup.heading"] = { fg = colors.milk },
