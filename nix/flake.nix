@@ -174,6 +174,9 @@
         homebrew.brews = [
           "php"
           "composer"
+          "xcode-build-server"
+          "xcbeautify"
+          "xcp"
         ];
 
         homebrew.masApps = {
