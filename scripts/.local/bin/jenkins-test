@@ -1,0 +1,905 @@
+#!/bin/bash
+
+set -u
+set -o pipefail
+
+# ============================================================
+# Configuration
+# ============================================================
+
+JENKINS_URL="https://ci.zabbix.lan"
+JENKINS_USER="ggrigorjevs"
+JENKINS_KEYCHAIN_SERVICE="jenkins-ci.zabbix.lan"
+
+JIRA_URL="https://support.zabbix.com"
+JIRA_USER="ggrigorjevs"
+JIRA_KEYCHAIN_SERVICE="jira-support.zabbix.com"
+
+# Temporary workaround for the internal self-signed certificates.
+# Prefer configuring your company's internal CA certificate.
+CURL_TLS_OPTIONS=(--insecure)
+
+# How long to wait for Jenkins to assign actual build numbers.
+QUEUE_TIMEOUT=180
+QUEUE_POLL_INTERVAL=2
+
+# How long the background build-status watcher may wait for the builds to
+# finish before it records the results it has. Override with RESULT_TIMEOUT.
+RESULT_TIMEOUT="${RESULT_TIMEOUT:-43200}"
+
+JOBS=(api frontend frontend-phpunit syntax-check)
+
+# ============================================================
+# Jira comment helpers
+# ============================================================
+
+# Map a Jenkins build result to a Jira emoticon. "(?)" means the result is
+# not known yet; "(-)" covers results without a dedicated icon.
+result_marker() {
+    case "$1" in
+        SUCCESS) printf '(/)' ;;
+        FAILURE) printf '(x)' ;;
+        UNSTABLE) printf '(!)' ;;
+        '') printf '(?)' ;;
+        *) printf '(-)' ;;
+    esac
+}
+
+# Print the comment section for this branch. Pass "yes" to prefix every link
+# with the build's result marker (read from <work dir>/<job>.result). Build
+# numbers are read from <work dir>/<job>.build-number.
+build_branch_comment() {
+    local with_status="$1"
+    local api_marker="" frontend_marker="" phpunit_marker="" syntax_marker=""
+
+    if [[ "$with_status" == "yes" ]]; then
+        api_marker="$(result_marker "$(cat "$TMP_DIR/api.result" 2>/dev/null)") "
+        frontend_marker="$(result_marker "$(cat "$TMP_DIR/frontend.result" 2>/dev/null)") "
+        phpunit_marker="$(result_marker "$(cat "$TMP_DIR/frontend-phpunit.result" 2>/dev/null)") "
+        syntax_marker="$(result_marker "$(cat "$TMP_DIR/syntax-check.result" 2>/dev/null)") "
+    fi
+
+    printf '%s:\n' "$BRANCH"
+    printf '* %s[API|%s/job/zabbix-dev/job/api/%s/]\n' \
+        "$api_marker" "$JENKINS_URL" "$(cat "$TMP_DIR/api.build-number" 2>/dev/null)"
+    printf '* %s[Frontend|%s/job/zabbix-dev/job/frontend/%s/]\n' \
+        "$frontend_marker" "$JENKINS_URL" "$(cat "$TMP_DIR/frontend.build-number" 2>/dev/null)"
+    printf '* %s[PHPunit|%s/job/zabbix-dev/job/frontend-phpunit/%s/]\n' \
+        "$phpunit_marker" "$JENKINS_URL" "$(cat "$TMP_DIR/frontend-phpunit.build-number" 2>/dev/null)"
+    printf '* %s[Syntax check|%s/job/zabbix-dev/job/syntax-check/%s/]\n' \
+        "$syntax_marker" "$JENKINS_URL" "$(cat "$TMP_DIR/syntax-check.build-number" 2>/dev/null)"
+}
+
+# Remove the comment section for this branch, preserving sections for other
+# versions. Buffer blank lines so trailing whitespace from a removed section
+# does not accumulate between runs.
+strip_branch_section() {
+    awk -v branch="$BRANCH" '
+        $0 == branch ":" {
+            skipping = 1
+            next
+        }
+
+        skipping && /^feature\/[^[:space:]]+:[[:space:]]*$/ {
+            skipping = 0
+        }
+
+        !skipping {
+            if ($0 ~ /^[[:space:]]*$/) {
+                blank_lines++
+                next
+            }
+
+            while (blank_lines > 0) {
+                print ""
+                blank_lines--
+            }
+
+            print
+        }
+    '
+}
+
+# ============================================================
+# Background build-status watcher
+# ============================================================
+
+# Poll the builds started by the main flow until they finish (or
+# RESULT_TIMEOUT elapses), then replace this branch's Jira comment section
+# with one that shows each build's status. Runs detached; the main flow
+# prepares <state dir> with the curl configs, build numbers and state.env.
+watch_build_status() {
+    watch_dir="$1"
+    watcher_ok=0
+
+    TMP_DIR="$watch_dir"
+    JENKINS_CURL_CONFIG="$watch_dir/jenkins-curl.conf"
+    JIRA_CURL_CONFIG="$watch_dir/jira-curl.conf"
+
+    watcher_cleanup() {
+        rm -f "$JENKINS_CURL_CONFIG" "$JIRA_CURL_CONFIG"
+        if (( watcher_ok )); then
+            rm -rf "$watch_dir"
+        else
+            echo "Watcher failed; log kept at $watch_dir/watcher.log"
+        fi
+    }
+
+    trap watcher_cleanup EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    if [[ ! -f "$watch_dir/state.env" ]]; then
+        echo "Error: missing watcher state: $watch_dir/state.env"
+        return 1
+    fi
+
+    . "$watch_dir/state.env" || {
+        echo "Error: could not load watcher state: $watch_dir/state.env"
+        return 1
+    }
+
+    JIRA_COMMENTS_URL="$JIRA_URL/rest/api/2/issue/$TICKET_KEY/comment"
+
+    local results_elapsed=0 results_pending still_pending job build_number
+    local build_json building build_result interval
+    local current_comment current_body section_without_branch branch_comment
+    local updated_comment status_comment_json status_comment_response
+    local status_http status_curl_exit
+
+    echo "Watching Jenkins builds for $BRANCH (up to ${RESULT_TIMEOUT}s)..."
+
+    results_pending="${JOBS[*]}"
+
+    while [[ -n "$results_pending" ]] && (( results_elapsed < RESULT_TIMEOUT )); do
+        still_pending=""
+
+        for job in $results_pending; do
+            build_number=$(cat "$TMP_DIR/$job.build-number")
+            build_json=$(curl "${CURL_TLS_OPTIONS[@]}" \
+                --config "$JENKINS_CURL_CONFIG" \
+                --silent --show-error \
+                --connect-timeout 10 \
+                --max-time 20 \
+                "$JENKINS_URL/job/zabbix-dev/job/$job/$build_number/api/json?tree=building,result" \
+                2>/dev/null) || build_json=""
+
+            building=$(printf '%s' "$build_json" |
+                jq -r '.building | tostring' 2>/dev/null)
+            build_result=$(printf '%s' "$build_json" |
+                jq -r '.result // empty' 2>/dev/null)
+
+            if [[ "$building" == "false" && -n "$build_result" ]]; then
+                printf '%s\n' "$build_result" > "$TMP_DIR/$job.result"
+                echo "✓ $job: $build_result"
+            else
+                still_pending="${still_pending}${still_pending:+ }$job"
+            fi
+        done
+
+        results_pending="$still_pending"
+
+        if [[ -n "$results_pending" ]]; then
+            # Quick first checks, then back off for long-running builds.
+            if (( results_elapsed < 300 )); then
+                interval=15
+            elif (( results_elapsed < 3600 )); then
+                interval=60
+            else
+                interval=300
+            fi
+
+            sleep "$interval"
+            results_elapsed=$((results_elapsed + interval))
+        fi
+    done
+
+    if [[ -n "$results_pending" ]]; then
+        echo "✗ Not finished within ${RESULT_TIMEOUT}s: $results_pending"
+        echo "  Their links are marked with (?) in the Jira comment."
+    fi
+
+    if [[ -z "${COMMENT_ID:-}" ]]; then
+        echo "Error: the Jira comment ID is unknown; not adding build statuses."
+        return 1
+    fi
+
+    # Re-read the comment; if a newer run already replaced this branch's
+    # section, leave it alone.
+    current_comment=$(curl "${CURL_TLS_OPTIONS[@]}" \
+        --config "$JIRA_CURL_CONFIG" \
+        --silent --show-error \
+        --connect-timeout 10 \
+        --max-time 30 \
+        "$JIRA_COMMENTS_URL/$COMMENT_ID") || current_comment=""
+
+    current_body=$(printf '%s' "$current_comment" |
+        jq -r '.body // empty' 2>/dev/null)
+
+    if [[ -z "$current_body" ]]; then
+        echo "Error: could not read the Jira comment back to add build statuses."
+        return 1
+    fi
+
+    for job in "${JOBS[@]}"; do
+        build_number=$(cat "$TMP_DIR/$job.build-number")
+        if ! printf '%s' "$current_body" |
+            grep -Fq -e "/job/zabbix-dev/job/$job/$build_number/"; then
+            echo "The comment section for $BRANCH was replaced by a newer run; leaving it unchanged."
+            watcher_ok=1
+            return 0
+        fi
+    done
+
+    section_without_branch=$(printf '%s\n' "$current_body" |
+        strip_branch_section)
+    branch_comment=$(build_branch_comment yes)
+    updated_comment=$(printf '%s\n\n%s' "$section_without_branch" "$branch_comment")
+
+    status_comment_json="$TMP_DIR/status-comment.json"
+    status_comment_response="$TMP_DIR/status-comment-response.json"
+
+    printf '%s' "$updated_comment" |
+        jq -Rs '{body: .}' > "$status_comment_json" || {
+        echo "Error: could not construct the Jira status comment JSON."
+        return 1
+    }
+
+    status_http=$(curl "${CURL_TLS_OPTIONS[@]}" \
+        --config "$JIRA_CURL_CONFIG" \
+        --silent --show-error \
+        --connect-timeout 10 \
+        --max-time 30 \
+        --output "$status_comment_response" \
+        --write-out '%{http_code}' \
+        --request PUT \
+        --header "Accept: application/json" \
+        --header "Content-Type: application/json" \
+        --data-binary "@$status_comment_json" \
+        "$JIRA_COMMENTS_URL/$COMMENT_ID")
+    status_curl_exit=$?
+
+    if [[ "$status_curl_exit" -ne 0 ]]; then
+        echo "Error: could not connect to Jira to add build statuses."
+        return 1
+    fi
+
+    if [[ "$status_http" != "200" ]]; then
+        echo "Error: Jira did not add the build statuses (HTTP $status_http)."
+        jq . "$status_comment_response" 2>/dev/null || cat "$status_comment_response"
+        return 1
+    fi
+
+    echo "✓ Jira build comment updated with build statuses for $BRANCH."
+    watcher_ok=1
+    return 0
+}
+
+# Detached-watcher entry point.
+if [[ "${1:-}" == "--watch-status" ]]; then
+    if (( $# != 2 )); then
+        echo "Usage: jenkins-test --watch-status <state-dir>" >&2
+        exit 2
+    fi
+    watch_build_status "$2"
+    exit $?
+fi
+
+# ============================================================
+# Detect branch, version and Jira ticket
+# ============================================================
+
+LOCAL_BRANCH="$(git branch --show-current)"
+
+# Extract the Jira ticket from the local branch name.
+TICKET_KEY="$(printf '%s\n' "$LOCAL_BRANCH" | grep -oE 'ZBX-[0-9]+' | head -n 1)"
+
+# Add feature/ for Jenkins if it isn't already present.
+if [[ "$LOCAL_BRANCH" == feature/* ]]; then
+    BRANCH="$LOCAL_BRANCH"
+else
+    BRANCH="feature/$LOCAL_BRANCH"
+fi
+
+if [[ -z "$BRANCH" ]]; then
+    echo "Error: not inside a Git repository or HEAD is detached."
+    exit 1
+fi
+
+VERSION=$(printf '%s\n' "$BRANCH" |
+    sed -nE 's/.*-([0-9]+\.[0-9]+)$/\1/p')
+
+if [[ -z "$VERSION" ]]; then
+    echo "Error: cannot determine version from branch: $BRANCH"
+    echo "Expected a branch ending in something like -7.0, -7.4 or -7.5."
+    exit 1
+fi
+
+if [[ -z "$TICKET_KEY" ]]; then
+    echo "Error: cannot extract a Jira ticket key from branch: $BRANCH"
+    exit 1
+fi
+
+case "$VERSION" in
+    7.0)
+        SCREENSHOT_BRANCH="release/7.0"
+        ;;
+    7.4)
+        SCREENSHOT_BRANCH="release/7.4"
+        ;;
+    *)
+        IFS='.' read -r MAJOR MINOR <<< "$VERSION"
+
+        if (( MAJOR > 7 || (MAJOR == 7 && MINOR > 4) )); then
+            SCREENSHOT_BRANCH="master"
+        else
+            echo "Error: no screenshot branch mapping for version $VERSION"
+            exit 1
+        fi
+        ;;
+esac
+
+# ============================================================
+# Display plan / dry run
+# ============================================================
+
+echo "Git branch:       $BRANCH"
+echo "Jira ticket:      $TICKET_KEY"
+echo "Screenshot branch: $SCREENSHOT_BRANCH"
+echo
+
+if [[ "${DRY_RUN:-0}" == "1" ]]; then
+    echo "DRY RUN: no builds will be triggered and no Jira comment will be posted."
+    echo
+
+    for job in "${JOBS[@]}"; do
+        echo "Job: $job"
+        echo "  BRANCH=$BRANCH"
+
+        if [[ "$job" == "frontend" ]]; then
+            echo "  SCREENSHOT_REFERENCES_BRANCH=$SCREENSHOT_BRANCH"
+        fi
+        echo
+    done
+
+    echo "Jira comment section would contain:"
+    echo "Jenkins builds:"
+    echo
+    echo "$BRANCH:"
+    echo "* [API|$JENKINS_URL/job/zabbix-dev/job/api/BUILD_NUMBER/]"
+    echo "* [Frontend|$JENKINS_URL/job/zabbix-dev/job/frontend/BUILD_NUMBER/]"
+    echo "* [PHPunit|$JENKINS_URL/job/zabbix-dev/job/frontend-phpunit/BUILD_NUMBER/]"
+    echo "* [Syntax check|$JENKINS_URL/job/zabbix-dev/job/syntax-check/BUILD_NUMBER/]"
+    echo
+    echo "A background watcher adds each build's status to the same section once the builds finish."
+    exit 0
+fi
+
+# ============================================================
+# Temporary files and cleanup
+# ============================================================
+
+TMP_DIR=$(mktemp -d) || {
+    echo "Error: could not create temporary directory."
+    exit 1
+}
+
+chmod 700 "$TMP_DIR"
+
+cleanup() {
+    rm -rf "$TMP_DIR"
+}
+
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+JENKINS_CURL_CONFIG="$TMP_DIR/jenkins-curl.conf"
+JENKINS_COOKIE_JAR="$TMP_DIR/jenkins-cookies.txt"
+JIRA_CURL_CONFIG="$TMP_DIR/jira-curl.conf"
+
+# ============================================================
+# Retrieve credentials from macOS Keychain
+# ============================================================
+
+echo "Retrieving Jenkins credentials from Keychain..."
+
+if ! JENKINS_TOKEN=$(
+    security find-generic-password \
+        -s "$JENKINS_KEYCHAIN_SERVICE" \
+        -a "$JENKINS_USER" \
+        -w
+); then
+    echo "Error: Jenkins token not found in Keychain."
+    exit 1
+fi
+
+printf 'user = "%s:%s"\n' \
+    "$JENKINS_USER" "$JENKINS_TOKEN" > "$JENKINS_CURL_CONFIG"
+
+unset JENKINS_TOKEN
+chmod 600 "$JENKINS_CURL_CONFIG"
+
+echo "Retrieving Jira credentials from Keychain..."
+
+if ! JIRA_TOKEN=$(
+    security find-generic-password \
+        -s "$JIRA_KEYCHAIN_SERVICE" \
+        -a "$JIRA_USER" \
+        -w
+); then
+    echo "Error: Jira token not found in Keychain."
+    exit 1
+fi
+
+# Use Bearer authentication for the Jira Personal Access Token.
+printf 'header = "Authorization: Bearer %s"\n' \
+    "$JIRA_TOKEN" > "$JIRA_CURL_CONFIG"
+
+unset JIRA_TOKEN
+chmod 600 "$JIRA_CURL_CONFIG"
+
+# ============================================================
+# Retrieve Jenkins CSRF crumb
+# ============================================================
+
+echo
+echo "Authenticating with Jenkins..."
+
+CRUMB_JSON=$(curl "${CURL_TLS_OPTIONS[@]}" \
+    --config "$JENKINS_CURL_CONFIG" \
+    --cookie-jar "$JENKINS_COOKIE_JAR" \
+    --fail --silent --show-error \
+    "$JENKINS_URL/crumbIssuer/api/json") || {
+    echo "Error: could not retrieve Jenkins CSRF crumb."
+    exit 1
+}
+
+CRUMB_FIELD=$(printf '%s' "$CRUMB_JSON" |
+    jq -r '.crumbRequestField // empty')
+
+CRUMB=$(printf '%s' "$CRUMB_JSON" |
+    jq -r '.crumb // empty')
+
+if [[ -z "$CRUMB_FIELD" || -z "$CRUMB" ]]; then
+    echo "Error: Jenkins returned an invalid CSRF crumb."
+    exit 1
+fi
+
+echo "Jenkins authentication successful."
+
+# ============================================================
+# Trigger Jenkins jobs
+# ============================================================
+
+trigger_job() {
+    local job="$1"
+    local headers="$TMP_DIR/$job.headers"
+    local error_file="$TMP_DIR/$job.error"
+    local status_file="$TMP_DIR/$job.status"
+    local http_status
+    local curl_status
+    local -a params
+
+    params=(
+        --data-urlencode "BRANCH=$BRANCH"
+    )
+
+    if [[ "$job" == "frontend" ]]; then
+        params+=(
+            --data-urlencode \
+                "SCREENSHOT_REFERENCES_BRANCH=$SCREENSHOT_BRANCH"
+        )
+    fi
+
+    echo "Triggering $job..."
+
+    http_status=$(curl "${CURL_TLS_OPTIONS[@]}" \
+        --config "$JENKINS_CURL_CONFIG" \
+        --cookie "$JENKINS_COOKIE_JAR" \
+        --silent --show-error \
+        --output /dev/null \
+        --dump-header "$headers" \
+        --write-out '%{http_code}' \
+        --connect-timeout 10 \
+        --max-time 30 \
+        -H "$CRUMB_FIELD: $CRUMB" \
+        "${params[@]}" \
+        "$JENKINS_URL/job/zabbix-dev/job/$job/buildWithParameters" \
+        2>"$error_file")
+
+    curl_status=$?
+
+    if [[ "$curl_status" -ne 0 ]]; then
+        http_status="000"
+    fi
+
+    printf '%s\n' "$http_status" > "$status_file"
+
+    if [[ "$http_status" =~ ^2[0-9][0-9]$ ]]; then
+        # Jenkins normally returns a Location header pointing to the
+        # queue item created by the build request.
+        awk '
+            tolower($1) == "location:" {
+                sub(/\r$/, "");
+                sub(/^[^:]*:[[:space:]]*/, "");
+                location = $0;
+            }
+            END {
+                print location;
+            }
+        ' "$headers" > "$TMP_DIR/$job.queue-url"
+    else
+        echo "Failed to trigger $job (HTTP $http_status)." \
+            > "$TMP_DIR/$job.trigger-error"
+    fi
+}
+
+echo
+echo "Triggering all four Jenkins jobs..."
+
+for job in "${JOBS[@]}"; do
+    trigger_job "$job" &
+done
+
+wait || true
+
+# ============================================================
+# Check that every build was queued successfully
+# ============================================================
+
+TRIGGER_FAILED=0
+
+echo
+echo "Checking Jenkins queue responses..."
+
+for job in "${JOBS[@]}"; do
+    status=$(cat "$TMP_DIR/$job.status" 2>/dev/null || echo "000")
+
+    if [[ ! "$status" =~ ^2[0-9][0-9]$ ]]; then
+        echo "✗ $job: request failed (HTTP $status)"
+
+        if [[ -f "$TMP_DIR/$job.error" ]]; then
+            cat "$TMP_DIR/$job.error"
+        fi
+
+        TRIGGER_FAILED=1
+        continue
+    fi
+
+    queue_url=$(cat "$TMP_DIR/$job.queue-url" 2>/dev/null || true)
+
+    if [[ -z "$queue_url" ]]; then
+        echo "✗ $job: Jenkins did not return a queue URL."
+        TRIGGER_FAILED=1
+        continue
+    fi
+
+    # Handle relative Location headers if Jenkins returns one.
+    if [[ "$queue_url" == /* ]]; then
+        queue_url="$JENKINS_URL$queue_url"
+    fi
+
+    printf '%s\n' "$queue_url" > "$TMP_DIR/$job.queue-url"
+
+    echo "✓ $job: accepted by Jenkins."
+done
+
+if [[ "$TRIGGER_FAILED" -ne 0 ]]; then
+    echo
+    echo "Error: one or more build requests failed."
+    echo "Not posting a Jira comment because the full set of builds was not queued."
+    exit 1
+fi
+
+# ============================================================
+# Wait for Jenkins to assign build numbers
+# ============================================================
+
+echo
+echo "Waiting for Jenkins to assign build numbers..."
+
+BUILD_FAILED=0
+
+for job in "${JOBS[@]}"; do
+    queue_url=$(cat "$TMP_DIR/$job.queue-url")
+    queue_api="${queue_url%/}/api/json"
+
+    elapsed=0
+    build_number=""
+
+    while (( elapsed < QUEUE_TIMEOUT )); do
+        queue_json=$(curl "${CURL_TLS_OPTIONS[@]}" \
+            --config "$JENKINS_CURL_CONFIG" \
+            --silent --show-error \
+            --connect-timeout 10 \
+            --max-time 20 \
+            "$queue_api" 2>/dev/null) || queue_json=""
+
+        if [[ -n "$queue_json" ]]; then
+            build_number=$(printf '%s' "$queue_json" |
+                jq -r '.executable.number // empty' 2>/dev/null)
+
+            cancelled=$(printf '%s' "$queue_json" |
+                jq -r '.cancelled // false' 2>/dev/null)
+
+            if [[ "$cancelled" == "true" ]]; then
+                echo "✗ $job: Jenkins queue item was cancelled."
+                break
+            fi
+
+            if [[ "$build_number" =~ ^[0-9]+$ ]]; then
+                printf '%s\n' "$build_number" \
+                    > "$TMP_DIR/$job.build-number"
+
+                echo "✓ $job: build #$build_number"
+                break
+            fi
+        fi
+
+        sleep "$QUEUE_POLL_INTERVAL"
+        elapsed=$((elapsed + QUEUE_POLL_INTERVAL))
+    done
+
+    if [[ ! "$build_number" =~ ^[0-9]+$ ]]; then
+        echo "✗ $job: no build number received within the timeout."
+        BUILD_FAILED=1
+    fi
+done
+
+if [[ "$BUILD_FAILED" -ne 0 ]]; then
+    echo
+    echo "Error: not all builds received build numbers."
+    echo "No Jira comment was posted."
+    echo "Some builds may still be queued or running. Check Jenkins."
+    exit 1
+fi
+
+# ============================================================
+# Construct Jira comment
+# ============================================================
+
+API_BUILD=$(cat "$TMP_DIR/api.build-number")
+FRONTEND_BUILD=$(cat "$TMP_DIR/frontend.build-number")
+PHPUNIT_BUILD=$(cat "$TMP_DIR/frontend-phpunit.build-number")
+SYNTAX_BUILD=$(cat "$TMP_DIR/syntax-check.build-number")
+
+BRANCH_COMMENT=$(build_branch_comment no)
+
+JIRA_COMMENTS_URL="$JIRA_URL/rest/api/2/issue/$TICKET_KEY/comment"
+EXISTING_COMMENT_ID=""
+EXISTING_COMMENT_BODY=""
+COMMENT_START_AT=0
+
+# Read comments page by page so an older Jenkins build comment is not missed.
+while :; do
+    COMMENTS_PAGE="$TMP_DIR/jira-comments-$COMMENT_START_AT.json"
+
+    COMMENTS_HTTP_STATUS=$(curl "${CURL_TLS_OPTIONS[@]}" \
+        --config "$JIRA_CURL_CONFIG" \
+        --silent --show-error \
+        --connect-timeout 10 \
+        --max-time 30 \
+        --output "$COMMENTS_PAGE" \
+        --write-out '%{http_code}' \
+        "$JIRA_COMMENTS_URL?startAt=$COMMENT_START_AT&maxResults=100")
+
+    CURL_STATUS=$?
+
+    if [[ "$CURL_STATUS" -ne 0 ]]; then
+        echo "Error: could not retrieve Jira comments for $TICKET_KEY."
+        echo "The Jenkins builds have already been queued."
+        exit 1
+    fi
+
+    if [[ "$COMMENTS_HTTP_STATUS" != "200" ]]; then
+        echo "Error: Jira comment lookup failed (HTTP $COMMENTS_HTTP_STATUS)."
+        jq . "$COMMENTS_PAGE" 2>/dev/null || cat "$COMMENTS_PAGE"
+        echo "The Jenkins builds have already been queued."
+        exit 1
+    fi
+
+    if ! jq -e '.comments | type == "array"' "$COMMENTS_PAGE" >/dev/null; then
+        echo "Error: Jira returned an invalid comments response."
+        echo "The Jenkins builds have already been queued."
+        exit 1
+    fi
+
+    COMMENT_TOTAL=$(jq -r '.total // 0' "$COMMENTS_PAGE")
+    COMMENTS_ON_PAGE=$(jq -r '.comments | length' "$COMMENTS_PAGE")
+
+    if [[ ! "$COMMENT_TOTAL" =~ ^[0-9]+$ ||
+          ! "$COMMENTS_ON_PAGE" =~ ^[0-9]+$ ]]; then
+        echo "Error: Jira returned invalid comment pagination details."
+        echo "The Jenkins builds have already been queued."
+        exit 1
+    fi
+
+    MATCHING_COMMENT=$(jq -c '
+        [.comments[]? |
+            select(((.body // "") | tostring) |
+                startswith("Jenkins builds:"))]
+        | last // empty
+    ' "$COMMENTS_PAGE")
+
+    if [[ -n "$MATCHING_COMMENT" ]]; then
+        MATCHING_COMMENT_ID=$(printf '%s' "$MATCHING_COMMENT" |
+            jq -r '(.id // "") | tostring')
+
+        if [[ ! "$MATCHING_COMMENT_ID" =~ ^[0-9]+$ ]]; then
+            echo "Error: the existing Jenkins build comment has an invalid ID."
+            echo "The Jenkins builds have already been queued."
+            exit 1
+        fi
+
+        EXISTING_COMMENT_ID="$MATCHING_COMMENT_ID"
+        EXISTING_COMMENT_BODY=$(printf '%s' "$MATCHING_COMMENT" |
+            jq -r '.body // ""')
+    fi
+
+    COMMENT_START_AT=$((COMMENT_START_AT + COMMENTS_ON_PAGE))
+
+    if (( COMMENTS_ON_PAGE == 0 || COMMENT_START_AT >= COMMENT_TOTAL )); then
+        break
+    fi
+done
+
+if [[ -n "$EXISTING_COMMENT_ID" ]]; then
+    # Replace every prior section for this branch, preserving sections for
+    # other versions.
+    COMMENT_WITHOUT_BRANCH=$(printf '%s\n' "$EXISTING_COMMENT_BODY" |
+        strip_branch_section)
+
+    COMMENT=$(printf '%s\n\n%s' "$COMMENT_WITHOUT_BRANCH" "$BRANCH_COMMENT")
+    JIRA_COMMENT_METHOD="PUT"
+    JIRA_COMMENT_ACTION="updated"
+    JIRA_COMMENT_URL="$JIRA_COMMENTS_URL/$EXISTING_COMMENT_ID"
+    JIRA_EXPECTED_STATUS="200"
+    echo "Updating Jenkins build comment #$EXISTING_COMMENT_ID (replacing links for $BRANCH)..."
+else
+    COMMENT=$(printf 'Jenkins builds:\n\n%s' "$BRANCH_COMMENT")
+    JIRA_COMMENT_METHOD="POST"
+    JIRA_COMMENT_ACTION="created"
+    JIRA_COMMENT_URL="$JIRA_COMMENTS_URL"
+    JIRA_EXPECTED_STATUS="201"
+    echo "Creating a Jenkins build comment..."
+fi
+
+echo
+echo "Jira comment content:"
+echo
+printf '%s\n' "$COMMENT"
+echo
+
+# ============================================================
+# Create or update Jira comment
+# ============================================================
+
+COMMENT_JSON="$TMP_DIR/comment.json"
+
+printf '%s' "$COMMENT" |
+    jq -Rs '{body: .}' > "$COMMENT_JSON" || {
+    echo "Error: could not construct Jira comment JSON."
+    echo "The Jenkins builds have already been queued."
+    exit 1
+}
+
+JIRA_RESPONSE="$TMP_DIR/jira-response.json"
+
+JIRA_HTTP_STATUS=$(curl "${CURL_TLS_OPTIONS[@]}" \
+    --config "$JIRA_CURL_CONFIG" \
+    --silent --show-error \
+    --connect-timeout 10 \
+    --max-time 30 \
+    --output "$JIRA_RESPONSE" \
+    --write-out '%{http_code}' \
+    --request "$JIRA_COMMENT_METHOD" \
+    --header "Accept: application/json" \
+    --header "Content-Type: application/json" \
+    --data-binary "@$COMMENT_JSON" \
+    "$JIRA_COMMENT_URL")
+
+CURL_STATUS=$?
+
+if [[ "$CURL_STATUS" -ne 0 ]]; then
+    echo "Error: could not connect to Jira."
+    echo "The Jenkins builds have already been queued."
+    exit 1
+fi
+
+if [[ "$JIRA_HTTP_STATUS" != "$JIRA_EXPECTED_STATUS" ]]; then
+    echo "Error: Jira did not $JIRA_COMMENT_ACTION the Jenkins build comment (HTTP $JIRA_HTTP_STATUS)."
+    echo "Response:"
+    jq . "$JIRA_RESPONSE" 2>/dev/null || cat "$JIRA_RESPONSE"
+    echo
+    echo "The Jenkins builds have already been queued."
+    exit 1
+fi
+
+COMMENT_ID=$(jq -r '.id // empty' "$JIRA_RESPONSE")
+
+if [[ -z "$COMMENT_ID" ]]; then
+    COMMENT_ID="$EXISTING_COMMENT_ID"
+fi
+
+echo
+echo "✓ All four Jenkins builds were queued."
+echo "✓ Jira build comment $JIRA_COMMENT_ACTION successfully."
+echo "  Ticket: $JIRA_URL/browse/$TICKET_KEY"
+
+if [[ -n "$COMMENT_ID" ]]; then
+    echo "  Comment ID: $COMMENT_ID"
+fi
+
+# ============================================================
+# Watch the builds in the background and update the comment
+# ============================================================
+
+watch_ready=1
+WATCH_DIR=$(mktemp -d "${TMPDIR:-/tmp}/jenkins-test-watch.XXXXXX" 2>/dev/null || true)
+
+if [[ -n "$WATCH_DIR" ]]; then
+    chmod 700 "$WATCH_DIR"
+    watch_ready=0
+
+    for job in "${JOBS[@]}"; do
+        cp "$TMP_DIR/$job.build-number" "$WATCH_DIR/$job.build-number" || watch_ready=1
+    done
+    cp "$JENKINS_CURL_CONFIG" "$WATCH_DIR/jenkins-curl.conf" || watch_ready=1
+    cp "$JIRA_CURL_CONFIG" "$WATCH_DIR/jira-curl.conf" || watch_ready=1
+
+    if (( watch_ready == 0 )); then
+        chmod 600 "$WATCH_DIR/jenkins-curl.conf" "$WATCH_DIR/jira-curl.conf" \
+            || watch_ready=1
+    fi
+
+    if (( watch_ready == 0 )); then
+        {
+            printf 'TICKET_KEY=%q\n' "$TICKET_KEY"
+            printf 'COMMENT_ID=%q\n' "$COMMENT_ID"
+            printf 'BRANCH=%q\n' "$BRANCH"
+            printf 'RESULT_TIMEOUT=%q\n' "$RESULT_TIMEOUT"
+        } > "$WATCH_DIR/state.env" || watch_ready=1
+    fi
+
+    if (( watch_ready == 0 )); then
+        SELF_PATH="${BASH_SOURCE[0]}"
+        if [[ "$SELF_PATH" != */* ]]; then
+            if command -v "$SELF_PATH" >/dev/null 2>&1; then
+                SELF_PATH=$(command -v "$SELF_PATH")
+            elif [[ -f "$SELF_PATH" ]]; then
+                SELF_PATH="$(pwd -P)/$SELF_PATH"
+            else
+                SELF_PATH=''
+            fi
+        elif [[ "$SELF_PATH" != /* ]]; then
+            SELF_PATH="$(pwd -P)/$SELF_PATH"
+        fi
+
+        if [[ -z "$SELF_PATH" ]]; then
+            watch_ready=1
+        fi
+    fi
+fi
+
+if (( watch_ready != 0 )); then
+    if [[ -n "$WATCH_DIR" ]]; then
+        rm -rf "$WATCH_DIR"
+    fi
+    echo "Warning: could not start the background build-status watcher; check the build links in $JIRA_URL/browse/$TICKET_KEY later." >&2
+else
+    nohup "$SELF_PATH" --watch-status "$WATCH_DIR" \
+        >>"$WATCH_DIR/watcher.log" 2>&1 </dev/null &
+    disown 2>/dev/null || true
+
+    echo
+    echo "✓ A background watcher will add the build statuses to the Jira comment."
+    echo "  Watcher log: $WATCH_DIR/watcher.log"
+fi
+
+echo
+echo "Build URLs:"
+echo "  API:          $JENKINS_URL/job/zabbix-dev/job/api/$API_BUILD/"
+echo "  Frontend:     $JENKINS_URL/job/zabbix-dev/job/frontend/$FRONTEND_BUILD/"
+echo "  PHPunit:      $JENKINS_URL/job/zabbix-dev/job/frontend-phpunit/$PHPUNIT_BUILD/"
+echo "  Syntax check: $JENKINS_URL/job/zabbix-dev/job/syntax-check/$SYNTAX_BUILD/"
