@@ -1,0 +1,75 @@
+id = "tab-autoname"
+name = "Tab Autoname"
+version = "0.1.0"
+min_herdr_version = "0.7.5"
+description = "Name tabs after the foreground command in their pane, like tmux automatic-rename."
+platforms = ["linux", "macos"]
+
+# Herdr has no "foreground command changed" event, so live renames come from
+# the zsh hooks (hook.zsh, sourced from ~/.zshrc). These event hooks keep the
+# rest of the session consistent: pane focus changes, new/closed panes and
+# tabs, restored sessions at server startup, and manual-rename detection.
+# Every pass is idempotent.
+
+[[startup]]
+command = ["bash", "autoname.sh", "reconcile", "startup"]
+
+[[actions]]
+id = "adopt"
+title = "Tab Autoname: re-adopt this tab"
+contexts = ["global"]
+command = ["bash", "autoname.sh", "adopt"]
+
+[[actions]]
+id = "release"
+title = "Tab Autoname: stop naming this tab"
+contexts = ["global"]
+command = ["bash", "autoname.sh", "release"]
+
+[[actions]]
+id = "doctor"
+title = "Tab Autoname: explain this tab's name"
+contexts = ["global"]
+command = ["bash", "autoname.sh", "doctor"]
+
+[[events]]
+on = "tab.renamed"
+command = ["bash", "autoname.sh", "renamed"]
+
+[[events]]
+on = "tab.created"
+command = ["bash", "autoname.sh", "reconcile"]
+
+[[events]]
+on = "tab.closed"
+command = ["bash", "autoname.sh", "reconcile"]
+
+[[events]]
+on = "tab.focused"
+command = ["bash", "autoname.sh", "reconcile"]
+
+[[events]]
+on = "pane.focused"
+command = ["bash", "autoname.sh", "reconcile"]
+
+[[events]]
+on = "pane.created"
+command = ["bash", "autoname.sh", "reconcile"]
+
+[[events]]
+on = "pane.closed"
+command = ["bash", "autoname.sh", "reconcile"]
+
+[[events]]
+on = "pane.exited"
+command = ["bash", "autoname.sh", "reconcile"]
+
+[[events]]
+on = "pane.moved"
+command = ["bash", "autoname.sh", "reconcile"]
+
+# Closing a workspace does not deliver pane.closed/tab.closed for its tabs
+# (verified on 0.9.5), so this is what prunes their bookkeeping.
+[[events]]
+on = "workspace.closed"
+command = ["bash", "autoname.sh", "reconcile"]

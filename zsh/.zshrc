@@ -143,3 +143,7 @@ export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# herdr tab auto-naming (see ~/.dotfiles/herdr/plugins/tab-autoname).
+# Names the current tab after the running command, tmux-style.
+[[ -n ${HERDR_PANE_ID:-} ]] && source "$HOME/.dotfiles/herdr/plugins/tab-autoname/hook.zsh"

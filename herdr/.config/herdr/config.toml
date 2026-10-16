@@ -1,0 +1,222 @@
+# herdr configuration
+#
+# Keybindings mirror ~/.dotfiles/tmux/.tmux.conf, so tmux muscle memory keeps
+# working here. Comments map each block back to the tmux binding it replicates.
+#
+# Concept mapping:
+#   tmux pane    -> herdr pane
+#   tmux window  -> herdr tab
+#   tmux session -> herdr workspace
+#
+# Validate after edits:  herdr config check
+# Apply while running:   herdr server reload-config   (or the "reload config"
+#                        action in the herdr UI menu for client-side keys)
+
+onboarding = false
+
+[theme]
+# Kept from the pre-dotfiles herdr config.
+name = "terminal"
+auto_switch = false
+
+[ui]
+confirm_close = false
+prompt_new_tab_name = false
+
+[keys]
+# tmux: unbind C-b / set -g prefix C-a
+# Like tmux's send-prefix (C-a C-a): pressing the prefix twice forwards a
+# literal C-a to the focused pane, so readline's beginning-of-line still works.
+prefix = "ctrl+a"
+
+# ---------------------------------------------------------------------------
+# Panes (tmux panes)
+# ---------------------------------------------------------------------------
+
+# tmux: C-Left/C-Down/C-Up/C-Right select-pane (root table, no prefix).
+# NOTE: herdr consumes these before the pane sees them, so inside a split nvim
+# they switch herdr panes rather than vim windows. Your nvim maps C-arrows to
+# vim-tmux-navigator, which shells out to tmux and won't work under herdr.
+# For seamless vim<->herdr movement, the vim-herdr-navigation plugin
+# (herdr.dev/plugins) rebinds these via [[keys.command]] plugin_action.
+focus_pane_left = "ctrl+left"
+focus_pane_down = "ctrl+down"
+focus_pane_up = "ctrl+up"
+focus_pane_right = "ctrl+right"
+
+# tmux default "x" kill-pane (herdr default kept)
+close_pane = "prefix+x"
+# tmux default "z" zoom-pane (herdr default kept)
+zoom = "prefix+z"
+# tmux default "r" refresh-client; herdr's resize mode is the closest analog.
+resize_mode = "prefix+r"
+# tmux default "[" copy mode. herdr's copy mode already matches your
+# copy-mode-vi bindings (v/V select, y yank) and copies to the system clipboard.
+copy_mode = "prefix+["
+
+# tmux default "{" / "}" swap-pane (herdr defaults shift+k / shift+j kept too)
+swap_pane_up = ["prefix+shift+k", "prefix+{"]
+swap_pane_down = ["prefix+shift+j", "prefix+}"]
+
+# tmux default M-Left/Right/Up/Down resize-pane (no prefix; herdr calls this
+# the reliable modifier family for direct chords).
+resize_pane_left = "alt+left"
+resize_pane_right = "alt+right"
+resize_pane_up = "alt+up"
+resize_pane_down = "alt+down"
+
+# tmux default "%" / '"' split-window (herdr defaults v / minus kept too)
+split_vertical = ["prefix+v", "prefix+percent"]
+split_horizontal = ["prefix+minus", "prefix+quote"]
+
+# tmux "o" kill-pane -a and "O" kill-window -a are custom commands further
+# down (they close the other panes in the current tab / other tabs in the
+# current workspace). open_notification_target, herdr's default prefix+o,
+# moved to prefix+ctrl+o.
+
+# ---------------------------------------------------------------------------
+# Tabs (tmux windows)
+# ---------------------------------------------------------------------------
+
+# tmux default "c" + root C-M-n new-window
+new_tab = ["prefix+c", "ctrl+alt+n"]
+# root C-M-d + tmux default "&" kill-window (herdr default shift+x kept)
+close_tab = ["prefix+shift+x", "ctrl+alt+d", "prefix+ampersand"]
+
+# tmux default n/p next/previous-window, plus root S-Right / S-Left
+next_tab = ["prefix+n", "shift+right"]
+previous_tab = ["prefix+p", "shift+left"]
+
+# tmux P / N swap-window -1 / +1.
+# NOTE: N takes over herdr's default shift+n, so new_workspace moves to
+# prefix+shift+c below.
+move_tab_previous = "prefix+shift+p"
+move_tab_next = "prefix+shift+n"
+
+# tmux default "," rename-window (herdr default shift+t kept too)
+rename_tab = ["prefix+shift+t", "prefix+comma"]
+
+# ---------------------------------------------------------------------------
+# Workspaces (tmux sessions)
+# ---------------------------------------------------------------------------
+
+# root C-Tab sesh picker, plus tmux default "s" / "w" choose-tree
+workspace_picker = ["prefix+w", "prefix+s", "ctrl+tab"]
+
+# herdr default (shift+n) is taken by move_tab_next; "c" pairs with new_tab.
+new_workspace = "prefix+shift+c"
+# herdr defaults kept
+rename_workspace = "prefix+shift+w"
+close_workspace = "prefix+shift+d"
+
+# tmux C-l switch-client -l, plus default "(" / ")" switch-client
+previous_workspace = ["prefix+ctrl+l", "prefix+("]
+next_workspace = ["prefix+ctrl+n", "prefix+)"]
+
+# ---------------------------------------------------------------------------
+# Session / global
+# ---------------------------------------------------------------------------
+
+# tmux default "d" detach-client (herdr default q kept)
+detach = ["prefix+q", "prefix+d"]
+
+# tmux C-s source-file (herdr default shift+r kept)
+reload_config = ["prefix+ctrl+s", "prefix+shift+r"]
+
+# Moved off their herdr defaults because the tmux bindings claimed the keys:
+settings = "prefix+shift+s"             # was prefix+s -> workspace_picker
+open_notification_target = "prefix+ctrl+o" # was prefix+o -> kill-pane -a
+rename_pane = "prefix+shift+e"          # was shift+p -> move_tab_previous
+
+# herdr defaults kept
+help = "prefix+?"
+goto = "prefix+g"
+toggle_sidebar = "prefix+b"
+edit_scrollback = "prefix+e"
+new_worktree = "prefix+shift+g"
+switch_tab = "prefix+1..9"
+
+# tmux C-\ select-pane -l (last/previous pane, root table)
+last_pane = "ctrl+backslash"
+
+# ---------------------------------------------------------------------------
+# Custom commands (replace the tmux run-shell scripts)
+# ---------------------------------------------------------------------------
+
+# tmux: bind-key o kill-pane -a
+[[keys.command]]
+key = "prefix+o"
+type = "shell"
+command = '''
+"$HERDR_BIN_PATH" pane list | /usr/bin/python3 -c 'import json, os, subprocess, sys
+panes = json.load(sys.stdin)["result"]["panes"]
+cur = next(p for p in panes if p["focused"])
+for p in panes:
+    if p["pane_id"] != cur["pane_id"] and p["tab_id"] == cur["tab_id"]:
+        subprocess.run([os.environ["HERDR_BIN_PATH"], "pane", "close", p["pane_id"]])
+'
+'''
+description = "close other panes in tab (tmux: kill-pane -a)"
+
+# tmux: bind-key O kill-window -a
+[[keys.command]]
+key = "prefix+shift+o"
+type = "shell"
+command = '''
+"$HERDR_BIN_PATH" tab list | /usr/bin/python3 -c 'import json, os, subprocess, sys
+tabs = json.load(sys.stdin)["result"]["tabs"]
+cur = next(t for t in tabs if t["focused"])
+for t in tabs:
+    if t["tab_id"] != cur["tab_id"] and t["workspace_id"] == cur["workspace_id"]:
+        subprocess.run([os.environ["HERDR_BIN_PATH"], "tab", "close", t["tab_id"]])
+'
+'''
+description = "close other tabs (tmux: kill-window -a)"
+
+# tmux: bind-key C-r run-shell restart_nvim — kill the nvim in the focused
+# pane, then start a fresh one (only when nvim was running, like the original
+# script).
+[[keys.command]]
+key = "prefix+ctrl+r"
+type = "shell"
+command = '''
+"$HERDR_BIN_PATH" pane process-info --pane "$HERDR_ACTIVE_PANE_ID" | /usr/bin/python3 -c 'import json, os, signal, subprocess, sys
+procs = [p for p in json.load(sys.stdin)["result"]["process_info"]["foreground_processes"] if "nvim" in p.get("name", "") or "nvim" in p.get("argv0", "")]
+if procs:
+    for p in procs:
+        try:
+            os.kill(p["pid"], signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    subprocess.run([os.environ["HERDR_BIN_PATH"], "pane", "run", os.environ["HERDR_ACTIVE_PANE_ID"], "nvim"])
+'
+'''
+description = "restart nvim (tmux: C-r)"
+
+# tmux: bind-key f run-shell tmux_sessionizer — fzf a directory and open it as
+# a workspace. Unlike the tmux version it always creates a workspace; it does
+# not reuse an existing one.
+[[keys.command]]
+key = "prefix+f"
+type = "popup"
+command = '''
+d=$(find ~/dev/work ~/dev ~/work ~/work/zbx/branches/ ~/work/zbx ~/work/zbx/branches/feature/ ~/ ~/dev/personal ~/dev/projects ~/.dotfiles/nvim/.config -mindepth 1 -maxdepth 1 -type d 2>/dev/null | fzf)
+[ -n "$d" ] && "$HERDR_BIN_PATH" workspace create --cwd "$d" --label "$(basename "$d" | tr . _)" --focus
+'''
+width = "50%"
+height = "90%"
+description = "sessionizer (tmux: f)"
+
+# Re-adopt tab auto-naming after a manual rename (plugin: tab-autoname).
+# Renaming a tab by hand stops the plugin naming it (like tmux turning
+# automatic-rename off per window); this restores it for the focused tab.
+[[keys.command]]
+key = "prefix+shift+a"
+type = "plugin_action"
+command = "tab-autoname.adopt"
+description = "re-adopt tab auto-naming"
+
+# Not carried over from tmux:
+#   * bind-key u attach-session -c '#{pane_current_path}' — herdr panes
+#     already inherit the working directory of the pane/workspace they were
+#     opened from (terminal.new_cwd = "follow", the default).
