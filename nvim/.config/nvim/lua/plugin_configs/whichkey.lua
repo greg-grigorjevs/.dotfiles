@@ -115,6 +115,28 @@ return {
       -- { "<leader>xr", "<cmd>Trouble lsp_references win.position=left<cr>",     desc = "LSP References" },
       { "<leader>xr", "<cmd>Trouble lsp_references<cr>",                       desc = "LSP References" },
 
+      { "<leader>X",  group = "Xcode" },
+      { "<leader>XX", "<cmd>XcodebuildPicker<cr>",                 desc = "Show All Actions" },
+      { "<leader>Xf", "<cmd>XcodebuildProjectManager<cr>",         desc = "Project Manager" },
+      { "<leader>Xb", "<cmd>XcodebuildBuild<cr>",                  desc = "Build" },
+      { "<leader>XB", "<cmd>XcodebuildBuildForTesting<cr>",        desc = "Build For Testing" },
+      { "<leader>Xr", "<cmd>XcodebuildBuildRun<cr>",               desc = "Build & Run" },
+      { "<leader>Xt", "<cmd>XcodebuildTest<cr>",                   desc = "Run Tests" },
+      { "<leader>Xt", "<cmd>XcodebuildTestSelected<cr>",           mode = { "v" }, desc = "Run Selected Tests" },
+      { "<leader>XT", "<cmd>XcodebuildTestClass<cr>",              desc = "Run Current Test Class" },
+      { "<leader>X.", "<cmd>XcodebuildTestRepeat<cr>",             desc = "Repeat Last Test Run" },
+      { "<leader>Xl", "<cmd>XcodebuildToggleLogs<cr>",             desc = "Toggle Logs" },
+      { "<leader>Xc", "<cmd>XcodebuildToggleCodeCoverage<cr>",     desc = "Toggle Code Coverage" },
+      { "<leader>XC", "<cmd>XcodebuildShowCodeCoverageReport<cr>", desc = "Code Coverage Report" },
+      { "<leader>Xe", "<cmd>XcodebuildTestExplorerToggle<cr>",     desc = "Toggle Test Explorer" },
+      { "<leader>Xs", "<cmd>XcodebuildFailingSnapshots<cr>",       desc = "Failing Snapshots" },
+      { "<leader>Xp", "<cmd>XcodebuildPreviewGenerateAndShow<cr>", desc = "Generate Preview" },
+      { "<leader>X<cr>", "<cmd>XcodebuildPreviewToggle<cr>",       desc = "Toggle Preview" },
+      { "<leader>Xd", "<cmd>XcodebuildSelectDevice<cr>",           desc = "Select Device" },
+      { "<leader>Xq", "<cmd>Telescope quickfix<cr>",               desc = "Quickfix List" },
+      { "<leader>Xx", "<cmd>XcodebuildQuickfixLine<cr>",           desc = "Quickfix Line" },
+      { "<leader>Xa", "<cmd>XcodebuildCodeActions<cr>",            desc = "Code Actions" },
+
 
 
       { '<leader>s',  group = 'Session' },

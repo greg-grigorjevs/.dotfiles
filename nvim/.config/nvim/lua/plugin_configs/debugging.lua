@@ -103,5 +103,18 @@ return {
     dap.listeners.before.event_exited["dapui_config"] = function()
       dapui.close()
     end
+
+    -- xcodebuild.nvim integration: build/run/debug Swift apps (uses lldb-dap on Xcode 16+)
+    local has_xcodebuild, xcodebuild_dap = pcall(require, 'xcodebuild.integrations.dap')
+    if has_xcodebuild then
+      xcodebuild_dap.setup()
+
+      vim.keymap.set('n', '<leader>dd', xcodebuild_dap.build_and_debug, { desc = 'Build & Debug' })
+      vim.keymap.set('n', '<leader>dR', xcodebuild_dap.debug_without_build, { desc = 'Debug Without Building' })
+      vim.keymap.set('n', '<leader>dt', xcodebuild_dap.debug_tests, { desc = 'Debug Tests' })
+      vim.keymap.set('n', '<leader>dT', xcodebuild_dap.debug_class_tests, { desc = 'Debug Current Test Class' })
+      vim.keymap.set('n', '<leader>dm', xcodebuild_dap.toggle_message_breakpoint, { desc = 'Toggle Message Breakpoint' })
+      vim.keymap.set('n', '<leader>dX', xcodebuild_dap.terminate_session, { desc = 'Terminate Debug Session' })
+    end
   end
 }

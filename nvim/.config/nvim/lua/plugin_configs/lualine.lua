@@ -2,6 +2,18 @@ return {
   'nvim-lualine/lualine.nvim',
   dependencies = { 'kyazdani42/nvim-web-devicons', opt = true },
   config = function()
+    -- Xcode project info for iOS development (xcodebuild.nvim)
+    local function xcodebuild_info()
+      local parts = {}
+      if vim.g.xcodebuild_last_status then
+        table.insert(parts, vim.g.xcodebuild_last_status)
+      end
+      if vim.g.xcodebuild_device_name then
+        table.insert(parts, vim.g.xcodebuild_device_name)
+      end
+      return table.concat(parts, ' ')
+    end
+
     require('lualine').setup {
       options = {
         icons_enabled = true,
@@ -29,7 +41,7 @@ return {
         } },
         lualine_b = { 'branch', 'diff', 'diagnostics' },
         lualine_c = { { 'filename', path = 3 } },
-        lualine_x = { 'encoding', 'fileformat', 'filetype' },
+        lualine_x = { 'encoding', 'fileformat', 'filetype', { xcodebuild_info, cond = function() return vim.g.xcodebuild_device_name ~= nil end } },
         lualine_y = { 'progress' },
         lualine_z = { 'location' }
       },

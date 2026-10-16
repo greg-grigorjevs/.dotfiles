@@ -20,6 +20,7 @@ return {
       'yaml',
       'svelte',
       'tsx',
+      'swift',
     }
     local parser_set = {}
     for _, parser in ipairs(parsers) do
@@ -48,6 +49,7 @@ return {
       jsx = true,
       tsx = true,
       markdown = true,
+      swift = true,
     }
 
     vim.api.nvim_create_autocmd('FileType', {

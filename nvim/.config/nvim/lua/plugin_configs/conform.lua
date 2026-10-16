@@ -12,7 +12,8 @@ return {
         blade = { 'blade-formatter' },
         nix = { 'nixpkgs_fmt' },
         html = { 'prettierd' },
-        javascript = { 'prettierd' }
+        javascript = { 'prettierd' },
+        swift = { 'swiftformat' }
       },
       format_on_save = function()
         -- disable autosafe for php and js at zabbix

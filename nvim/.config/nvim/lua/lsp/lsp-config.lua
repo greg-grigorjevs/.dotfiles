@@ -12,6 +12,11 @@ local servers = {
   'clojure_lsp',
   -- 'pest_ls'
 }
+
+-- Provided by the Xcode toolchain (xcrun sourcekit-lsp); not available via Mason
+local external_servers = { 'sourcekit' }
+
+local all_servers = vim.list_extend(vim.deepcopy(servers), external_servers)
 require('mason').setup()
 require('mason-lspconfig').setup({
   ensure_installed = servers,
@@ -21,6 +26,8 @@ require('mason-null-ls').setup({
   ensure_installed = {
     'nixpkgs-fmt',
     'blade-formatter',
+    'swiftformat',
+    'swiftlint',
   }
 })
 
@@ -59,7 +66,7 @@ end
 
 local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
-for _, server in ipairs(servers) do
+for _, server in ipairs(all_servers) do
   local server_config = {
     on_attach = on_attach,
     capabilities = capabilities,
@@ -94,11 +101,14 @@ for _, server in ipairs(servers) do
         }
       }
     }
+  elseif server == 'sourcekit' then
+    -- Swift/Objective-C LSP shipped with Xcode; not in PATH without xcrun
+    server_config.cmd = { 'xcrun', 'sourcekit-lsp' }
   end
 
   vim.lsp.config(server, server_config)
 end
-vim.lsp.enable(servers)
+vim.lsp.enable(all_servers)
 
 -- For some reason intelephense does not attach to a blade file
 -- when it is the FIRST buffer that is opened after nvim is openned

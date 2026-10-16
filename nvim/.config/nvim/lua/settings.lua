@@ -118,6 +118,7 @@ vim.g.tmux_navigator_no_mappings = 1
 vim.cmd('highlight Matchparen guibg=none gui=bold,underline')
 
 vim.cmd [[autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab]]
+vim.cmd [[autocmd FileType swift setlocal ts=4 sts=4 sw=4 expandtab]]
 vim.cmd [[
   let &t_ZH="\e[3m"
   let &t_ZR="\e[23m"
@@ -155,5 +156,8 @@ vim.treesitter.language.register('bash', 'zsh')
 vim.filetype.add({
   pattern = {
     ['.*%.blade%.php'] = 'php',
+    ['.*%.plist'] = 'xml',
+    ['.*%.entitlements'] = 'xml',
+    ['.*%.xcconfig'] = 'config',
   }
 })

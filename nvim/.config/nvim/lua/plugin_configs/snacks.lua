@@ -9,6 +9,8 @@ return {
     end
   end,
   opts = {
+    -- image support is needed for SwiftUI/UIKit previews in xcodebuild.nvim
+    image = { enabled = true },
     picker = {
       enabled = true,
       sources = {
