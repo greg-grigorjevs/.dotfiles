@@ -17,8 +17,8 @@ two halves:
   herdr CLI call, ~5 ms), so a command's start always lands before its finish.
   Only external commands rename the tab: builtins, functions, and typos leave
   the shell name, matching the foreground process tmux would see.
-- `herdr-plugin.toml` events + `reconcile.py` - an idempotent full pass after
-  focus changes, new/closed panes and tabs, and at server startup. For tabs
+- `herdr-plugin.toml` events + `reconcile.py` - creation and focus events check
+  only the affected tab. Startup, closure, and move events run a full pass. For tabs
   whose panes are not running the hook (another shell, a restored session), the
   pass reads `pane process-info` and names the tab from the foreground process.
 

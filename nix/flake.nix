@@ -16,7 +16,15 @@
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, nixpkgs-stable, nixpkgs-latest }:
     let
-      user = "grigorijs.grigorjevs";
+      user =
+        let
+          sudoUser = builtins.getEnv "SUDO_USER";
+          currentUser = if sudoUser != "" then sudoUser else builtins.getEnv "USER";
+        in
+        if currentUser == "" || currentUser == "root" then
+          throw "Cannot determine a non-root user. Run as your normal user with --impure (sudo is supported)."
+        else
+          currentUser;
       homeDir = "/Users/${user}";
       system = "aarch64-darwin";
 
@@ -61,6 +69,7 @@
         nix.settings.experimental-features = "nix-command flakes";
         programs.zsh = {
           enable = true; # default shell on catalina
+          enableGlobalCompInit = false;
         };
         system.configurationRevision = self.rev or self.dirtyRev or null;
         system.stateVersion = 4;

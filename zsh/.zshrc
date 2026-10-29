@@ -1,4 +1,14 @@
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# Homebrew environment without launching brew on every shell startup.
+# PATH is set below with the other executable paths.
+export HOMEBREW_PREFIX="/opt/homebrew"
+export HOMEBREW_CELLAR="$HOMEBREW_PREFIX/Cellar"
+export HOMEBREW_REPOSITORY="$HOMEBREW_PREFIX"
+fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
+if [[ -n ${MANPATH:-} ]]; then
+  export MANPATH="${MANPATH%"${MANPATH##*[!:]}"}"
+  export MANPATH=":${MANPATH#"${MANPATH%%[!:]*}"}"
+fi
+export INFOPATH="$HOMEBREW_PREFIX/share/info:${INFOPATH:-}"
 
 # You may need to manually set your language environment
  export LANG=en_US.UTF-8
@@ -37,7 +47,7 @@ alias kanataoff="tmux kill-session -t kanata"
 alias kanatacheck="kanata --cfg ~/.dotfiles/kmonad/kanata.kbd --check"
 
 alias kanatarestart="kanataoff && kanataon"
-alias nixrebuild="sudo /run/current-system/sw/bin/nix run  --extra-experimental-features 'nix-command flakes' nix-darwin -- switch --flake ~/.dotfiles/nix#default --impure"
+alias nixrebuild="sudo /run/current-system/sw/bin/darwin-rebuild switch --flake ~/.dotfiles/nix#default --impure"
 
 # Functions
 gswf() {

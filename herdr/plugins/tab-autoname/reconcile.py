@@ -187,6 +187,33 @@ def prune_state(tab_ids):
                     pass
 
 
+def event_tabs(tabs, panes):
+    event_name = os.environ.get("HERDR_PLUGIN_EVENT", "")
+    if event_name not in ("tab.created", "tab.focused", "pane.created", "pane.focused"):
+        return tabs
+    try:
+        event = json.loads(os.environ.get("HERDR_PLUGIN_EVENT_JSON", ""))
+    except ValueError:
+        return tabs
+    if not isinstance(event, dict) or not isinstance(event.get("data"), dict):
+        return tabs
+    data = event["data"]
+    if event_name == "tab.created":
+        tab_id = (data.get("tab") or {}).get("tab_id")
+    elif event_name == "tab.focused":
+        tab_id = data.get("tab_id")
+    elif event_name == "pane.created":
+        tab_id = (data.get("pane") or {}).get("tab_id")
+    else:
+        tab_id = next(
+            (pane.get("tab_id") for pane in panes if pane.get("pane_id") == data.get("pane_id")),
+            None,
+        )
+    if not tab_id:
+        return tabs
+    return [tab for tab in tabs if tab.get("tab_id") == tab_id]
+
+
 def full_pass(reason):
     if not acquire_lock(2000):
         print("tab-autoname: lock busy, skipping (%s)" % reason)
@@ -198,6 +225,8 @@ def full_pass(reason):
         tabs = snap.get("tabs") or []
         panes = snap.get("panes") or []
         prune_state({t.get("tab_id") for t in tabs})
+        if reason not in ("startup", "adopt"):
+            tabs = event_tabs(tabs, panes)
 
         panes_by_tab = {}
         for pane in panes:
