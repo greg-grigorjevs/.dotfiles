@@ -1,0 +1,147 @@
+#!/usr/bin/env node
+// Ctrl+Tab workspace picker. fzf displays labels and returns workspace IDs.
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { createHash, randomUUID } = require('node:crypto');
+const { spawnSync } = require('node:child_process');
+
+const home = os.homedir();
+const herdr = process.env.HERDR_BIN_PATH || 'herdr';
+const styles = {
+  working: '\x1b[33m', blocked: '\x1b[31m', done: '\x1b[32m',
+  idle: '\x1b[2m', unknown: '\x1b[2m',
+};
+const reset = '\x1b[0m';
+
+function findFzf() {
+  const candidates = [
+    process.env.FZF,
+    ...(process.env.PATH || '').split(path.delimiter).map(dir => path.join(dir, 'fzf')),
+    path.join(home, '.nix-profile/bin/fzf'),
+    '/opt/homebrew/bin/fzf', '/usr/local/bin/fzf',
+  ];
+  return candidates.find(candidate => {
+    if (!candidate) return false;
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return fs.statSync(candidate).isFile();
+    } catch {
+      return false;
+    }
+  });
+}
+
+function listWorkspaces() {
+  const result = spawnSync(herdr, ['workspace', 'list'], { encoding: 'utf8' });
+  if (result.status !== 0) {
+    process.stderr.write(result.stderr || `${result.error}\n`);
+    return [];
+  }
+  try {
+    const workspaces = JSON.parse(result.stdout).result.workspaces;
+    return Array.isArray(workspaces) ? workspaces : [];
+  } catch {
+    return [];
+  }
+}
+
+function readJson(file, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (error) {
+    if (error.code === 'ENOENT' || error instanceof SyntaxError) return fallback;
+    throw error;
+  }
+}
+
+function recentWorkspaces(workspaces, selected) {
+  const socket = process.env.HERDR_SOCKET_PATH || path.join(home, '.config/herdr/herdr.sock');
+  const session = createHash('sha256').update(socket).digest('hex').slice(0, 16);
+  const root = path.join(process.env.XDG_STATE_HOME || path.join(home, '.local/state'), 'herdr-workspace-picker');
+  const directory = path.join(root, session);
+  fs.mkdirSync(directory, { recursive: true });
+
+  // Retain the Python picker's history as a baseline for unvisited workspaces.
+  const previous = readJson(path.join(root, `${session}.json`), []);
+  const history = Array.isArray(previous) ? previous : [];
+  const focused = selected || workspaces.find(workspace => workspace.focused)?.workspace_id;
+  const fileFor = id => path.join(directory, `${encodeURIComponent(id)}.json`);
+  if (workspaces.some(workspace => workspace.workspace_id === focused)) {
+    // Independent, atomically replaced files avoid a shared history-file lock.
+    const file = fileFor(focused);
+    const temporary = `${file}.${randomUUID()}.tmp`;
+    fs.writeFileSync(temporary, JSON.stringify(Date.now()));
+    fs.renameSync(temporary, file);
+  }
+  const times = new Map(workspaces.map(workspace => {
+    const time = readJson(fileFor(workspace.workspace_id), 0);
+    return [workspace.workspace_id, typeof time === 'number' ? time : 0];
+  }));
+  const rank = id => {
+    const index = history.indexOf(id);
+    return index < 0 ? history.length : index;
+  };
+  return [...workspaces].sort((a, b) =>
+    times.get(b.workspace_id) - times.get(a.workspace_id)
+    || rank(a.workspace_id) - rank(b.workspace_id));
+}
+
+function pickerRows(workspaces) {
+  return workspaces.map(workspace => {
+    const tabs = workspace.tab_count ?? 0;
+    const panes = workspace.pane_count ?? 0;
+    const status = workspace.agent_status || 'unknown';
+    const label = (workspace.label || '(unnamed)').replace(/[\t\n\r]/g, ' ');
+    const marker = workspace.focused ? `\x1b[1;32m*${reset}` : ' ';
+    return `${workspace.workspace_id}\t${marker} ${String(workspace.number ?? '?').padStart(2)}  ${label}`
+      + `  ·  ${tabs} tab${tabs === 1 ? '' : 's'}  ${panes} pane${panes === 1 ? '' : 's'}`
+      + `  ·  ${styles[status] || ''}${status}${reset}`;
+  });
+}
+
+function focusWorkspace(workspaces, workspaceId) {
+  const focus = spawnSync(herdr, ['workspace', 'focus', workspaceId], { stdio: 'inherit' });
+  if (focus.error) throw focus.error;
+  if (focus.status === 0) recentWorkspaces(workspaces, workspaceId);
+  return focus.status ?? 1;
+}
+
+function main() {
+  let workspaces = listWorkspaces();
+  if (!workspaces.length) return 1;
+  workspaces = recentWorkspaces(workspaces);
+  if (process.argv.length === 3 && process.argv[2] === '--record') return 0;
+  if (process.argv.length === 3 && process.argv[2] === '--last') {
+    const previous = workspaces.find(workspace => !workspace.focused);
+    return previous ? focusWorkspace(workspaces, previous.workspace_id) : 0;
+  }
+
+  const fzf = findFzf();
+  if (!fzf) {
+    process.stderr.write('herdr-workspace-picker: fzf not found\n');
+    return 1;
+  }
+  const currentIndex = Math.max(0, workspaces.findIndex(workspace => workspace.focused)) + 1;
+  const result = spawnSync(fzf, [
+    '--ansi', '--reverse', '--cycle', '--no-sort', '--delimiter=\t',
+    '--with-nth=2', '--accept-nth=1', '--prompt=workspace> ',
+    '--header=enter: switch   esc: cancel', '--header-first',
+    `--bind=load:pos(${currentIndex})`,
+  ], { input: `${pickerRows(workspaces).join('\n')}\n`, encoding: 'utf8' });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    if (![1, 130].includes(result.status)) process.stderr.write(result.stderr || '');
+    return 0;
+  }
+  const workspaceId = result.stdout.trim();
+  if (!workspaceId) return 0;
+  return focusWorkspace(workspaces, workspaceId);
+}
+
+try {
+  process.exitCode = main();
+} catch (error) {
+  process.stderr.write(`herdr-workspace-picker: ${error.message}\n`);
+  process.exitCode = 1;
+}

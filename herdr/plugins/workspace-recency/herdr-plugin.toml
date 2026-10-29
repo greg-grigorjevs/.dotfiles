@@ -1,0 +1,13 @@
+id = "workspace-recency"
+name = "Workspace Recency"
+version = "0.1.0"
+min_herdr_version = "0.7.5"
+description = "Track workspace focus order for the Ctrl+Tab picker."
+platforms = ["linux", "macos"]
+
+[[startup]]
+command = ["sh", "record.sh"]
+
+[[events]]
+on = "workspace.focused"
+command = ["sh", "record.sh"]

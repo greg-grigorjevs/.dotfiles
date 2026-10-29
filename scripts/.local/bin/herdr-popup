@@ -1,0 +1,17 @@
+#!/bin/sh
+# Herdr owns the popup; an isolated tmux server keeps its shell alive when hidden.
+set -eu
+
+: "${HERDR_ACTIVE_WORKSPACE_ID:?Run this from a Herdr popup keybinding}"
+identity=$(printf '%s\n%s' "${HERDR_SOCKET_PATH:-${HERDR_SESSION:-default}}" "$HERDR_ACTIVE_WORKSPACE_ID" | shasum -a 256)
+session="workspace-${identity%% *}"
+cwd=${HERDR_ACTIVE_PANE_CWD:-$PWD}
+
+# Do not inherit an outer tmux client or identify the scratch as a tiled pane.
+unset TMUX TMUX_PANE HERDR_PANE_ID
+
+exec tmux -L herdr-popup -f /dev/null \
+    new-session -A -s "$session" -c "$cwd" \; \
+    set-option -t "=$session:" status off \; \
+    set-option -t "=$session:" detach-on-destroy on \; \
+    bind-key -n 'C-\' detach-client

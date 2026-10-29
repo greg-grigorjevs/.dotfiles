@@ -109,8 +109,8 @@ new_workspace = "prefix+shift+c"
 rename_workspace = "prefix+shift+w"
 close_workspace = "prefix+shift+d"
 
-# tmux C-l switch-client -l, plus default "(" / ")" switch-client
-previous_workspace = ["prefix+ctrl+l", "prefix+("]
+# tmux default "(" / ")" switch-client; C-l toggles recent workspaces below.
+previous_workspace = "prefix+("
 next_workspace = ["prefix+ctrl+n", "prefix+)"]
 
 # ---------------------------------------------------------------------------
@@ -136,12 +136,28 @@ edit_scrollback = "prefix+e"
 new_worktree = "prefix+shift+g"
 switch_tab = "prefix+1..9"
 
-# tmux C-\ select-pane -l (last/previous pane, root table)
-last_pane = "ctrl+backslash"
+# Ctrl+\ is reserved for the workspace scratch terminal below.
+last_pane = ""
 
 # ---------------------------------------------------------------------------
 # Custom commands (replace the tmux run-shell scripts)
 # ---------------------------------------------------------------------------
+
+# A persistent scratch shell per workspace; Ctrl+\ detaches to hide it.
+[[keys.command]]
+key = "ctrl+backslash"
+type = "popup"
+command = 'exec "$HOME/.local/bin/herdr-popup"'
+width = "80%"
+height = "80%"
+description = "toggle workspace scratch terminal"
+
+# tmux: C-l switch-client -l, using the workspace-recency plugin's history.
+[[keys.command]]
+key = "prefix+ctrl+l"
+type = "shell"
+command = 'exec "$HOME/.local/bin/herdr-workspace-picker" --last'
+description = "switch to last visited workspace"
 
 # tmux: bind-key o kill-pane -a
 [[keys.command]]
