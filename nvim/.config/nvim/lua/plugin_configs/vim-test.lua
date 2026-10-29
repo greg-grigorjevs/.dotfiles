@@ -1,5 +1,6 @@
 return {
   "vim-test/vim-test",
+  cmd = { 'TestNearest', 'TestFile', 'TestSuite', 'TestLast', 'TestVisit' },
   config = function()
     vim.cmd([[
         let test#php#phpunit#executable = 'php artisan test'

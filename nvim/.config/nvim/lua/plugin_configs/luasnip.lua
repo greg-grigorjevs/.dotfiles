@@ -1,7 +1,8 @@
 return {
-  'saadparwaiz1/cmp_luasnip',
+  { 'saadparwaiz1/cmp_luasnip', lazy = true },
   {
     'L3MON4D3/LuaSnip',
+    event = 'InsertEnter',
     config = function()
       local ls = require("luasnip")
       -- some shorthands...

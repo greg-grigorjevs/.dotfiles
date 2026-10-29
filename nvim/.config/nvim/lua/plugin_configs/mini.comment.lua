@@ -1,5 +1,9 @@
 return {
   'echasnovski/mini.comment',
+  keys = {
+    { 'g/', mode = { 'n', 'x', 'o' } },
+    { 'g//', mode = 'n' },
+  },
   opts = {
     options = {
       custom_commentstring = function()

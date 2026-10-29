@@ -1,5 +1,6 @@
 return {
   'AckslD/nvim-neoclip.lua',
+  event = 'VeryLazy',
   config = function()
     -- default config
     -- all options are explained in https://github.com/AckslD/nvim-neoclip.lua

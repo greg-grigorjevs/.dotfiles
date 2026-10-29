@@ -1,5 +1,6 @@
 return {
   'voldikss/vim-floaterm',
+  cmd = { 'FloatermNew', 'FloatermToggle', 'FloatermShow', 'FloatermHide', 'FloatermKill', 'FloatermNext', 'FloatermPrev', 'FloatermSend' },
   config = function()
     vim.g.floaterm_width = 0.99
     vim.g.floaterm_height = 0.99

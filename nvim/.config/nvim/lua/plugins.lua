@@ -31,76 +31,95 @@ local plugins = {
 
   -- Colorschemes,
   'luisiacc/gruvbox-baby',
-  'sainnhe/gruvbox-material',
-  'ellisonleao/gruvbox.nvim',
-  'rebelot/kanagawa.nvim',
-  'folke/tokyonight.nvim',
-  'marko-cerovac/material.nvim',
-  'Mofiqul/vscode.nvim',
-  "olimorris/onedarkpro.nvim",
+  { 'sainnhe/gruvbox-material', lazy = true },
+  { 'ellisonleao/gruvbox.nvim', lazy = true },
+  { 'rebelot/kanagawa.nvim', lazy = true },
+  { 'folke/tokyonight.nvim', lazy = true },
+  { 'marko-cerovac/material.nvim', lazy = true },
+  { 'Mofiqul/vscode.nvim', lazy = true },
+  { "olimorris/onedarkpro.nvim", lazy = true },
 
-  'MaxMEllon/vim-jsx-pretty',
-  'ThePrimeagen/harpoon',
+  { 'MaxMEllon/vim-jsx-pretty', ft = { 'javascriptreact', 'typescriptreact' } },
+  { 'ThePrimeagen/harpoon', lazy = true },
 
   {
     'windwp/nvim-autopairs',
+    event = 'InsertEnter',
     config = function()
       require('nvim-autopairs').setup {}
     end
   },
-  'andymass/vim-matchup',                        -- significatly expands % functionality
-  'JoosepAlviste/nvim-ts-context-commentstring', -- support for jsx commenting
+  { 'andymass/vim-matchup', event = { 'BufReadPre', 'BufNewFile' } },
+  { 'JoosepAlviste/nvim-ts-context-commentstring', lazy = true },
   {
     'mattn/emmet-vim',
-    config = function()
-      vim.g.user_emmet_mode = 'a' -- enable in all modes
-    end
+    ft = { 'html', 'css', 'scss', 'less', 'javascriptreact', 'typescriptreact', 'svelte', 'blade', 'php' },
+    init = function()
+      vim.g.user_emmet_mode = 'a'
+    end,
   },
-  'tpope/vim-surround',
-  'kyazdani42/nvim-web-devicons',
+  { 'tpope/vim-surround', event = { 'BufReadPre', 'BufNewFile' } },
+  { 'kyazdani42/nvim-web-devicons', lazy = true },
 
   -- LSP
-  "williamboman/mason.nvim",
-  "williamboman/mason-lspconfig.nvim",
-  "jay-babu/mason-null-ls.nvim",
-  "nvimtools/none-ls.nvim",
-  'neovim/nvim-lspconfig',
-  'hrsh7th/cmp-nvim-lsp',
-  'hrsh7th/cmp-buffer',
-  'hrsh7th/cmp-path',
-  'hrsh7th/cmp-cmdline',
-  'hrsh7th/nvim-cmp',
-  'hrsh7th/cmp-nvim-lsp-signature-help',
+  { "williamboman/mason.nvim", cmd = { 'Mason', 'MasonInstall', 'MasonUpdate', 'MasonUninstall', 'MasonLog' } },
+  { "williamboman/mason-lspconfig.nvim", lazy = true },
+  { "jay-babu/mason-null-ls.nvim", lazy = true },
+  { "nvimtools/none-ls.nvim", lazy = true },
+  { 'neovim/nvim-lspconfig', event = { 'BufReadPre', 'BufNewFile' } },
+  { 'hrsh7th/cmp-nvim-lsp', lazy = true },
+  {
+    'hrsh7th/nvim-cmp',
+    event = { 'InsertEnter', 'CmdlineEnter' },
+    dependencies = {
+      'hrsh7th/cmp-nvim-lsp',
+      'hrsh7th/cmp-buffer',
+      'hrsh7th/cmp-path',
+      'hrsh7th/cmp-cmdline',
+      'hrsh7th/cmp-nvim-lsp-signature-help',
+      'saadparwaiz1/cmp_luasnip',
+      'L3MON4D3/LuaSnip',
+      'kristijanhusak/vim-dadbod-completion',
+    },
+    config = function()
+      require('lsp.nvim-cmp')
+    end,
+  },
 
-  'jwalton512/vim-blade',
+  { 'jwalton512/vim-blade', ft = { 'blade', 'php' } },
 
-  'tpope/vim-repeat', -- dot-repeat for some plugins
+  { 'tpope/vim-repeat', event = { 'BufReadPre', 'BufNewFile' } },
   'MattesGroeger/vim-bookmarks',
   {
     'tom-anders/telescope-vim-bookmarks.nvim',
-    config = function()
+    lazy = true,
+    init = function()
       vim.g.bookmark_save_per_working_dir = 0
       vim.g.bookmark_auto_save = 1
     end
   },
 
-  'tpope/vim-fugitive',
-  'tpope/vim-rhubarb',    -- support GBrowse for github
-  'tommcdo/vim-fubitive', -- support GBrowse for bitbucket
-  'nvim-treesitter/nvim-treesitter-context',
-  "b0o/schemastore.nvim",
+  {
+    'tpope/vim-fugitive',
+    cmd = { 'G', 'Git', 'Gdiffsplit', 'Gvdiffsplit', 'Gedit', 'Gread', 'Gwrite', 'Ggrep', 'Gclog', 'GBrowse' },
+    dependencies = { 'tpope/vim-rhubarb', 'tommcdo/vim-fubitive' },
+  },
+  { 'nvim-treesitter/nvim-treesitter-context', event = { 'BufReadPost', 'BufNewFile' } },
+  { "b0o/schemastore.nvim", lazy = true },
   {
     'fei6409/log-highlight.nvim',
+    ft = 'log',
     config = function()
       require('log-highlight').setup {}
     end,
   },
-  'kmonad/kmonad-vim',
-  'mbbill/undotree',
-  'stevearc/dressing.nvim',
+  { 'kmonad/kmonad-vim', ft = 'kmonad' },
+  { 'mbbill/undotree', cmd = { 'UndotreeToggle', 'UndotreeShow', 'UndotreeHide', 'UndotreeFocus' } },
+  { 'stevearc/dressing.nvim', event = 'VeryLazy' },
 
   {
     "tpope/vim-dadbod",
+    cmd = { 'DB', 'DBUI', 'DBUIToggle', 'DBUIAddConnection', 'DBUIFindBuffer' },
     dependencies = { 'kristijanhusak/vim-dadbod-ui', 'kristijanhusak/vim-dadbod-completion' },
     config = function()
       vim.g.db_ui_auto_execute_table_helpers = 1
@@ -108,6 +127,7 @@ local plugins = {
   },
   {
     "folke/todo-comments.nvim",
+    event = { 'BufReadPost', 'BufNewFile' },
     config = function()
       require('todo-comments').setup()
     end

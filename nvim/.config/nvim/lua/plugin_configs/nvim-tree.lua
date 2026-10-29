@@ -1,6 +1,6 @@
 return {
   'kyazdani42/nvim-tree.lua',
-  lazy = false,
+  cmd = { 'NvimTreeToggle', 'NvimTreeOpen', 'NvimTreeClose', 'NvimTreeFocus', 'NvimTreeFindFile', 'NvimTreeFindFileToggle' },
   -- enabled = false,
   config = function()
     -- Newer Neovim versions may not create netrw's legacy augroup.

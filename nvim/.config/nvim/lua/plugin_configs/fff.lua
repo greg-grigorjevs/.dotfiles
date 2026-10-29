@@ -4,7 +4,7 @@ return {
     build = function()
       require('fff.download').download_or_build_binary()
     end,
-    lazy = false,
+    lazy = true,
     opts = {
       max_results = 100,
       prompt_vim_mode = false,

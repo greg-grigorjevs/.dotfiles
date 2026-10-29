@@ -1,5 +1,6 @@
 return {
   'lukas-reineke/indent-blankline.nvim',
+  event = { 'BufReadPost', 'BufNewFile' },
   commit = '9637670896b68805430e2f72cf5d16be5b97a22a',
   config = function()
     vim.g.indentLine_enabled = 1

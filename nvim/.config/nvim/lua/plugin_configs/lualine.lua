@@ -1,5 +1,6 @@
 return {
   'nvim-lualine/lualine.nvim',
+  event = 'VeryLazy',
   dependencies = { 'kyazdani42/nvim-web-devicons', opt = true },
   config = function()
     -- Xcode project info for iOS development (xcodebuild.nvim)

@@ -8,9 +8,10 @@ return {
       }
     }
   },
-  config = function()
+  config = function(_, opts)
     local Snacks = require("snacks")
     local wk = require("which-key")
+    wk.setup(opts)
 
     local function copy_opencode_location(is_visual)
       local path = vim.fn.expand("%:p:.")

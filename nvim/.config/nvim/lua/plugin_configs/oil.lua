@@ -1,5 +1,7 @@
 return {
   'stevearc/oil.nvim',
+  cmd = 'Oil',
+  keys = { { '-', '<cmd>Oil<cr>', desc = 'Open parent directory' } },
   config = function()
     require("oil").setup({
       -- Oil will take over directory buffers (e.g. `vim .` or `:e src/`)
