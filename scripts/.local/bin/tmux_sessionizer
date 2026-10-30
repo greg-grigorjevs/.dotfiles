@@ -11,6 +11,14 @@ if [[ -z $selected ]]; then
 fi
 
 selected_name=$(basename "$selected" | tr . _)
+if [[ -n ${HERDR_SOCKET_PATH:-} || -n ${HERDR_ACTIVE_WORKSPACE_ID:-} ]]; then
+    "${HERDR_BIN_PATH:-herdr}" workspace create --cwd "$selected" --label "$selected_name" --focus || exit $?
+    if [[ -n ${TMUX:-} && $(tmux display-message -p '#{socket_path}') == */herdr-popup ]]; then
+        tmux detach-client
+    fi
+    exit 0
+fi
+
 tmux_running=$(pgrep tmux)
 
 if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then

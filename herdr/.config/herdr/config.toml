@@ -58,12 +58,14 @@ copy_mode = "prefix+["
 swap_pane_up = ["prefix+shift+k", "prefix+{"]
 swap_pane_down = ["prefix+shift+j", "prefix+}"]
 
-# tmux default M-Left/Right/Up/Down resize-pane (no prefix; herdr calls this
-# the reliable modifier family for direct chords).
-resize_pane_left = "alt+left"
-resize_pane_right = "alt+right"
-resize_pane_up = "alt+up"
-resize_pane_down = "alt+down"
+# tmux default M-Left/Right/Up/Down resize-pane, moved to alt+shift because
+# alt+arrows belong to word navigation inside panes (zsh bindkeys and the
+# nvim <M-Left>/<M-Right> maps). Herdr consumes direct chords before the pane,
+# so binding alt+arrows here would silently kill Alt+Left/Right word jumps.
+resize_pane_left = "alt+shift+left"
+resize_pane_right = "alt+shift+right"
+resize_pane_up = "alt+shift+up"
+resize_pane_down = "alt+shift+down"
 
 # tmux default "%" / '"' split-window (herdr defaults v / minus kept too)
 split_vertical = ["prefix+v", "prefix+percent"]
@@ -100,8 +102,9 @@ rename_tab = ["prefix+shift+t", "prefix+comma"]
 # Workspaces (tmux sessions)
 # ---------------------------------------------------------------------------
 
-# root C-Tab sesh picker, plus tmux default "s" / "w" choose-tree
-workspace_picker = ["prefix+w", "prefix+s", "ctrl+tab"]
+# tmux default "s" / "w" choose-tree. Root C-Tab is the fuzzy fzf picker in
+# the custom command below (the built-in Navigate view has no fuzzy filter).
+workspace_picker = ["prefix+w", "prefix+s"]
 
 # herdr default (shift+n) is taken by move_tab_next; "c" pairs with new_tab.
 new_workspace = "prefix+shift+c"
@@ -110,8 +113,10 @@ rename_workspace = "prefix+shift+w"
 close_workspace = "prefix+shift+d"
 
 # tmux default "(" / ")" switch-client; C-l toggles recent workspaces below.
-previous_workspace = "prefix+("
-next_workspace = ["prefix+ctrl+n", "prefix+)"]
+# Root S-Up / S-Down mirror the S-Left / S-Right tab bindings above: workspaces
+# stack vertically in the sidebar, tabs horizontally in the tab row.
+previous_workspace = ["prefix+(", "shift+up"]
+next_workspace = ["prefix+ctrl+n", "prefix+)", "shift+down"]
 
 # ---------------------------------------------------------------------------
 # Session / global
@@ -216,12 +221,23 @@ description = "restart nvim (tmux: C-r)"
 key = "prefix+f"
 type = "popup"
 command = '''
-d=$(find ~/dev/work ~/dev ~/work ~/work/zbx/branches/ ~/work/zbx ~/work/zbx/branches/feature/ ~/ ~/dev/personal ~/dev/projects ~/.dotfiles/nvim/.config -mindepth 1 -maxdepth 1 -type d 2>/dev/null | fzf)
+d=$(find ~/dev/work ~/dev ~/work ~/work/zbx/branches/ ~/work/zbx ~/work/zbx/branches/feature/ ~/ ~/dev/personal ~/dev/projects ~/.dotfiles/nvim/.config -mindepth 1 -maxdepth 1 -type d -exec stat -f '%B %N' {} + 2>/dev/null | sort -rn | cut -d ' ' -f 2- | fzf --no-sort)
 [ -n "$d" ] && "$HERDR_BIN_PATH" workspace create --cwd "$d" --label "$(basename "$d" | tr . _)" --focus
 '''
 width = "50%"
 height = "90%"
 description = "sessionizer (tmux: f)"
+
+# tmux: root C-Tab sesh picker. fzf over workspaces (script:
+# ~/.local/bin/herdr-workspace-picker) instead of the built-in Navigate view,
+# which has no fuzzy filter.
+[[keys.command]]
+key = "ctrl+tab"
+type = "popup"
+command = 'exec "$HOME/.local/bin/herdr-workspace-picker"'
+width = "50%"
+height = "90%"
+description = "fuzzy workspace picker (tmux: C-Tab sesh)"
 
 # Re-adopt tab auto-naming after a manual rename (plugin: tab-autoname).
 # Renaming a tab by hand stops the plugin naming it (like tmux turning

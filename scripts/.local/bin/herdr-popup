@@ -12,6 +12,7 @@ unset TMUX TMUX_PANE HERDR_PANE_ID
 
 exec tmux -L herdr-popup -f /dev/null \
     new-session -A -s "$session" -c "$cwd" \; \
+    set-option -g mouse on \; \
     set-option -t "=$session:" status off \; \
     set-option -t "=$session:" detach-on-destroy on \; \
     bind-key -n 'C-\' detach-client

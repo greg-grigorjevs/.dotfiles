@@ -23,6 +23,7 @@ _fzf_nvim() {
 }
 zle -N _fzf_nvim
 bindkey '^[f' _fzf_nvim
+bindkey '^[[1;3D' backward-word
 bindkey '^[[1;3C' forward-word
 
 # Aliases
@@ -124,7 +125,8 @@ export XDG_CONFIG_HOME="$HOME/.config"
 # fzf config
 export FZF_DEFAULT_COMMAND="fd --exclude 'node_modules'"
 export FZF_CTRL_T_COMMAND="fd -t f -I -E 'node_modules' -E 'vendor' . ."
-export FZF_ALT_C_COMMAND="fd -t d . $HOME"
+export FZF_ALT_C_COMMAND='fd --type d --no-ignore --max-depth 1 --exclude Library . "$HOME" "$HOME/dev" "$HOME/work/zbx/branches" | while IFS= read -r dir; do printf "%s\t%s\n" "~${dir#"$HOME"}" "$dir"; done'
+export FZF_ALT_C_OPTS="--delimiter '\t' --with-nth 1 --accept-nth 2 --cycle"
 
 # CTRL-Y to copy the command into clipboard using pbcopy
 export FZF_CTRL_R_OPTS="
