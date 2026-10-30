@@ -4,11 +4,59 @@ set -euo pipefail
 usage() {
   printf 'Usage: zbx-worktree [branch-name]\n' >&2
   printf '       zbx-worktree  # pick one of your assigned ZBX tickets\n' >&2
+  printf '       zbx-worktree -a|--all  # set up all affected versions of the current ticket\n' >&2
+  printf 'Runs from any directory; override the Zabbix checkout with ZBX_WORKTREE_REPO.\n' >&2
 }
 
 die() {
   printf 'zbx-worktree: %s\n' "$*" >&2
   exit 1
+}
+
+is_zabbix_remote() {
+  case "$1" in
+    */zbx/zabbix|*/zbx/zabbix.git) return 0 ;;
+    */zabbix/zabbix|*/zabbix/zabbix.git|*:zabbix/zabbix|*:zabbix/zabbix.git) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Find the Zabbix checkout to operate on: the checkout containing the current
+# directory when it is a Zabbix clone, then ZBX_WORKTREE_REPO when set, then a
+# standard clone location. Sets repo_root and remote.
+resolve_repo_root() {
+  local candidate
+
+  remote=origin
+
+  candidate=$(git rev-parse --show-toplevel 2>/dev/null || true)
+  if [[ -n "$candidate" ]] \
+    && is_zabbix_remote "$(git -C "$candidate" remote get-url "$remote" 2>/dev/null || true)"; then
+    repo_root=$(cd "$candidate" && pwd -P)
+    return
+  fi
+
+  if [[ -n ${ZBX_WORKTREE_REPO:-} ]]; then
+    candidate=${ZBX_WORKTREE_REPO/#\~/$HOME}
+    candidate=$(cd "$candidate" 2>/dev/null && pwd -P) \
+      || die "ZBX_WORKTREE_REPO is not a directory: $ZBX_WORKTREE_REPO"
+    is_zabbix_remote "$(git -C "$candidate" remote get-url "$remote" 2>/dev/null || true)" \
+      || die "ZBX_WORKTREE_REPO is not a Zabbix checkout: $ZBX_WORKTREE_REPO"
+    repo_root=$candidate
+    printf 'Not inside a Zabbix checkout; using %s\n' "$repo_root"
+    return
+  fi
+
+  for candidate in "$HOME/work/zbx/branches/zabbix" "$HOME/work/zbx/branches/master"; do
+    candidate=$(cd "$candidate" 2>/dev/null && pwd -P) || continue
+    if is_zabbix_remote "$(git -C "$candidate" remote get-url "$remote" 2>/dev/null || true)"; then
+      repo_root=$candidate
+      printf 'Not inside a Zabbix checkout; using %s\n' "$repo_root"
+      return
+    fi
+  done
+
+  die 'no Zabbix checkout found; run this inside a Zabbix clone or set ZBX_WORKTREE_REPO'
 }
 
 jira_tmp_dir=''
@@ -27,11 +75,22 @@ cleanup_jira_credentials() {
 
 trap cleanup_jira_credentials EXIT
 
+# 8.0 is developed on master and delivered as 7.5, so worktrees and branches
+# for it use the 7.5 suffix. Sets release_suffix.
+set_release_suffix() {
+  local major=$1 minor=$2
+
+  case "$major.$minor" in
+    8.0) release_suffix=7.5 ;;
+    *) release_suffix="$major.$minor" ;;
+  esac
+}
+
 set_base_ref() {
   local major minor major_num minor_num
   major=$1
   minor=$2
-  release_suffix="$major.$minor"
+  set_release_suffix "$major" "$minor"
 
   if [[ "$major" == 7 && "$minor" == 0 ]]; then
     base_ref=origin/release/7.0
@@ -48,21 +107,37 @@ set_base_ref() {
   fi
 }
 
+queue_worktree() {
+  local index
+  if [[ "$branch" == */* ]] || ! git check-ref-format --branch "$branch" >/dev/null 2>&1; then
+    die "invalid branch name: $branch"
+  fi
+  for ((index = 0; index < target_count; index++)); do
+    [[ "${target_branches[index]}" != "$branch" ]] || return 0
+  done
+  target_branches[target_count]=$branch
+  target_refs[target_count]=$base_ref
+  target_count=$((target_count + 1))
+}
+
 select_assigned_ticket() {
   local jira_url jql start_at total page page_count all_issues tickets_json issue_options selected_issue
   local issue_json issue_type versions_json version_count version_options selected_version
   local dependency jira_keychain_service jira_user jira_token
 
-  for dependency in curl jq fzf; do
+  for dependency in curl jq; do
     command -v "$dependency" >/dev/null 2>&1 || die "$dependency is required to select an assigned Jira ticket"
   done
+  if [[ -z "$current_issue" ]]; then
+    command -v fzf >/dev/null 2>&1 || die 'fzf is required to select an assigned Jira ticket'
+  fi
 
   jira_url=${ZBX_JIRA_URL:-https://support.zabbix.com}
   jira_url=${jira_url%/}
   jira_user=${ZBX_JIRA_USER:-ggrigorjevs}
   jira_keychain_service=${ZBX_JIRA_KEYCHAIN_SERVICE:-jira-support.zabbix.com}
 
-  # Reuse the Jira Personal Access Token lookup from ~/bin/jenkins-test.
+  # Reuse the Jira Personal Access Token lookup from jenkins-test.
   command -v security >/dev/null 2>&1 || die 'macOS security is required to read the Jira token from Keychain'
   if ! jira_token=$(security find-generic-password \
     -s "$jira_keychain_service" \
@@ -81,6 +156,9 @@ select_assigned_ticket() {
   chmod 600 "$jira_curl_config" || die 'could not secure the temporary Jira curl config'
 
   jql='project = ZBX AND assignee = currentUser() ORDER BY updated DESC'
+  if [[ -n "$current_issue" ]]; then
+    jql="key = $current_issue"
+  fi
   start_at=0
   total=0
   all_issues='[]'
@@ -116,14 +194,19 @@ select_assigned_ticket() {
 
   tickets_json=$(jq -cn --argjson issues "$all_issues" '{issues: $issues}')
   if [[ $(jq -r '.issues | length' <<< "$tickets_json") -eq 0 ]]; then
+    [[ -z "$current_issue" ]] || die "Jira ticket not found: $current_issue"
     die "no assigned ZBX tickets found for '$jira_user' (check the Jira Keychain token and account)"
   fi
 
-  issue_options=$(jq -r '.issues[] | [.key, (.fields.summary // ""), (.fields.issuetype.name // "Unknown type")] | @tsv' <<< "$tickets_json")
-  if ! selected_issue=$(printf '%s\n' "$issue_options" | fzf --delimiter=$'\t' --with-nth=1,2,3 --prompt='Assigned ZBX ticket> '); then
-    exit 0
+  if [[ -n "$current_issue" ]]; then
+    issue_key=$current_issue
+  else
+    issue_options=$(jq -r '.issues[] | [.key, (.fields.summary // ""), (.fields.issuetype.name // "Unknown type")] | @tsv' <<< "$tickets_json")
+    if ! selected_issue=$(printf '%s\n' "$issue_options" | fzf --delimiter=$'\t' --with-nth=1,2,3 --prompt='Assigned ZBX ticket> '); then
+      exit 0
+    fi
+    issue_key=${selected_issue%%$'\t'*}
   fi
-  issue_key=${selected_issue%%$'\t'*}
   issue_json=$(jq -ce --arg key "$issue_key" '.issues[] | select(.key == $key)' <<< "$tickets_json") \
     || die "could not read selected Jira ticket: $issue_key"
   issue_type=$(jq -r '.fields.issuetype.name // ""' <<< "$issue_json")
@@ -133,28 +216,39 @@ select_assigned_ticket() {
     version_count=$(jq -r 'length' <<< "$versions_json")
     if (( version_count == 0 )); then
       die "$issue_key is a Problem report but has no Affected Version/s"
+    elif [[ "$all_versions" == true ]]; then
+      selected_version=All
     elif (( version_count == 1 )); then
       selected_version=$(jq -r '.[0]' <<< "$versions_json")
     else
       version_options=$(jq -r '.[]' <<< "$versions_json")
-      if ! selected_version=$(printf '%s\n' "$version_options" | fzf --prompt='Affected Version/s> '); then
+      if ! selected_version=$(printf 'All\n%s\n' "$version_options" | fzf --prompt='Affected Version/s> '); then
         exit 0
       fi
     fi
 
-    if [[ "$selected_version" =~ ^([0-9]+)\.([0-9]+)([.-].*|[[:space:]].*|$)$ ]]; then
-      set_base_ref "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
-      branch="$issue_key-$release_suffix"
+    if [[ "$selected_version" == All ]]; then
+      version_options=$(jq -r '.[]' <<< "$versions_json")
     else
-      die "unsupported Affected Version/s value '$selected_version' on $issue_key"
+      version_options=$selected_version
     fi
+    while IFS= read -r selected_version; do
+      if [[ "$selected_version" =~ ^([0-9]+)\.([0-9]+)([.-].*|[[:space:]].*|$)$ ]]; then
+        set_base_ref "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+        branch="$issue_key-$release_suffix"
+        queue_worktree
+      else
+        die "unsupported Affected Version/s value '$selected_version' on $issue_key"
+      fi
+    done <<< "$version_options"
   else
     # Non-problem tickets have no meaningful Affected Version/s; start them from trunk.
     branch=$issue_key
     base_ref=origin/master
+    queue_worktree
   fi
 
-  printf 'Selected %s (%s); using %s\n' "$issue_key" "${issue_type:-unknown type}" "$base_ref"
+  printf 'Selected %s (%s); setting up %s worktree(s)\n' "$issue_key" "${issue_type:-unknown type}" "$target_count"
 }
 
 if [[ $# -gt 1 ]]; then
@@ -162,19 +256,40 @@ if [[ $# -gt 1 ]]; then
   exit 2
 fi
 
-if [[ $# -eq 0 ]]; then
+all_versions=false
+current_issue=''
+target_branches=()
+target_refs=()
+target_count=0
+
+case "${1:-}" in
+  -h|--help) usage; exit 0 ;;
+  -a|--all)
+    all_versions=true
+    current_branch=$(git branch --show-current 2>/dev/null) \
+      || die 'run --all from inside a Zabbix ticket worktree'
+    if [[ "$current_branch" =~ ^(ZBX-[0-9]+)(-[0-9]+\.[0-9]+)?$ ]]; then
+      current_issue=${BASH_REMATCH[1]}
+    else
+      die "could not find a ZBX issue key in the current branch: $current_branch"
+    fi
+    ;;
+  -*) usage; exit 2 ;;
+esac
+
+resolve_repo_root
+
+if [[ $# -eq 0 || "$all_versions" == true ]]; then
   select_assigned_ticket
 else
   branch=$1
-fi
-
-if [[ "$branch" == */* ]] || ! git check-ref-format --branch "$branch" >/dev/null 2>&1; then
-  die "invalid branch name: $branch"
-fi
-
-if [[ $# -eq 1 ]]; then
-  if [[ "$branch" =~ -([0-9]+)\.([0-9]+)$ ]]; then
-    set_base_ref "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+  if [[ "$branch" =~ ^(.+)-([0-9]+)\.([0-9]+)$ ]]; then
+    branch_prefix=${BASH_REMATCH[1]}
+    branch_major=${BASH_REMATCH[2]}
+    branch_minor=${BASH_REMATCH[3]}
+    set_base_ref "$branch_major" "$branch_minor"
+    branch="$branch_prefix-$release_suffix"
+    queue_worktree
   else
     die 'branch name must end with a version, e.g. ZBX-27998-7.4'
   fi
@@ -182,45 +297,58 @@ fi
 
 command -v tmux >/dev/null 2>&1 || die 'tmux is required but was not found in PATH'
 
-repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || die 'run this command from inside a Git worktree'
-repo_root=$(cd "$repo_root" && pwd -P)
-worktree_path="$(dirname "$repo_root")/$branch"
-remote=origin
+setup_worktree() {
+  local worktree_path base_branch existing_root existing_branch session feature_fetch_ref
+  worktree_path="$(dirname "$repo_root")/$branch"
 
-git -C "$repo_root" remote get-url "$remote" >/dev/null 2>&1 || die "Git remote '$remote' is not configured"
+  base_branch=${base_ref#"$remote"/}
+  printf 'Fetching %s/%s...\n' "$remote" "$base_branch"
+  git -C "$repo_root" fetch "$remote" \
+    "+refs/heads/$base_branch:refs/remotes/$remote/$base_branch"
+  git -C "$repo_root" rev-parse --verify --quiet "${base_ref}^{commit}" >/dev/null \
+    || die "base ref '$base_ref' is unavailable"
 
-base_branch=${base_ref#"$remote"/}
-printf 'Fetching %s/%s...\n' "$remote" "$base_branch"
-git -C "$repo_root" fetch "$remote" \
-  "+refs/heads/$base_branch:refs/remotes/$remote/$base_branch"
-git -C "$repo_root" rev-parse --verify --quiet "${base_ref}^{commit}" >/dev/null \
-  || die "base ref '$base_ref' is unavailable"
-
-if [[ -e "$worktree_path" ]]; then
-  existing_root=$(git -C "$worktree_path" rev-parse --show-toplevel 2>/dev/null || true)
-  existing_branch=$(git -C "$worktree_path" branch --show-current 2>/dev/null || true)
-  if [[ "$existing_root" != "$worktree_path" || "$existing_branch" != "$branch" ]]; then
-    die "path already exists and is not the '$branch' worktree: $worktree_path"
+  if [[ -e "$worktree_path" ]]; then
+    existing_root=$(git -C "$worktree_path" rev-parse --show-toplevel 2>/dev/null || true)
+    existing_branch=$(git -C "$worktree_path" branch --show-current 2>/dev/null || true)
+    if [[ "$existing_root" != "$worktree_path" || "$existing_branch" != "$branch" ]]; then
+      die "path already exists and is not the '$branch' worktree: $worktree_path"
+    fi
+    printf 'Using existing worktree: %s\n' "$worktree_path"
+  elif git -C "$repo_root" show-ref --verify --quiet "refs/heads/$branch"; then
+    printf 'Adding existing branch %s as a worktree...\n' "$branch"
+    git -C "$repo_root" worktree add "$worktree_path" "$branch"
+  else
+    printf 'Creating %s from %s...\n' "$branch" "$base_ref"
+    git -C "$repo_root" worktree add -b "$branch" "$worktree_path" "$base_ref"
   fi
-  printf 'Using existing worktree: %s\n' "$worktree_path"
-elif git -C "$repo_root" show-ref --verify --quiet "refs/heads/$branch"; then
-  printf 'Adding existing branch %s as a worktree...\n' "$branch"
-  git -C "$repo_root" worktree add "$worktree_path" "$branch"
-else
-  printf 'Creating %s from %s...\n' "$branch" "$base_ref"
-  git -C "$repo_root" worktree add -b "$branch" "$worktree_path" "$base_ref"
+
+  printf 'Pushing to %s/feature/%s...\n' "$remote" "$branch"
+  feature_fetch_ref="+refs/heads/feature/$branch:refs/remotes/$remote/feature/$branch"
+  if ! git -C "$repo_root" config --get-all "remote.$remote.fetch" | grep -Fxq "$feature_fetch_ref"; then
+    git -C "$repo_root" remote set-branches --add "$remote" "feature/$branch"
+  fi
+  git -C "$worktree_path" push --set-upstream "$remote" \
+    "refs/heads/$branch:refs/heads/feature/$branch"
+
+  # Dots are treated specially in tmux targets, so use underscores in session names.
+  session=${branch//./_}
+  if ! tmux has-session -t "=$session" 2>/dev/null; then
+    tmux new-session -d -s "$session" -c "$worktree_path"
+  fi
+}
+
+for ((index = 0; index < target_count; index++)); do
+  branch=${target_branches[index]}
+  base_ref=${target_refs[index]}
+  setup_worktree
+done
+
+if [[ "$all_versions" == true ]]; then
+  exit 0
 fi
 
-printf 'Pushing to %s/feature/%s...\n' "$remote" "$branch"
-git -C "$worktree_path" push --set-upstream "$remote" \
-  "refs/heads/$branch:refs/heads/feature/$branch"
-
-# Dots are treated specially in tmux targets, so use underscores in session names.
-session=${branch//./_}
-if ! tmux has-session -t "=$session" 2>/dev/null; then
-  tmux new-session -d -s "$session" -c "$worktree_path"
-fi
-
+session=${target_branches[0]//./_}
 if [[ -n ${TMUX:-} ]]; then
   tmux switch-client -t "=$session"
 else

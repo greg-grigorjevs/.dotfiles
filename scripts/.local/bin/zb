@@ -6,12 +6,17 @@ usage() {
 Usage: zb <command> [arguments...]
 
 Commands:
-  w [branch-name]  Create or open a Zabbix worktree
-  o [*|-a]         Open the current checkout's UI
-  j                Run Jenkins tests for the current branch
-  pr [options]     Create pull requests and run Jenkins tests
-  i, jira          Open the current branch's Jira issue
-  -h, --help       Show this help
+  w [branch-name]     Create or open a Zabbix worktree
+  w -a, --all         Set up all affected versions of the current ticket
+  o [*|-a]            Open the current checkout's UI
+  j [options]        Run Jenkins tests (--rerun-failed to retry failed jobs)
+  j --all            Run Jenkins tests for all version worktrees of this ticket
+  j --failures       Print the failure context of the branch's latest builds
+  pr [options]        Create pull requests and run Jenkins tests
+  git push [-a]       Push this ticket's current or all version worktrees
+  git rebase [-a]     Rebase onto the version's latest release branch or master
+  i, jira             Open the current branch's Jira issue
+  -h, --help          Show this help
 EOF
 }
 
@@ -54,6 +59,7 @@ case "$subcommand" in
   o) command_name=zbx-ui ;;
   j) command_name=jenkins-test ;;
   pr|pull-request) command_name=zbx-pr ;;
+  git) command_name=zbx-git ;;
   i|jira)
     if (($# != 0)); then
       printf 'Usage: zb i (or zb jira)\n' >&2

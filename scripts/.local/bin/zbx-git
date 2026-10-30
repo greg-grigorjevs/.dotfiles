@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: zb git <push|rebase> [-a|--all] [git arguments...]
+
+By default, operate on the current checkout. With -a, operate on all checked-out
+version branches of the current ZBX ticket (including feature/ branches).
+
+Push defaults to origin and feature/<branch>, matching zb pr.
+Rebase defaults to the freshly fetched origin/release/7.0, origin/release/7.4,
+or origin/master for newer versions. Explicit Git arguments replace defaults.
+Use -- to pass the remaining arguments directly to Git. Stop on the first error;
+resolve or abort a conflicting rebase in the reported worktree before retrying.
+EOF
+}
+
+die() {
+  printf 'zbx-git: %s\n' "$*" >&2
+  exit 1
+}
+
+operation=${1:-}
+case "$operation" in
+  -h|--help|help) usage; exit 0 ;;
+  push|rebase) shift ;;
+  *) usage >&2; exit 2 ;;
+esac
+
+all=0
+arguments=()
+while (($#)); do
+  case "$1" in
+    -a|--all) all=1 ;;
+    -h|--help) usage; exit 0 ;;
+    --) shift; arguments+=("$@"); break ;;
+    *) arguments+=("$1") ;;
+  esac
+  shift
+done
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) \
+  || die 'run this command from inside a Git checkout'
+branch=$(git -C "$root" branch --show-current)
+[[ -n "$branch" ]] || die 'cannot operate on a detached HEAD'
+paths=("$root")
+branches=("$branch")
+
+if (( all )); then
+  normalized=${branch#feature/}
+  [[ $normalized =~ ^(ZBX-[0-9]+)-[0-9]+\.[0-9]+$ ]] \
+    || die "current branch must include a ticket and version: $branch"
+  ticket=${BASH_REMATCH[1]}
+  paths=()
+  branches=()
+  path=''
+  while IFS= read -r -d '' entry; do
+    case "$entry" in
+      'worktree '*) path=${entry#worktree } ;;
+      'branch refs/heads/'*)
+        candidate=${entry#branch refs/heads/}
+        normalized=${candidate#feature/}
+        if [[ $normalized =~ ^(ZBX-[0-9]+)-[0-9]+\.[0-9]+$ && ${BASH_REMATCH[1]} == "$ticket" ]]; then
+          paths+=("$path")
+          branches+=("$candidate")
+        fi
+        ;;
+    esac
+  done < <(git -C "$root" worktree list --porcelain -z)
+  ((${#paths[@]})) || die "no checked-out version branches found for $ticket"
+fi
+
+# Validate every default rebase target before changing any worktree.
+targets=()
+for branch in "${branches[@]}"; do
+  target=''
+  if [[ $operation == rebase ]] && ((${#arguments[@]} == 0)); then
+    normalized=${branch#feature/}
+    [[ $normalized =~ ^ZBX-[0-9]+-([0-9]+)\.([0-9]+)$ ]] \
+      || die "cannot infer a rebase target for $branch; supply a Git upstream"
+    major=$((10#${BASH_REMATCH[1]}))
+    minor=$((10#${BASH_REMATCH[2]}))
+    case "$major.$minor" in
+      7.0|7.4) target="release/$major.$minor" ;;
+      *)
+        (( major > 7 || (major == 7 && minor > 4) )) \
+          || die "unsupported version in branch: $branch"
+        target=master
+        ;;
+    esac
+  fi
+  targets+=("$target")
+done
+
+for ((index = 0; index < ${#paths[@]}; index++)); do
+  path=${paths[$index]}
+  branch=${branches[$index]}
+  printf '\n%s: %s (%s)\n' "$operation" "$branch" "$path"
+  if ((${#arguments[@]})); then
+    git -C "$path" "$operation" "${arguments[@]}"
+  elif [[ $operation == push ]]; then
+    source_ref="feature/${branch#feature/}"
+    git -C "$path" push origin "$branch:refs/heads/$source_ref"
+  else
+    target=${targets[$index]}
+    git -C "$path" fetch origin "+refs/heads/$target:refs/remotes/origin/$target"
+    git -C "$path" rebase "refs/remotes/origin/$target"
+  fi
+done

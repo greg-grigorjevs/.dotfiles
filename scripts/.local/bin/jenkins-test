@@ -29,6 +29,14 @@ RESULT_TIMEOUT="${RESULT_TIMEOUT:-43200}"
 
 JOBS=(api frontend frontend-phpunit syntax-check)
 
+# How many recent builds to scan per job when looking for this branch's latest
+# build in --rerun-failed mode.
+LOOKBACK_BUILDS=50
+
+# When --failures prints a build's console log, keep at most this many lines
+# (the tail) so that a very large log cannot flood the output.
+MAX_CONSOLE_LINES="${MAX_CONSOLE_LINES:-5000}"
+
 # ============================================================
 # Desktop notifications
 # ============================================================
@@ -320,10 +328,140 @@ if [[ "${1:-}" == "--watch-status" ]]; then
 fi
 
 # ============================================================
+# Command-line arguments
+# ============================================================
+
+usage() {
+    cat <<'EOF'
+Usage: jenkins-test [--all] [--rerun-failed | --failures]
+
+Runs the Jenkins jobs (api, frontend, frontend-phpunit, syntax-check) for the
+current Git branch, adds the build links to the Jira issue comment and watches
+the builds in the background.
+
+Options:
+  -a, --all       Process all checked-out version worktrees for the current
+                  ZBX ticket. Can be combined with either mode below.
+  --rerun-failed  Only trigger jobs whose latest build for this branch failed
+                  or does not exist yet; jobs whose latest build succeeded or
+                  is still running are kept as-is.
+  --failures      Do not trigger anything. Print the failure context of this
+                  branch's latest builds: each build's result, the failed
+                  tests from its JUnit report and the raw console log of
+                  failed builds.
+  -h, --help      Show this help.
+
+Environment:
+  DRY_RUN=1           Print the plan without contacting Jenkins or Jira.
+  RESULT_TIMEOUT=N    How long the build-status watcher may wait for the builds
+                      to finish (default: 43200 seconds).
+  MAX_CONSOLE_LINES=N How many lines of a failed build's console log
+                      --failures prints at most (default: 5000).
+EOF
+}
+
+RERUN_FAILED=0
+SHOW_FAILURES=0
+ALL_VERSIONS=0
+
+parse_arguments() {
+    while (( $# > 0 )); do
+        case "$1" in
+            -a|--all)
+                ALL_VERSIONS=1
+                ;;
+            --rerun-failed|--failed)
+                RERUN_FAILED=1
+                ;;
+            --failures)
+                SHOW_FAILURES=1
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                printf 'jenkins-test: unknown argument: %s\n\n' "$1" >&2
+                usage >&2
+                exit 2
+                ;;
+        esac
+        shift
+    done
+}
+
+parse_arguments "$@"
+
+if (( RERUN_FAILED && SHOW_FAILURES )); then
+    printf 'jenkins-test: --rerun-failed and --failures cannot be combined\n\n' >&2
+    usage >&2
+    exit 2
+fi
+
+# ============================================================
 # Detect branch, version and Jira ticket
 # ============================================================
 
 LOCAL_BRANCH="$(git branch --show-current)"
+
+run_all_versions() {
+    local normalized_branch=${LOCAL_BRANCH#feature/}
+    local ticket_key self_path record worktree_path="" candidate_branch
+    local matched=0 errors=0
+
+    if [[ ! "$normalized_branch" =~ ^(ZBX-[0-9]+)-([0-9]+\.[0-9]+)$ ]]; then
+        echo "Error: --all requires a version branch such as ZBX-27915-7.4." >&2
+        return 1
+    fi
+    ticket_key=${BASH_REMATCH[1]}
+
+    self_path=${BASH_SOURCE[0]}
+    if [[ "$self_path" != */* ]]; then
+        self_path=$(command -v "$self_path") || return 1
+    fi
+    [[ "$self_path" == /* ]] || self_path="$PWD/$self_path"
+
+    set --
+    if (( RERUN_FAILED )); then
+        set -- --rerun-failed
+    elif (( SHOW_FAILURES )); then
+        set -- --failures
+    fi
+
+    printf 'Processing checked-out versions of %s...\n' "$ticket_key"
+
+    while IFS= read -r -d '' record; do
+        case "$record" in
+            'worktree '*) worktree_path=${record#worktree } ;;
+            'branch refs/heads/'*)
+                candidate_branch=${record#branch refs/heads/}
+                normalized_branch=${candidate_branch#feature/}
+                if [[ "$normalized_branch" =~ ^(ZBX-[0-9]+)-([0-9]+\.[0-9]+)$ ]] &&
+                    [[ "${BASH_REMATCH[1]}" == "$ticket_key" ]]; then
+                    matched=$((matched + 1))
+                    printf '\nProcessing %s...\n' "$candidate_branch"
+                    if ! (cd "$worktree_path" && "$self_path" "$@"); then
+                        printf 'Error: Jenkins command failed for %s.\n' "$candidate_branch" >&2
+                        errors=1
+                    fi
+                fi
+                ;;
+            '') worktree_path="" ;;
+        esac
+    done < <(git worktree list --porcelain -z)
+
+    if (( matched == 0 )); then
+        printf 'Error: no checked-out version branches found for %s.\n' "$ticket_key" >&2
+        return 1
+    fi
+
+    return "$errors"
+}
+
+if (( ALL_VERSIONS )); then
+    run_all_versions
+    exit $?
+fi
 
 # Extract the Jira ticket from the local branch name.
 TICKET_KEY="$(printf '%s\n' "$LOCAL_BRANCH" | grep -oE 'ZBX-[0-9]+' | head -n 1)"
@@ -340,50 +478,62 @@ if [[ -z "$BRANCH" ]]; then
     exit 1
 fi
 
-VERSION=$(printf '%s\n' "$BRANCH" |
-    sed -nE 's/.*-([0-9]+\.[0-9]+)$/\1/p')
+if (( ! SHOW_FAILURES )); then
+    VERSION=$(printf '%s\n' "$BRANCH" |
+        sed -nE 's/.*-([0-9]+\.[0-9]+)$/\1/p')
 
-if [[ -z "$VERSION" ]]; then
-    echo "Error: cannot determine version from branch: $BRANCH"
-    echo "Expected a branch ending in something like -7.0, -7.4 or -7.5."
-    exit 1
+    if [[ -z "$VERSION" ]]; then
+        echo "Error: cannot determine version from branch: $BRANCH"
+        echo "Expected a branch ending in something like -7.0, -7.4 or -7.5."
+        exit 1
+    fi
+
+    if [[ -z "$TICKET_KEY" ]]; then
+        echo "Error: cannot extract a Jira ticket key from branch: $BRANCH"
+        exit 1
+    fi
+
+    case "$VERSION" in
+        7.0)
+            SCREENSHOT_BRANCH="release/7.0"
+            ;;
+        7.4)
+            SCREENSHOT_BRANCH="release/7.4"
+            ;;
+        *)
+            IFS='.' read -r MAJOR MINOR <<< "$VERSION"
+
+            if (( MAJOR > 7 || (MAJOR == 7 && MINOR > 4) )); then
+                SCREENSHOT_BRANCH="master"
+            else
+                echo "Error: no screenshot branch mapping for version $VERSION"
+                exit 1
+            fi
+            ;;
+    esac
 fi
-
-if [[ -z "$TICKET_KEY" ]]; then
-    echo "Error: cannot extract a Jira ticket key from branch: $BRANCH"
-    exit 1
-fi
-
-case "$VERSION" in
-    7.0)
-        SCREENSHOT_BRANCH="release/7.0"
-        ;;
-    7.4)
-        SCREENSHOT_BRANCH="release/7.4"
-        ;;
-    *)
-        IFS='.' read -r MAJOR MINOR <<< "$VERSION"
-
-        if (( MAJOR > 7 || (MAJOR == 7 && MINOR > 4) )); then
-            SCREENSHOT_BRANCH="master"
-        else
-            echo "Error: no screenshot branch mapping for version $VERSION"
-            exit 1
-        fi
-        ;;
-esac
 
 # ============================================================
 # Display plan / dry run
 # ============================================================
 
 echo "Git branch:       $BRANCH"
-echo "Jira ticket:      $TICKET_KEY"
-echo "Screenshot branch: $SCREENSHOT_BRANCH"
+
+if (( ! SHOW_FAILURES )); then
+    echo "Jira ticket:      $TICKET_KEY"
+    echo "Screenshot branch: $SCREENSHOT_BRANCH"
+fi
+
 echo
 
-if [[ "${DRY_RUN:-0}" == "1" ]]; then
+if (( ! SHOW_FAILURES )) && [[ "${DRY_RUN:-0}" == "1" ]]; then
     echo "DRY RUN: no builds will be triggered and no Jira comment will be posted."
+
+    if (( RERUN_FAILED )); then
+        echo "With --rerun-failed, each job's latest build for this branch would be"
+        echo "looked up first and only failed or missing builds would be triggered."
+    fi
+
     echo
 
     for job in "${JOBS[@]}"; do
@@ -454,24 +604,226 @@ printf 'user = "%s:%s"\n' \
 unset JENKINS_TOKEN
 chmod 600 "$JENKINS_CURL_CONFIG"
 
-echo "Retrieving Jira credentials from Keychain..."
+# Jira is not contacted in --failures mode.
+if (( ! SHOW_FAILURES )); then
+    echo "Retrieving Jira credentials from Keychain..."
 
-if ! JIRA_TOKEN=$(
-    security find-generic-password \
-        -s "$JIRA_KEYCHAIN_SERVICE" \
-        -a "$JIRA_USER" \
-        -w
-); then
-    echo "Error: Jira token not found in Keychain."
-    exit 1
+    if ! JIRA_TOKEN=$(
+        security find-generic-password \
+            -s "$JIRA_KEYCHAIN_SERVICE" \
+            -a "$JIRA_USER" \
+            -w
+    ); then
+        echo "Error: Jira token not found in Keychain."
+        exit 1
+    fi
+
+    # Use Bearer authentication for the Jira Personal Access Token.
+    printf 'header = "Authorization: Bearer %s"\n' \
+        "$JIRA_TOKEN" > "$JIRA_CURL_CONFIG"
+
+    unset JIRA_TOKEN
+    chmod 600 "$JIRA_CURL_CONFIG"
 fi
 
-# Use Bearer authentication for the Jira Personal Access Token.
-printf 'header = "Authorization: Bearer %s"\n' \
-    "$JIRA_TOKEN" > "$JIRA_CURL_CONFIG"
+# ============================================================
+# Jenkins build lookup
+# ============================================================
 
-unset JIRA_TOKEN
-chmod 600 "$JIRA_CURL_CONFIG"
+# Print "<build number> <building> <result>" for this branch's most recent
+# build of $job, or nothing when the branch has no build yet. Return non-zero
+# when the job's builds cannot be listed.
+latest_branch_build() {
+    local job="$1"
+    local json
+
+    json=$(curl "${CURL_TLS_OPTIONS[@]}" \
+        --config "$JENKINS_CURL_CONFIG" \
+        --globoff \
+        --fail --silent --show-error \
+        --connect-timeout 10 \
+        --max-time 30 \
+        "$JENKINS_URL/job/zabbix-dev/job/$job/api/json?tree=builds[number,building,result,actions[parameters[name,value]]]{0,$LOOKBACK_BUILDS}" \
+        2>/dev/null) || return 1
+
+    printf '%s' "$json" |
+        jq -r --arg branch "$BRANCH" '
+            [.builds[]? | {
+                number,
+                building,
+                result,
+                branch: ([.actions[]?.parameters[]?
+                    | select(.name == "BRANCH") | .value][0])
+            }]
+            | map(select(.branch == $branch))[0]
+            | select(. != null)
+            | "\(.number) \(.building) \(.result // "")"
+        ' || return 1
+}
+
+# ============================================================
+# Failure context (--failures)
+# ============================================================
+
+# Print the failures recorded in the JUnit test report of build $2 of job $1.
+# The test report holds the failure details for jobs whose console log does
+# not, for example the syntax check.
+print_build_test_report() {
+    local job="$1"
+    local build_number="$2"
+    local report_file="$TMP_DIR/$job-$build_number.test-report.json"
+    local http_status
+    local curl_status
+
+    http_status=$(curl "${CURL_TLS_OPTIONS[@]}" \
+        --config "$JENKINS_CURL_CONFIG" \
+        --globoff \
+        --silent --show-error \
+        --connect-timeout 10 \
+        --max-time 60 \
+        --output "$report_file" \
+        --write-out '%{http_code}' \
+        "$JENKINS_URL/job/zabbix-dev/job/$job/$build_number/testReport/api/json?tree=failCount,passCount,skipCount,suites[cases[className,name,status,errorDetails,errorStackTrace]]")
+    curl_status=$?
+
+    if [[ "$curl_status" -ne 0 || "$http_status" != "200" ]]; then
+        echo "  Test report: unavailable (HTTP $http_status)"
+        return
+    fi
+
+    if ! jq -r '
+        [.suites[]?.cases[]? |
+            select(.status == "FAILED" or .status == "REGRESSION")] as $failed
+        | "  Test report: \(.failCount // ($failed | length)) failed, \(.passCount // 0) passed, \(.skipCount // 0) skipped",
+          (if ($failed | length) == 0 then
+              "  Failed tests: none recorded in the test report"
+           else
+              "  Failed tests:",
+              ($failed[] as $case
+               | "    - \($case.className)::\($case.name)",
+                 (($case.errorStackTrace // $case.errorDetails //
+                   $case.stdout // $case.stderr // "")
+                  | select(length > 0)
+                  | split("\n")[]
+                  | "      \(.)"))
+           end)
+    ' "$report_file"; then
+        echo "  Test report: could not be read"
+    fi
+}
+
+# Print the raw console log of build $2 of job $1, keeping only the last
+# MAX_CONSOLE_LINES lines when the log is larger.
+print_build_console_log() {
+    local job="$1"
+    local build_number="$2"
+    local console_file="$TMP_DIR/$job-$build_number.console.txt"
+    local console_url="$JENKINS_URL/job/zabbix-dev/job/$job/$build_number/consoleText"
+    local http_status
+    local curl_status
+    local total_lines
+
+    http_status=$(curl "${CURL_TLS_OPTIONS[@]}" \
+        --config "$JENKINS_CURL_CONFIG" \
+        --silent --show-error \
+        --connect-timeout 10 \
+        --max-time 120 \
+        --output "$console_file" \
+        --write-out '%{http_code}' \
+        "$console_url")
+    curl_status=$?
+
+    if [[ "$curl_status" -ne 0 || "$http_status" != "200" ]]; then
+        echo "  Console log: unavailable (HTTP $http_status)"
+        return
+    fi
+
+    total_lines=$(wc -l < "$console_file")
+    total_lines="${total_lines//[[:space:]]/}"
+
+    echo "---- $job #$build_number console log (start) ----"
+
+    if [[ "$total_lines" =~ ^[0-9]+$ ]] && (( total_lines > MAX_CONSOLE_LINES )); then
+        echo "[showing the last $MAX_CONSOLE_LINES of $total_lines lines; complete log: $console_url]"
+        tail -n "$MAX_CONSOLE_LINES" "$console_file"
+    else
+        cat "$console_file"
+    fi
+
+    echo "---- $job #$build_number console log (end) ----"
+}
+
+# Print this branch's latest build of each job with its failure context: the
+# build result, the JUnit test report failures with their error details and
+# the raw console log of failed builds.
+show_failure_context() {
+    local job info build_number building build_result
+    local failed_builds="" pending_builds="" missing_builds=""
+
+    echo "Failure context for $BRANCH"
+    echo
+
+    for job in "${JOBS[@]}"; do
+        if ! info=$(latest_branch_build "$job"); then
+            echo "Error: could not list the latest $job builds from Jenkins."
+            exit 1
+        fi
+
+        if [[ -z "$info" ]]; then
+            printf '%s: no recent build on this branch\n\n' "$job"
+            missing_builds="${missing_builds}${missing_builds:+, }$job"
+            continue
+        fi
+
+        read -r build_number building build_result <<< "$info"
+
+        if [[ "$building" == "true" ]]; then
+            printf '%s: build #%s is still running\n\n' "$job" "$build_number"
+            pending_builds="${pending_builds}${pending_builds:+, }$job #$build_number"
+            continue
+        fi
+
+        if [[ "$build_result" == "SUCCESS" ]]; then
+            printf '%s: build #%s succeeded\n\n' "$job" "$build_number"
+            continue
+        fi
+
+        failed_builds="${failed_builds}${failed_builds:+, }$job #$build_number (${build_result:-unknown result})"
+
+        printf '%s: build #%s ended with %s\n' \
+            "$job" "$build_number" "${build_result:-an unknown result}"
+        printf '  URL: %s/job/zabbix-dev/job/%s/%s/\n' \
+            "$JENKINS_URL" "$job" "$build_number"
+
+        print_build_test_report "$job" "$build_number"
+        echo
+        print_build_console_log "$job" "$build_number"
+        echo
+    done
+
+    if [[ -n "$failed_builds" ]]; then
+        printf 'Failed builds: %s\n' "$failed_builds"
+    else
+        printf 'No failed builds for %s.\n' "$BRANCH"
+    fi
+
+    if [[ -n "$pending_builds" ]]; then
+        printf 'Still running: %s\n' "$pending_builds"
+    fi
+
+    if [[ -n "$missing_builds" ]]; then
+        printf 'No recent build on this branch: %s\n' "$missing_builds"
+    fi
+
+    if [[ -n "$failed_builds" ]]; then
+        printf 'After pushing a fix, rerun them with: zb j --rerun-failed\n'
+    fi
+}
+
+if (( SHOW_FAILURES )); then
+    show_failure_context
+    exit 0
+fi
 
 # ============================================================
 # Retrieve Jenkins CSRF crumb
@@ -501,6 +853,59 @@ if [[ -z "$CRUMB_FIELD" || -z "$CRUMB" ]]; then
 fi
 
 echo "Jenkins authentication successful."
+
+# ============================================================
+# Pick the jobs to trigger (--rerun-failed only)
+# ============================================================
+
+TRIGGER_JOBS=("${JOBS[@]}")
+REUSE_JOBS=()
+
+if (( RERUN_FAILED )); then
+    TRIGGER_JOBS=()
+
+    echo
+    echo "Checking the latest build of each job for $BRANCH..."
+
+    for job in "${JOBS[@]}"; do
+        if ! info=$(latest_branch_build "$job"); then
+            echo "Error: could not list the latest $job builds from Jenkins."
+            echo "No builds were triggered."
+            exit 1
+        fi
+
+        if [[ -z "$info" ]]; then
+            printf '  %-17s no build on this branch; rerunning\n' "$job"
+            TRIGGER_JOBS+=("$job")
+            continue
+        fi
+
+        read -r build_number building build_result <<< "$info"
+
+        if [[ "$building" == "true" ]]; then
+            printf '  %-17s build #%s is still running; reusing\n' \
+                "$job" "$build_number"
+            printf '%s\n' "$build_number" > "$TMP_DIR/$job.build-number"
+            REUSE_JOBS+=("$job")
+        elif [[ "$build_result" == "SUCCESS" ]]; then
+            printf '  %-17s build #%s succeeded; reusing\n' \
+                "$job" "$build_number"
+            printf '%s\n' "$build_number" > "$TMP_DIR/$job.build-number"
+            REUSE_JOBS+=("$job")
+        else
+            printf '  %-17s build #%s ended with %s; rerunning\n' \
+                "$job" "$build_number" "${build_result:-an unknown result}"
+            TRIGGER_JOBS+=("$job")
+        fi
+    done
+
+    if (( ${#TRIGGER_JOBS[@]} == 0 )); then
+        echo
+        echo "✓ No failed builds for $BRANCH; nothing was triggered."
+        echo "  The Jira comment was left unchanged."
+        exit 0
+    fi
+fi
 
 # ============================================================
 # Trigger Jenkins jobs
@@ -570,9 +975,13 @@ trigger_job() {
 }
 
 echo
-echo "Triggering all four Jenkins jobs..."
+if (( RERUN_FAILED )); then
+    echo "Triggering failed jobs only: ${TRIGGER_JOBS[*]}..."
+else
+    echo "Triggering all four Jenkins jobs..."
+fi
 
-for job in "${JOBS[@]}"; do
+for job in "${TRIGGER_JOBS[@]}"; do
     trigger_job "$job" &
 done
 
@@ -587,7 +996,7 @@ TRIGGER_FAILED=0
 echo
 echo "Checking Jenkins queue responses..."
 
-for job in "${JOBS[@]}"; do
+for job in "${TRIGGER_JOBS[@]}"; do
     status=$(cat "$TMP_DIR/$job.status" 2>/dev/null || echo "000")
 
     if [[ ! "$status" =~ ^2[0-9][0-9]$ ]]; then
@@ -622,7 +1031,7 @@ done
 if [[ "$TRIGGER_FAILED" -ne 0 ]]; then
     echo
     echo "Error: one or more build requests failed."
-    echo "Not posting a Jira comment because the full set of builds was not queued."
+    echo "Not posting a Jira comment because not all requested builds were queued."
     exit 1
 fi
 
@@ -635,7 +1044,7 @@ echo "Waiting for Jenkins to assign build numbers..."
 
 BUILD_FAILED=0
 
-for job in "${JOBS[@]}"; do
+for job in "${TRIGGER_JOBS[@]}"; do
     queue_url=$(cat "$TMP_DIR/$job.queue-url")
     queue_api="${queue_url%/}/api/json"
 
@@ -857,7 +1266,15 @@ if [[ -z "$COMMENT_ID" ]]; then
 fi
 
 echo
-echo "✓ All four Jenkins builds were queued."
+if (( RERUN_FAILED )); then
+    echo "✓ Jenkins builds queued: ${TRIGGER_JOBS[*]}"
+
+    if (( ${#REUSE_JOBS[@]} > 0 )); then
+        echo "  Reused previous builds: ${REUSE_JOBS[*]}"
+    fi
+else
+    echo "✓ All four Jenkins builds were queued."
+fi
 echo "✓ Jira build comment $JIRA_COMMENT_ACTION successfully."
 echo "  Ticket: $JIRA_URL/browse/$TICKET_KEY"
 
