@@ -56,7 +56,7 @@ return {
       { "<leader>fo",  function() Snacks.picker.pickers() end,                                      desc = "List Available Pickers" },
       { "<leader>fu",  function() Snacks.picker.recent({ filter = { cwd = true } }) end,            desc = "Recently Opened Files" },
       { "<leader>fp",  function() require('harpoon.ui').toggle_quick_menu() end,                    desc = "Har[p]oon" },
-      { "<leader>fj",  function() Snacks.picker.jumps() end,                                        desc = "[J]umplist" },
+      { "<leader>fj",  function() Snacks.picker.jumps({ filter = { cwd = true } }) end,             desc = "[J]umplist" },
       { "<leader>f/",  function() Snacks.picker.lines() end,                                        desc = "Search Current File" },
       { "<leader>fl",  group = "LSP" },
       { "<leader>fls", function() Snacks.picker.lsp_symbols() end,                                  desc = "Document Symbols" },
@@ -68,6 +68,8 @@ return {
       { "<leader>fmc", "<cmd>BookmarkNext<cr>",                                                     desc = "Next [c]urrent-file bookmark" },
 
       { "<leader>g",   group = "Git" },
+      { ")",           "<cmd>lua require 'gitsigns'.next_hunk()<cr>", mode = "n",                  desc = "Next Hunk" },
+      { "(",           "<cmd>lua require 'gitsigns'.prev_hunk()<cr>", mode = "n",                  desc = "Prev Hunk" },
       { "<leader>gj",  "<cmd>lua require 'gitsigns'.next_hunk()<cr>",                               desc = "Next Hunk" },
       { "<leader>gk",  "<cmd>lua require 'gitsigns'.prev_hunk()<cr>",                               desc = "Prev Hunk" },
       { "<leader>gl",  "<cmd>Gitsigns toggle_current_line_blame<cr>",                               desc = "Blame Toggle" },

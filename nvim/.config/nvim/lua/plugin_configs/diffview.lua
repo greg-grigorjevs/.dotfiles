@@ -61,12 +61,14 @@ return {
         view = {
           -- The `view` bindings are active in the diff buffers, only when the current
           -- tabpage is a Diffview.
+          nmap(")", "]c", "Next Hunk"),
+          nmap("(", "[c", "Prev Hunk"),
           nmap("<tab>", actions.select_next_entry, "Open the diff for the next file"),
           nmap("<s-tab>", actions.select_prev_entry, "Open the diff for the previous file"),
           nmap("gf", actions.goto_file, "Open the file in a split in the previous tabpage"),
           nmap("<C-w><C-f>", actions.goto_file_split, "Open the file in a new split"),
           nmap("<C-w>gf", actions.goto_file_tab, "Open the file in a new tabpage"),
-          nmap("<leader>e", actions.focus_files, "Bring focus to the file panel"),
+          nmap("<leader>e", actions.toggle_files, "Toggle the file panel"),
           nmap("<leader>b", actions.toggle_files, "Toggle the file panel"),
         },
         file_panel = {
@@ -92,7 +94,7 @@ return {
           nmap("<C-w>gf", actions.goto_file_tab, "Open the file in a new tabpage"),
           nmap("i", actions.listing_style, "Toggle between list and tree views"),
           nmap("f", actions.toggle_flatten_dirs, "Flatten empty subdirectories in the tree"),
-          nmap("<leader>e", actions.focus_files, "Bring focus to the file panel"),
+          nmap("<leader>e", actions.toggle_files, "Toggle the file panel"),
           nmap("<leader>b", actions.toggle_files, "Toggle the file panel"),
         },
         file_history_panel = {
@@ -116,7 +118,7 @@ return {
           nmap("gf", actions.goto_file, "Open the file in a split in the previous tabpage"),
           nmap("<C-w><C-f>", actions.goto_file_split, "Open the file in a new split"),
           nmap("<C-w>gf", actions.goto_file_tab, "Open the file in a new tabpage"),
-          nmap("<leader>e", actions.focus_files, "Bring focus to the file panel"),
+          nmap("<leader>e", actions.toggle_files, "Toggle the file panel"),
           nmap("<leader>b", actions.toggle_files, "Toggle the file panel"),
         },
         option_panel = {

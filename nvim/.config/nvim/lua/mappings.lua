@@ -50,7 +50,16 @@ nmap("<S-x>", ":bdelete<CR>")
 --[[ map("n", "f", ":HopChar1AC<CR>") ]]
 --[[ map("n", "F", ":HopChar1BC<CR>") ]]
 
-nmap('g.', '<C-I>')
+-- Jump through history without leaving the current directory.
+local function jump_history(direction)
+  return function()
+    require('custom.jumps').jump(direction, vim.v.count1)
+  end
+end
+
+vim.keymap.set('n', 'g.', jump_history(1), { desc = 'Newer jump in current directory' })
+vim.keymap.set('n', '<C-o>', jump_history(-1), { desc = 'Older jump in current directory' })
+vim.keymap.set('n', '<C-i>', jump_history(1), { desc = 'Newer jump in current directory' })
 
 vim.cmd [[
 " visual line mode mappings

@@ -8,14 +8,20 @@ return {
       formatters = {
         ['blade-formatter'] = {
           append_args = { '--sort-html-attributes=code-guide', '--sort-tailwindcss-classes' }
-        }
+        },
+        -- Apple's swift-format from the Xcode toolchain; matches `make format` in Swift projects
+        ['swift_format'] = {
+          command = 'xcrun',
+          args = { 'swift-format', 'format', '--in-place', '$FILENAME' },
+          stdin = false,
+        },
       },
       formatters_by_ft = {
         blade = { 'blade-formatter' },
         nix = { 'nixpkgs_fmt' },
         html = { 'prettierd' },
         javascript = { 'prettierd' },
-        swift = { 'swiftformat' }
+        swift = { 'swift_format' }
       },
       format_on_save = function()
         -- disable autosafe for php and js at zabbix

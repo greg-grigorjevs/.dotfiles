@@ -1,5 +1,5 @@
 local servers = {
-  -- 'ts_ls',
+  'ts_ls',
   'lua_ls',
   'intelephense',
   'emmet_ls',
@@ -17,6 +17,9 @@ local servers = {
 local external_servers = { 'sourcekit' }
 
 local all_servers = vim.list_extend(vim.deepcopy(servers), external_servers)
+local php_language_id = function(_, filetype)
+  return filetype == 'phpjs' and 'php' or filetype
+end
 require('mason').setup()
 require('mason-lspconfig').setup({
   ensure_installed = servers,
@@ -26,7 +29,6 @@ require('mason-null-ls').setup({
   ensure_installed = {
     'nixpkgs-fmt',
     'blade-formatter',
-    'swiftformat',
     'swiftlint',
   }
 })
@@ -72,7 +74,19 @@ for _, server in ipairs(all_servers) do
     capabilities = capabilities,
   }
 
-  if server == 'lua_ls' then
+  if server == 'ts_ls' then
+    server_config.before_init = function(params, config)
+      local root = config.root_dir
+      if not root and type(params.workspaceFolders) == 'table' and params.workspaceFolders[1] then
+        root = vim.uri_to_fname(params.workspaceFolders[1].uri)
+      end
+      if not root and type(params.rootUri) == 'string' then
+        root = vim.uri_to_fname(params.rootUri)
+      end
+
+      require('lsp.zabbix').ensure_project(root)
+    end
+  elseif server == 'lua_ls' then
     server_config.settings = {
       Lua = {
         diagnostics = {
@@ -90,6 +104,8 @@ for _, server in ipairs(all_servers) do
       "typescript.tsx", "svelte", 'blade' }
   elseif server == 'intelephense' then
     server_config.single_file_support = true
+    server_config.filetypes = { 'php', 'phpjs' }
+    server_config.get_language_id = php_language_id
     server_config.settings = {
       intelephense = {
         environment = {
@@ -101,6 +117,10 @@ for _, server in ipairs(all_servers) do
         }
       }
     }
+  elseif server == 'tailwindcss' then
+    server_config.filetypes = vim.deepcopy(vim.lsp.config[server].filetypes)
+    table.insert(server_config.filetypes, 'phpjs')
+    server_config.get_language_id = php_language_id
   elseif server == 'sourcekit' then
     -- Swift/Objective-C LSP shipped with Xcode; not in PATH without xcrun
     server_config.cmd = { 'xcrun', 'sourcekit-lsp' }

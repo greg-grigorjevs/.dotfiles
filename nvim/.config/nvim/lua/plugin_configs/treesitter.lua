@@ -32,6 +32,16 @@ return {
     vim.opt.rtp:prepend(plugin_dir .. '/runtime')
     require('nvim-treesitter').setup({ install_dir = plugin_dir })
 
+    local phpjs_parser = plugin_dir .. '/parser/php.so'
+    local phpjs_available = pcall(vim.treesitter.language.inspect, 'phpjs')
+    if not phpjs_available and vim.fn.filereadable(phpjs_parser) == 1 then
+      phpjs_available = vim.treesitter.language.add('phpjs', {
+        path = phpjs_parser,
+        symbol_name = 'php',
+      }) == true
+    end
+    parser_set.phpjs = phpjs_available
+
     if vim.fn.executable('tree-sitter') == 1 then
       local missing_parsers = vim.tbl_filter(function(parser)
         return vim.fn.filereadable(plugin_dir .. '/parser/' .. parser .. '.so') ~= 1
