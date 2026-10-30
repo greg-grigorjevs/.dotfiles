@@ -1,0 +1,134 @@
+#!/bin/bash
+# Toggleable scratch terminal in a tmux display-popup (bound to C-\ in tmux.conf).
+#
+#   tmux_popup toggle <client> <session> <pane_tty> <pane> <cwd>   # from the C-\ binding
+#   tmux_popup attach <scratch>                                    # the popup's own command
+#   tmux_popup closed <session>                                    # from the session-closed hook
+#
+# "toggle" forwards C-\ to nvim when a pane is focused on it, hides the popup
+# when it is already focused, and opens it otherwise. Every tmux session gets
+# its own scratch session ("_popup_<session>"), marked with the
+# @tmux_popup_parent option, so hiding and showing keeps that session's shell
+# (and whatever runs in it) alive independently of the others.
+#
+# Every popup client records itself in the scratch's @tmux_popup_clients
+# option (its tty is the popup's pty, which is also how tmux names the
+# client). That tells "closed" which clients attached to a scratch are the
+# popup's own - they exit with the popup - and which were only parked there:
+# destroying a session moves its clients to the newest session, which is
+# often a scratch, and killing that scratch would detach them. Parked clients
+# are moved back to a real session instead. "attach" attaches the scratch
+# session the popup shows; "closed" runs on session-closed and cleans up.
+set -eu
+
+PREFIX="_popup_" # scratch sessions are named "$PREFIX$parent_session"
+WIDTH="80%"
+HEIGHT="80%"
+SELF="$HOME/.local/bin/tmux_popup"
+
+# Newest session that is not one of our scratch sessions. This is the choice
+# tmux itself makes when destroying a session moves its clients somewhere.
+best_real_session() {
+    best=""
+    best_act=""
+    while read -r sact sname; do
+        if [ -z "$best_act" ] || [ "$sact" -gt "$best_act" ]; then
+            if [ -z "$(tmux show-options -qv -t "=$sname:" @tmux_popup_parent 2>/dev/null || true)" ]; then
+                best="$sname"
+                best_act="$sact"
+            fi
+        fi
+    done <<EOF
+$(tmux list-sessions -F '#{session_activity} #{session_name}' 2>/dev/null || true)
+EOF
+    printf '%s' "$best"
+}
+
+# Move a client that ended up on a scratch session back to a real one.
+evict_client() {
+    session="$(best_real_session)"
+    if [ -n "$session" ]; then
+        tmux switch-client -c "$1" -t "=$session:" 2>/dev/null || true
+    fi
+}
+
+case "${1:-toggle}" in
+attach)
+    scratch="$2"
+    # Record this popup's client (the tty of the popup) on the scratch.
+    cname="$(tty 2>/dev/null)" || cname=""
+    if [ -n "$cname" ]; then
+        clients="$(tmux show-options -qv -t "=$scratch:" @tmux_popup_clients 2>/dev/null || true)"
+        case ",$clients," in
+        *",$cname,"*) ;;
+        *) tmux set-option -t "=$scratch:" @tmux_popup_clients "${clients:+$clients,}$cname" ;;
+        esac
+    fi
+    # Detach instead of switching to another session when the scratch shell
+    # exits, so the popup closes and the outer client stays where it was.
+    # (The "=" prefix needs a colon here: without it set-option -t resolves a
+    # bare "=name" as a pane target and fails.)
+    tmux set-option -t "=$scratch:" detach-on-destroy on
+    exec tmux attach-session -t "=$scratch"
+    ;;
+toggle)
+    client="$2" session="$3" pane_tty="$4" pane="$5" cwd="$6"
+
+    if ps -o state= -o comm= -t "$pane_tty" \
+        | grep -iqE '^[^TXZ ]+ +(\S+/)?g?(view|n?vim?x?)(diff)?$'; then
+        # nvim focused: let it see C-\ (FloatermToggle)
+        tmux send-keys -t "$pane" 'C-\'
+    elif [ -n "$(tmux show-options -qv -t "=$session:" @tmux_popup_parent 2>/dev/null || true)" ]; then
+        # This is a scratch session. Hide the popup when the key came from
+        # the scratch's own popup client; another client here was parked by
+        # tmux when its session died, so move it to a real session instead of
+        # detaching it.
+        clients="$(tmux show-options -qv -t "=$session:" @tmux_popup_clients 2>/dev/null || true)"
+        if [ -z "$clients" ]; then
+            tmux detach-client -t "$client"
+        else
+            case ",$clients," in
+            *",$client,"*) tmux detach-client -t "$client" ;;
+            *) evict_client "$client" ;;
+            esac
+        fi
+    else
+        # create the session's scratch on first use, then show the popup
+        scratch="$PREFIX$session"
+        tmux new-session -d -s "$scratch" -c "$cwd" 2>/dev/null || true
+        tmux set-option -t "=$scratch:" @tmux_popup_parent "$session"
+        tmux display-popup -E -w "$WIDTH" -h "$HEIGHT" -d "$cwd" -c "$client" \
+            "'$SELF' attach '$scratch'"
+    fi
+    ;;
+closed)
+    # A tmux session closed. First move clients that tmux just parked on one
+    # of our scratch sessions back to a real session, or killing the scratch
+    # below would detach them. The scratch's own popup clients stay: they are
+    # supposed to exit with the popup that shows them.
+    attached="$(tmux list-clients -F '#{client_name} #{client_session}' 2>/dev/null || true)"
+    if [ -n "$attached" ]; then
+        while read -r cname csession; do
+            [ -n "$cname" ] || continue
+            [ -n "$(tmux show-options -qv -t "=$csession:" @tmux_popup_parent 2>/dev/null || true)" ] || continue
+            clients="$(tmux show-options -qv -t "=$csession:" @tmux_popup_clients 2>/dev/null || true)"
+            [ -n "$clients" ] || continue
+            case ",$clients," in
+            *",$cname,"*) continue ;;
+            esac
+            evict_client "$cname"
+        done <<EOF
+$attached
+EOF
+    fi
+
+    # Then kill the scratch of the session that closed, if it has one. Only
+    # sessions this script marked are touched, so a user session that merely
+    # matches the name is left alone.
+    parent="$2"
+    scratch="$PREFIX$parent"
+    if [ "$(tmux show-options -qv -t "=$scratch:" @tmux_popup_parent 2>/dev/null || true)" = "$parent" ]; then
+        tmux kill-session -t "=$scratch:"
+    fi
+    ;;
+esac

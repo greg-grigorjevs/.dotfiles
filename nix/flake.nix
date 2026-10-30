@@ -246,6 +246,7 @@
             ".config/kitty".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/kitty/.config/kitty";
             ".config/opencode".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/opencode";
             ".config/herdr/config.toml".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/herdr/.config/herdr/config.toml";
+            ".config/sesh/sesh.toml".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/sesh/.config/sesh/sesh.toml";
             ".hammerspoon".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/hammerspoon/.hammerspoon";
             ".tmux.conf".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/tmux/.tmux.conf";
             ".local/bin".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/scripts/.local/bin";

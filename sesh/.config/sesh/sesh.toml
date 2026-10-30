@@ -1,0 +1,5 @@
+#:schema https://github.com/joshmedeski/sesh/raw/main/sesh.schema.json
+
+# Hide the persistent C-\ popup scratch sessions (see tmux_popup) from sesh
+# list/picker results. Use `sesh list -b -t` to still see them.
+blacklist = ["^_popup(_|$)"]
