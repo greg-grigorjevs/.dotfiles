@@ -102,7 +102,7 @@ set_base_ref() {
     if (( major_num > 7 || (major_num == 7 && minor_num > 4) )); then
       base_ref=origin/master
     else
-      die "unsupported release suffix: $major.$minor (use 7.0, 7.4, or a version greater than 7.4)"
+      return 1
     fi
   fi
 }
@@ -122,7 +122,7 @@ queue_worktree() {
 
 select_assigned_ticket() {
   local jira_url jql start_at total page page_count all_issues tickets_json issue_options selected_issue
-  local issue_json issue_type versions_json version_count version_options selected_version
+  local issue_json issue_type versions_json version_count version_options selected_version selecting_all=false
   local dependency jira_keychain_service jira_user jira_token
 
   for dependency in curl jq; do
@@ -228,19 +228,26 @@ select_assigned_ticket() {
     fi
 
     if [[ "$selected_version" == All ]]; then
+      selecting_all=true
       version_options=$(jq -r '.[]' <<< "$versions_json")
     else
       version_options=$selected_version
     fi
     while IFS= read -r selected_version; do
-      if [[ "$selected_version" =~ ^([0-9]+)\.([0-9]+)([.-].*|[[:space:]].*|$)$ ]]; then
-        set_base_ref "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+      if [[ "$selected_version" =~ ^([0-9]+)\.([0-9]+)([.-].*|[[:space:]].*|$)$ ]] \
+        && set_base_ref "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"; then
         branch="$issue_key-$release_suffix"
         queue_worktree
+      elif [[ "$selecting_all" == true ]]; then
+        printf "Skipping unsupported Affected Version/s value '%s' on %s\n" "$selected_version" "$issue_key"
       else
         die "unsupported Affected Version/s value '$selected_version' on $issue_key"
       fi
     done <<< "$version_options"
+    if (( target_count == 0 )); then
+      printf 'No supported Affected Version/s on %s; no worktrees to set up\n' "$issue_key"
+      exit 0
+    fi
   else
     # Non-problem tickets have no meaningful Affected Version/s; start them from trunk.
     branch=$issue_key
@@ -287,7 +294,8 @@ else
     branch_prefix=${BASH_REMATCH[1]}
     branch_major=${BASH_REMATCH[2]}
     branch_minor=${BASH_REMATCH[3]}
-    set_base_ref "$branch_major" "$branch_minor"
+    set_base_ref "$branch_major" "$branch_minor" \
+      || die "unsupported release suffix: $branch_major.$branch_minor (use 7.0, 7.4, or a version greater than 7.4)"
     branch="$branch_prefix-$release_suffix"
     queue_worktree
   else
@@ -295,7 +303,13 @@ else
   fi
 fi
 
-command -v tmux >/dev/null 2>&1 || die 'tmux is required but was not found in PATH'
+use_herdr=false
+if [[ -n ${HERDR_SOCKET_PATH:-} || -n ${HERDR_ACTIVE_WORKSPACE_ID:-} ]]; then
+  use_herdr=true
+  command -v "${HERDR_BIN_PATH:-herdr}" >/dev/null 2>&1 || die 'herdr is required but was not found in PATH'
+else
+  command -v tmux >/dev/null 2>&1 || die 'tmux is required but was not found in PATH'
+fi
 
 setup_worktree() {
   local worktree_path base_branch existing_root existing_branch session feature_fetch_ref
@@ -331,10 +345,12 @@ setup_worktree() {
   git -C "$worktree_path" push --set-upstream "$remote" \
     "refs/heads/$branch:refs/heads/feature/$branch"
 
-  # Dots are treated specially in tmux targets, so use underscores in session names.
-  session=${branch//./_}
-  if ! tmux has-session -t "=$session" 2>/dev/null; then
-    tmux new-session -d -s "$session" -c "$worktree_path"
+  if [[ "$use_herdr" == false ]]; then
+    # Dots are treated specially in tmux targets, so use underscores in session names.
+    session=${branch//./_}
+    if ! tmux has-session -t "=$session" 2>/dev/null; then
+      tmux new-session -d -s "$session" -c "$worktree_path"
+    fi
   fi
 }
 
@@ -349,6 +365,15 @@ if [[ "$all_versions" == true ]]; then
 fi
 
 session=${target_branches[0]//./_}
+if [[ "$use_herdr" == true ]]; then
+  "${HERDR_BIN_PATH:-herdr}" workspace create \
+    --cwd "$(dirname "$repo_root")/${target_branches[0]}" --label "$session" --focus
+  if [[ -n ${TMUX:-} && $(tmux display-message -p '#{socket_path}') == */herdr-popup ]]; then
+    tmux detach-client
+  fi
+  exit 0
+fi
+
 if [[ -n ${TMUX:-} ]]; then
   tmux switch-client -t "=$session"
 else
