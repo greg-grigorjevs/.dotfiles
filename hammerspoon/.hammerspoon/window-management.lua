@@ -41,6 +41,21 @@ hs.hotkey.bind({ "cmd", "ctrl" }, "k", function()
   win:setFrame(f, 0)
 end)
 
+-- Center 75%
+hs.hotkey.bind({ "cmd", "ctrl" }, "return", function()
+  local win = hs.window.focusedWindow()
+  local f = win:frame()
+  local screen = win:screen()
+  local max = screen:frame()
+
+  f.w = max.w * 0.80
+  f.h = max.h * 0.80
+  f.x = (max.w - f.w) / 2
+  f.y = (max.h - f.h) / 2
+  win:setFrame(f, 0)
+end)
+
+
 -- Center
 hs.hotkey.bind({ "cmd", "ctrl" }, "j", function()
   local win = hs.window.focusedWindow()
