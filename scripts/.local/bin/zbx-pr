@@ -900,7 +900,7 @@ for ((index = 0; index < ${#selected_paths[@]}; index++)); do
   target_ref="refs/heads/${selected_targets[$index]}"
 
   printf '\nPushing %s...\n' "$source_branch"
-  if ! git -C "$path" push origin "$branch:$source_ref"; then
+  if ! git -C "$path" push --set-upstream origin "$branch:$source_ref"; then
     say_error "could not push $branch to origin/$source_branch"
     overall_errors=1
     continue

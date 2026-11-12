@@ -323,17 +323,13 @@ setup_worktree() {
     git -C "$repo_root" worktree add "$worktree_path" "$branch"
   else
     printf 'Creating %s from %s...\n' "$branch" "$base_ref"
-    git -C "$repo_root" worktree add -b "$branch" "$worktree_path" "$base_ref"
+    git -C "$repo_root" worktree add --no-track -b "$branch" "$worktree_path" "$base_ref"
   fi
 
-  printf 'Pushing to %s/feature/%s...\n' "$remote" "$branch"
   feature_fetch_ref="+refs/heads/feature/$branch:refs/remotes/$remote/feature/$branch"
   if ! git -C "$repo_root" config --get-all "remote.$remote.fetch" | grep -Fxq "$feature_fetch_ref"; then
     git -C "$repo_root" remote set-branches --add "$remote" "feature/$branch"
   fi
-  git -C "$worktree_path" push --set-upstream "$remote" \
-    "refs/heads/$branch:refs/heads/feature/$branch"
-
   if [[ "$use_herdr" == false ]]; then
     # Dots are treated specially in tmux targets, so use underscores in session names.
     session=${branch//./_}

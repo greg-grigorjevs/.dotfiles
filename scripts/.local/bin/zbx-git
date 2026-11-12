@@ -101,7 +101,7 @@ for ((index = 0; index < ${#paths[@]}; index++)); do
     git -C "$path" "$operation" "${arguments[@]}"
   elif [[ $operation == push ]]; then
     source_ref="feature/${branch#feature/}"
-    git -C "$path" push origin "$branch:refs/heads/$source_ref"
+    git -C "$path" push --set-upstream origin "$branch:refs/heads/$source_ref"
   else
     target=${targets[$index]}
     git -C "$path" fetch origin "+refs/heads/$target:refs/remotes/origin/$target"
