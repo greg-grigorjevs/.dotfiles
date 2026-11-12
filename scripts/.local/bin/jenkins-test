@@ -484,7 +484,7 @@ if (( ! SHOW_FAILURES )); then
 
     if [[ -z "$VERSION" ]]; then
         echo "Error: cannot determine version from branch: $BRANCH"
-        echo "Expected a branch ending in something like -7.0, -7.4 or -7.5."
+        echo "Expected a branch ending in something like -7.0, -7.4 or -8.0."
         exit 1
     fi
 

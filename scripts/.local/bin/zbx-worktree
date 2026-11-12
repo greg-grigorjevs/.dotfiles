@@ -75,22 +75,11 @@ cleanup_jira_credentials() {
 
 trap cleanup_jira_credentials EXIT
 
-# 8.0 is developed on master and delivered as 7.5, so worktrees and branches
-# for it use the 7.5 suffix. Sets release_suffix.
-set_release_suffix() {
-  local major=$1 minor=$2
-
-  case "$major.$minor" in
-    8.0) release_suffix=7.5 ;;
-    *) release_suffix="$major.$minor" ;;
-  esac
-}
-
 set_base_ref() {
   local major minor major_num minor_num
   major=$1
   minor=$2
-  set_release_suffix "$major" "$minor"
+  release_suffix="$major.$minor"
 
   if [[ "$major" == 7 && "$minor" == 0 ]]; then
     base_ref=origin/release/7.0
