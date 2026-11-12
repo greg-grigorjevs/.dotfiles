@@ -84,16 +84,21 @@ hs.hotkey.bind({ "cmd", "ctrl" }, "/", function()
   win:setFrame(f, 0)
 end)
 
--- Left 2/3
+-- Left 2/3 or 3/4
 hs.hotkey.bind({ "cmd", "ctrl" }, "b", function()
   local win = hs.window.focusedWindow()
   local f = win:frame()
   local screen = win:screen()
   local max = screen:frame()
 
+  if math.abs(f.w - max.w * 0.66) < 2 then
+    f.w = max.w * 0.75
+  else
+    f.w = max.w * 0.66
+  end
+
   f.x = 0
   f.y = max.y
-  f.w = max.w * 0.66
   f.h = max.h
   win:setFrame(f, 0)
 end)
