@@ -13,6 +13,12 @@ return {
     image = { enabled = true },
     picker = {
       enabled = true,
+      layout = {
+        layout = {
+          width = 0.95,
+          height = 0.95,
+        },
+      },
       sources = {
         files = {
           actions = {
