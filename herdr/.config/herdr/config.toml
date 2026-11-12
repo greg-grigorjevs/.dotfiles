@@ -37,15 +37,11 @@ prefix = "ctrl+a"
 # ---------------------------------------------------------------------------
 
 # tmux: C-Left/C-Down/C-Up/C-Right select-pane (root table, no prefix).
-# NOTE: herdr consumes these before the pane sees them, so inside a split nvim
-# they switch herdr panes rather than vim windows. Your nvim maps C-arrows to
-# vim-tmux-navigator, which shells out to tmux and won't work under herdr.
-# For seamless vim<->herdr movement, the vim-herdr-navigation plugin
-# (herdr.dev/plugins) rebinds these via [[keys.command]] plugin_action.
-focus_pane_left = "ctrl+left"
-focus_pane_down = "ctrl+down"
-focus_pane_up = "ctrl+up"
-focus_pane_right = "ctrl+right"
+# Direct chords below forward to Neovim; prefix chords always move Herdr panes.
+focus_pane_left = "prefix+left"
+focus_pane_down = "prefix+down"
+focus_pane_up = "prefix+up"
+focus_pane_right = "prefix+right"
 
 # tmux default "x" kill-pane (herdr default kept)
 close_pane = "prefix+x"
@@ -151,6 +147,30 @@ last_pane = ""
 # Custom commands (replace the tmux run-shell scripts)
 # ---------------------------------------------------------------------------
 
+[[keys.command]]
+key = "ctrl+left"
+type = "shell"
+command = '/usr/bin/python3 "$HOME/.local/bin/herdr-navigate" left'
+description = "navigate left (Neovim/Herdr)"
+
+[[keys.command]]
+key = "ctrl+down"
+type = "shell"
+command = '/usr/bin/python3 "$HOME/.local/bin/herdr-navigate" down'
+description = "navigate down (Neovim/Herdr)"
+
+[[keys.command]]
+key = "ctrl+up"
+type = "shell"
+command = '/usr/bin/python3 "$HOME/.local/bin/herdr-navigate" up'
+description = "navigate up (Neovim/Herdr)"
+
+[[keys.command]]
+key = "ctrl+right"
+type = "shell"
+command = '/usr/bin/python3 "$HOME/.local/bin/herdr-navigate" right'
+description = "navigate right (Neovim/Herdr)"
+
 # A persistent scratch shell per workspace; Ctrl+\ detaches to hide it.
 [[keys.command]]
 key = "ctrl+backslash"
@@ -227,7 +247,7 @@ command = '''
 d=$(find ~/dev/work ~/dev ~/work ~/work/zbx/branches/ ~/work/zbx ~/work/zbx/branches/feature/ ~/ ~/dev/personal ~/dev/projects ~/.dotfiles/nvim/.config -mindepth 1 -maxdepth 1 -type d -exec stat -f '%B %N' {} + 2>/dev/null | sort -rn | cut -d ' ' -f 2- | fzf --no-sort)
 [ -n "$d" ] && "$HERDR_BIN_PATH" workspace create --cwd "$d" --label "$(basename "$d" | tr . _)" --focus
 '''
-width = "50%"
+width = "70%"
 height = "90%"
 description = "sessionizer (tmux: f)"
 
@@ -238,7 +258,7 @@ description = "sessionizer (tmux: f)"
 key = "ctrl+tab"
 type = "popup"
 command = 'exec "$HOME/.local/bin/herdr-workspace-picker"'
-width = "70%"
+width = "50%"
 height = "90%"
 description = "fuzzy workspace picker (tmux: C-Tab sesh)"
 

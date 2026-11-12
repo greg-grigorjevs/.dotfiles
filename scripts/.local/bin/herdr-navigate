@@ -1,0 +1,28 @@
+import json
+import os
+import shutil
+import subprocess
+import sys
+
+direction = sys.argv[1]
+if direction not in ("left", "down", "up", "right"):
+    sys.exit("expected left, down, up, or right")
+
+herdr = os.environ.get("HERDR_BIN_PATH", "")
+if not os.access(herdr, os.X_OK):
+    herdr = shutil.which("herdr") or "herdr"
+pane = os.environ["HERDR_ACTIVE_PANE_ID"]
+result = subprocess.run(
+    [herdr, "pane", "process-info", "--pane", pane],
+    check=True, capture_output=True, text=True,
+)
+processes = json.loads(result.stdout)["result"]["process_info"]["foreground_processes"]
+is_vim = any(
+    os.path.basename(p.get(field, "")) in ("nvim", "vim", "view", "nvimdiff", "vimdiff")
+    for p in processes for field in ("name", "argv0")
+)
+if is_vim:
+    command = [herdr, "pane", "send-keys", pane, "ctrl+" + direction]
+else:
+    command = [herdr, "pane", "focus", "--pane", pane, "--direction", direction]
+subprocess.run(command, check=True)
