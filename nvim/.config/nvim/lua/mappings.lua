@@ -35,6 +35,7 @@ imap("\27\127", "<C-w>")
 --[[ nmap("<Tab>", ":BufferNext<CR>") ]]
 nmap("<S-Tab>", ":BufferPrevious<CR>")
 nmap("<S-x>", ":bdelete<CR>")
+vim.keymap.set('n', '<C-w><BS>', '<Cmd>tabclose<CR>', { desc = 'Close current tab' })
 
 --[[ nmap("j", "gj"); ]]
 --[[ nmap("k", "gk"); ]]

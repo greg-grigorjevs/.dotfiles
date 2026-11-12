@@ -200,8 +200,8 @@ return {
 
     -- quickfix list mappings
     wk.add({
-      { "<M-s>", "<cmd>tabnext<cr>", desc = "Next tab" },
-      { "<M-b>", "<cmd>tabprev<cr>", desc = "Previous tab" },
+      { "<M-d>", "<cmd>tabnext<cr>", desc = "Next tab" },
+      { "<M-l>", "<cmd>tabprev<cr>", desc = "Previous tab" },
       { "<M-h>", "<cmd>cnext<cr>",   desc = "Quickfix next" },
       { "<M-t>", "<cmd>cprev<cr>",   desc = "Quickfix prev" }
     })
