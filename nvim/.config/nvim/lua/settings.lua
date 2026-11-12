@@ -154,10 +154,8 @@ end, { nargs = '*' })
 
 vim.treesitter.language.register('bash', 'zsh')
 vim.filetype.add({
-  filename = {
-    ['template.edit.js.php'] = 'phpjs',
-  },
   pattern = {
+    ['.*%.js%.php'] = 'phpjs',
     ['.*%.blade%.php'] = 'php',
     ['.*%.plist'] = 'xml',
     ['.*%.entitlements'] = 'xml',

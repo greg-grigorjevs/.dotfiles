@@ -9,6 +9,7 @@ return {
         write_to_disk = true,
       },
     })
+    require('lsp.phpjs').setup()
 
     -- Otter routes requests through every LSP client attached to its virtual
     -- buffer. html/tailwindcss also attach to JavaScript and answer definition
@@ -33,14 +34,9 @@ return {
     })
 
     vim.api.nvim_create_autocmd('FileType', {
-      group = vim.api.nvim_create_augroup('zabbix_template_javascript_lsp', { clear = true }),
+      group = vim.api.nvim_create_augroup('phpjs_javascript_lsp', { clear = true }),
       pattern = 'phpjs',
       callback = function(event)
-        local file_path = vim.api.nvim_buf_get_name(event.buf):gsub('\\', '/')
-        if not file_path:match('ui/app/views/js/template%.edit%.js%.php$') then
-          return
-        end
-
         vim.api.nvim_buf_call(event.buf, function()
           require('otter').activate({ 'javascript' })
         end)
