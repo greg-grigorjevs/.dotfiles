@@ -68,8 +68,8 @@ return {
       { "<leader>fmc", "<cmd>BookmarkNext<cr>",                                                     desc = "Next [c]urrent-file bookmark" },
 
       { "<leader>g",   group = "Git" },
-      { ")",           "<cmd>lua require 'gitsigns'.next_hunk()<cr>", mode = "n",                  desc = "Next Hunk" },
-      { "(",           "<cmd>lua require 'gitsigns'.prev_hunk()<cr>", mode = "n",                  desc = "Prev Hunk" },
+      { ")",           "<cmd>lua require 'gitsigns'.next_hunk()<cr>",                               mode = "n",                           desc = "Next Hunk" },
+      { "(",           "<cmd>lua require 'gitsigns'.prev_hunk()<cr>",                               mode = "n",                           desc = "Prev Hunk" },
       { "<leader>gj",  "<cmd>lua require 'gitsigns'.next_hunk()<cr>",                               desc = "Next Hunk" },
       { "<leader>gk",  "<cmd>lua require 'gitsigns'.prev_hunk()<cr>",                               desc = "Prev Hunk" },
       { "<leader>gl",  "<cmd>Gitsigns toggle_current_line_blame<cr>",                               desc = "Blame Toggle" },
@@ -93,65 +93,73 @@ return {
       { "<leader>t",   group = "Terminal/Test" },
       {
         "<leader>tg",
-        "<cmd>FloatermNew --autoclose=always --name=lazygit lazygit --use-config-file=\"$HOME/.dotfiles/lazygit/.config/lazygit/config.yml\"<cr>",
+        function()
+          local command = vim.fn.shellescape(vim.fn.expand("~/.local/bin/lazygit-select-file"))
+              .. ' --use-config-file="$HOME/.dotfiles/lazygit/.config/lazygit/config.yml,$HOME/.dotfiles/lazygit/.config/lazygit/nvim-theme.yml"'
+          local file = vim.fn.expand("%:p")
+          if file ~= "" and vim.bo.buftype == "" then
+            command = command .. " --select-file=" .. vim.fn.shellescape(file)
+          end
+          vim.cmd("FloatermNew --autoclose=always --name=lazygit " .. command)
+        end,
         desc = "lazygit"
       },
-      { "<leader>ty", "<cmd>FloatermNew yazi<cr>",                             desc = "yazi file explorer" },
-      { "<leader>tK", "<cmd>FloatermKill!<cr>",                                desc = "Kill all terminals" },
-      { "<leader>tt", "<cmd>FloatermShow lazygit<cr>",                         desc = "[T]oggle existing lazygit if exists" },
-      { "<leader>tn", "<cmd>TestNearest<cr>",                                  desc = "Run Nearest [T]est" },
-      { "<leader>tl", "<cmd>TestLast<cr>",                                     desc = "Run [L]ast test" },
-      { "<leader>tf", "<cmd>TestFile<cr>",                                     desc = "Run [F]ile test" },
+      { "<leader>ty",    "<cmd>FloatermNew yazi<cr>",                             desc = "yazi file explorer" },
+      { "<leader>tK",    "<cmd>FloatermKill!<cr>",                                desc = "Kill all terminals" },
+      { "<leader>tt",    "<cmd>FloatermShow lazygit<cr>",                         desc = "[T]oggle existing lazygit if exists" },
+      { "<leader>tn",    "<cmd>TestNearest<cr>",                                  desc = "Run Nearest [T]est" },
+      { "<leader>tl",    "<cmd>TestLast<cr>",                                     desc = "Run [L]ast test" },
+      { "<leader>tf",    "<cmd>TestFile<cr>",                                     desc = "Run [F]ile test" },
 
 
-      { '<leader>rr', "<cmd>ReloadBrowser<cr>",                                desc = 'Reload Browser' },
+      { '<leader>rr',    "<cmd>ReloadBrowser<cr>",                                desc = 'Reload Browser' },
 
-      { "<leader>h",  group = "Harpoon/Format" },
-      { "<leader>hp", "<cmd>Prettier<cr>",                                     desc = "Prettier" },
-      { "<leader>ha", "<cmd>lua require 'harpoon.mark'.add_file()<cr>",        desc = "Add file to bookmarks" },
-      { "<leader>ht", "<cmd>lua require 'harpoon.ui'.toggle_quick_menu()<cr>", desc = "Toggle harpoon" },
+      { "<leader>h",     group = "Harpoon/Format" },
+      { "<leader>hp",    "<cmd>Prettier<cr>",                                     desc = "Prettier" },
+      { "<leader>ha",    "<cmd>lua require 'harpoon.mark'.add_file()<cr>",        desc = "Add file to bookmarks" },
+      { "<leader>ht",    "<cmd>lua require 'harpoon.ui'.toggle_quick_menu()<cr>", desc = "Toggle harpoon" },
 
-      { "<leader>x",  group = "Trouble" },
-      { "<leader>xx", "<cmd>Trouble<cr>",                                      desc = "Toggle Trouble" },
-      { "<leader>xw", "<cmd>Trouble workspace_diagnostics<cr>",                desc = "Workspace Diagnostics" },
-      { "<leader>xd", "<cmd>Trouble document_diagnostics<cr>",                 desc = "Document Diagnostics" },
+      { "<leader>x",     group = "Trouble" },
+      { "<leader>xx",    "<cmd>Trouble<cr>",                                      desc = "Toggle Trouble" },
+      { "<leader>xw",    "<cmd>Trouble workspace_diagnostics<cr>",                desc = "Workspace Diagnostics" },
+      { "<leader>xd",    "<cmd>Trouble document_diagnostics<cr>",                 desc = "Document Diagnostics" },
       -- { "<leader>xr", "<cmd>Trouble lsp_references win.position=left<cr>",     desc = "LSP References" },
-      { "<leader>xr", "<cmd>Trouble lsp_references<cr>",                       desc = "LSP References" },
+      { "<leader>xr",    "<cmd>Trouble lsp_references<cr>",                       desc = "LSP References" },
 
-      { "<leader>X",  group = "Xcode" },
-      { "<leader>XX", "<cmd>XcodebuildPicker<cr>",                 desc = "Show All Actions" },
-      { "<leader>Xf", "<cmd>XcodebuildProjectManager<cr>",         desc = "Project Manager" },
-      { "<leader>Xb", "<cmd>XcodebuildBuild<cr>",                  desc = "Build" },
-      { "<leader>XB", "<cmd>XcodebuildBuildForTesting<cr>",        desc = "Build For Testing" },
-      { "<leader>Xr", "<cmd>XcodebuildBuildRun<cr>",               desc = "Build & Run" },
-      { "<leader>Xt", "<cmd>XcodebuildTest<cr>",                   desc = "Run Tests" },
-      { "<leader>Xt", "<cmd>XcodebuildTestSelected<cr>",           mode = { "v" }, desc = "Run Selected Tests" },
-      { "<leader>XT", "<cmd>XcodebuildTestClass<cr>",              desc = "Run Current Test Class" },
-      { "<leader>X.", "<cmd>XcodebuildTestRepeat<cr>",             desc = "Repeat Last Test Run" },
-      { "<leader>Xl", "<cmd>XcodebuildToggleLogs<cr>",             desc = "Toggle Logs" },
-      { "<leader>Xc", "<cmd>XcodebuildToggleCodeCoverage<cr>",     desc = "Toggle Code Coverage" },
-      { "<leader>XC", "<cmd>XcodebuildShowCodeCoverageReport<cr>", desc = "Code Coverage Report" },
-      { "<leader>Xe", "<cmd>XcodebuildTestExplorerToggle<cr>",     desc = "Toggle Test Explorer" },
-      { "<leader>Xs", "<cmd>XcodebuildFailingSnapshots<cr>",       desc = "Failing Snapshots" },
-      { "<leader>Xp", "<cmd>XcodebuildPreviewGenerateAndShow<cr>", desc = "Generate Preview" },
-      { "<leader>X<cr>", "<cmd>XcodebuildPreviewToggle<cr>",       desc = "Toggle Preview" },
-      { "<leader>Xd", "<cmd>XcodebuildSelectDevice<cr>",           desc = "Select Device" },
-      { "<leader>Xq", "<cmd>Telescope quickfix<cr>",               desc = "Quickfix List" },
-      { "<leader>Xx", "<cmd>XcodebuildQuickfixLine<cr>",           desc = "Quickfix Line" },
-      { "<leader>Xa", "<cmd>XcodebuildCodeActions<cr>",            desc = "Code Actions" },
-
-
-
-      { '<leader>s',  group = 'Session' },
-      { "<leader>sw", function() require('persistence').save() end,            desc = "Save" },
-      { "<leader>sr", function() require('persistence').load() end,            desc = "Restore" },
+      { "<leader>X",     group = "Xcode" },
+      { "<leader>XX",    "<cmd>XcodebuildPicker<cr>",                             desc = "Show All Actions" },
+      { "<leader>Xf",    "<cmd>XcodebuildProjectManager<cr>",                     desc = "Project Manager" },
+      { "<leader>Xb",    "<cmd>XcodebuildBuild<cr>",                              desc = "Build" },
+      { "<leader>XB",    "<cmd>XcodebuildBuildForTesting<cr>",                    desc = "Build For Testing" },
+      { "<leader>Xr",    "<cmd>XcodebuildBuildRun<cr>",                           desc = "Build & Run" },
+      { "<leader>Xt",    "<cmd>XcodebuildTest<cr>",                               desc = "Run Tests" },
+      { "<leader>Xt",    "<cmd>XcodebuildTestSelected<cr>",                       mode = { "v" },                              desc = "Run Selected Tests" },
+      { "<leader>XT",    "<cmd>XcodebuildTestClass<cr>",                          desc = "Run Current Test Class" },
+      { "<leader>X.",    "<cmd>XcodebuildTestRepeat<cr>",                         desc = "Repeat Last Test Run" },
+      { "<leader>Xl",    "<cmd>XcodebuildToggleLogs<cr>",                         desc = "Toggle Logs" },
+      { "<leader>Xc",    "<cmd>XcodebuildToggleCodeCoverage<cr>",                 desc = "Toggle Code Coverage" },
+      { "<leader>XC",    "<cmd>XcodebuildShowCodeCoverageReport<cr>",             desc = "Code Coverage Report" },
+      { "<leader>Xe",    "<cmd>XcodebuildTestExplorerToggle<cr>",                 desc = "Toggle Test Explorer" },
+      { "<leader>Xs",    "<cmd>XcodebuildFailingSnapshots<cr>",                   desc = "Failing Snapshots" },
+      { "<leader>Xp",    "<cmd>XcodebuildPreviewGenerateAndShow<cr>",             desc = "Generate Preview" },
+      { "<leader>X<cr>", "<cmd>XcodebuildPreviewToggle<cr>",                      desc = "Toggle Preview" },
+      { "<leader>Xd",    "<cmd>XcodebuildSelectDevice<cr>",                       desc = "Select Device" },
+      { "<leader>Xq",    "<cmd>Telescope quickfix<cr>",                           desc = "Quickfix List" },
+      { "<leader>Xx",    "<cmd>XcodebuildQuickfixLine<cr>",                       desc = "Quickfix Line" },
+      { "<leader>Xa",    "<cmd>XcodebuildCodeActions<cr>",                        desc = "Code Actions" },
 
 
 
-      { '<leader>y',  group = 'Yank' },
-      { "<leader>yf", "<cmd>let @* = expand('%:t')<CR>",                       desc = "Current buffer's filename" },
-      { "<leader>yp", "<cmd>let @* = expand('%')<CR>",                         desc = "Current buffer's relative path" },
-      { "<leader>yP", "<cmd>let @* = expand('%:p')<CR>",                       desc = "Current buffer's full path" },
+      { '<leader>s',     group = 'Session' },
+      { "<leader>sw",    function() require('persistence').save() end,            desc = "Save" },
+      { "<leader>sr",    function() require('persistence').load() end,            desc = "Restore" },
+
+
+
+      { '<leader>y',     group = 'Yank' },
+      { "<leader>yf",    "<cmd>let @* = expand('%:t')<CR>",                       desc = "Current buffer's filename" },
+      { "<leader>yp",    "<cmd>let @* = expand('%')<CR>",                         desc = "Current buffer's relative path" },
+      { "<leader>yP",    "<cmd>let @* = expand('%:p')<CR>",                       desc = "Current buffer's full path" },
       {
         "<leader>yc",
         function() copy_opencode_location(false) end,
