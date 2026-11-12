@@ -12,9 +12,10 @@
     };
 
     nixpkgs-latest.url = "github:NixOS/nixpkgs/a84ebe20c6bc2ecbcfb000a50776219f48d134cc";
+    zlib-cli.url = "github:greg-grigorjevs/zlib";
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, nixpkgs-stable, nixpkgs-latest }:
+  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, nixpkgs-stable, nixpkgs-latest, zlib-cli }:
     let
       user =
         let
@@ -204,6 +205,7 @@
 
           # Makes sense for user specific applications that shouldn't be available system-wide
           home.packages = with pkgs; [
+            zlib-cli.packages.${pkgs.stdenv.hostPlatform.system}.default
             ansible
             atac
             bat
@@ -245,6 +247,7 @@
             ".config/nvim".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/nvim/.config/nvim";
             ".config/kitty".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/kitty/.config/kitty";
             ".config/opencode".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/opencode";
+            ".config/zlib/config.json".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/zlib/config.json";
             ".config/herdr/config.toml".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/herdr/.config/herdr/config.toml";
             ".config/sesh/sesh.toml".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/sesh/.config/sesh/sesh.toml";
             ".hammerspoon".source = mkOutOfStoreSymlink "${homeDir}/.dotfiles/hammerspoon/.hammerspoon";
