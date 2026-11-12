@@ -149,8 +149,8 @@ end)
 hs.hotkey.bind({ "cmd", "ctrl" }, "d", function()
   local laptopScreen = "Built-in Retina Display"
   local windowLayout = {
-    { 'Google Chrome', nil, laptopScreen, hs.layout.left50,  nil, nil },
-    { 'kitty',         nil, laptopScreen, hs.layout.right50, nil, nil },
+    { 'Google Chrome', nil, laptopScreen, hs.layout.right50, nil, nil },
+    { 'kitty',         nil, laptopScreen, hs.layout.left50,  nil, nil },
   }
 
   hs.layout.apply(windowLayout)
