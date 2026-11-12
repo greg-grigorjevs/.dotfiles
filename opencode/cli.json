@@ -27,8 +27,10 @@
 		"name": "opencode"
 	},
 	"session": {
-    "sidebar": "auto",
-    "thinking": "hide"
+    "sidebar": "hide",
+    "thinking": "hide",
+    "scrollbar": true,
+    "verbosity": "medium"
 	},
 	"diffs": {
 		"view": "auto",
