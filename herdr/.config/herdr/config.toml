@@ -238,7 +238,7 @@ description = "sessionizer (tmux: f)"
 key = "ctrl+tab"
 type = "popup"
 command = 'exec "$HOME/.local/bin/herdr-workspace-picker"'
-width = "50%"
+width = "70%"
 height = "90%"
 description = "fuzzy workspace picker (tmux: C-Tab sesh)"
 
