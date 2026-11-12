@@ -4,6 +4,13 @@ return {
   cmd = 'ConformInfo',
   config = function()
     local conform = require('conform')
+    local function autoformat_disabled()
+      if vim.b.disable_autoformat ~= nil then
+        return vim.b.disable_autoformat
+      end
+      return vim.api.nvim_buf_get_name(0):match('%.js%.php$') ~= nil
+    end
+
     conform.setup({
       formatters = {
         ['blade-formatter'] = {
@@ -40,7 +47,7 @@ return {
           "javascriptreact",
         }, vim.bo.filetype)
 
-        if vim.b.disable_autoformat
+        if autoformat_disabled()
             or (file_is_in_work and disabled_filetype) then
           return
         end
@@ -51,7 +58,7 @@ return {
 
     -- Keymaps
     vim.keymap.set({ "n" }, "<leader>hd", function()
-      vim.b.disable_autoformat = not vim.b.disable_autoformat
+      vim.b.disable_autoformat = not autoformat_disabled()
     end, { desc = "Toggle buffer autoformat", noremap = true })
 
     vim.keymap.set({ "n", "v" }, "<leader>hf", function()
