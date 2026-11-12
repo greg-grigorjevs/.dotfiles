@@ -23,7 +23,8 @@ local jsconfig_lines = {
 
 local function is_zabbix_root(root)
   return vim.fn.isdirectory(root .. '/ui/js') == 1
-    and vim.fn.filereadable(root .. '/ui/js/class.form.js') == 1
+    and (vim.fn.filereadable(root .. '/ui/js/class.form.js') == 1
+      or vim.fn.filereadable(root .. '/ui/js/functions.js') == 1)
     and vim.fn.isdirectory(root .. '/ui/app/views/js') == 1
 end
 
