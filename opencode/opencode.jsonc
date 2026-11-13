@@ -24,5 +24,19 @@
 	],
 	"plugins": [
 		"/Users/grigorijs.grigorjevs/.config/opencode/plugins/zbx-jira-context"
-	]
+  ],
+  "mcp": {
+    "servers": {
+      "browse": {
+        "type": "local",
+        "command": [
+          "/Users/grigorijs.grigorjevs/.local/bin/browse",
+          "mcp"
+        ],
+        "environment": {
+          "OPENCODE_BROWSER_RUNTIME": "auto-update"
+        }
+      }
+    }
+  }
 }
