@@ -3,14 +3,17 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: zb git <push|rebase> [-a|--all] [git arguments...]
+Usage: zb git <push|rebase> [ticket|branch] [-a|--all] [--push] [git arguments...]
 
 By default, operate on the current checkout. With -a, operate on all checked-out
 version branches of the current ZBX ticket (including feature/ branches).
+A ticket such as ZBX-28274 selects all its checked-out version branches.
+A full branch such as ZBX-28274-7.4 selects that worktree; -a selects its ticket.
 
 Push defaults to origin and feature/<branch>, matching zb pr.
 Rebase defaults to the freshly fetched origin/release/7.0, origin/release/7.4,
 or origin/master for newer versions. Explicit Git arguments replace defaults.
+Rebase --push pushes each successfully rebased branch with --force-with-lease.
 Use -- to pass the remaining arguments directly to Git. Stop on the first error;
 resolve or abort a conflicting rebase in the reported worktree before retrying.
 EOF
@@ -29,29 +32,48 @@ case "$operation" in
 esac
 
 all=0
+push_after_rebase=0
+selector=''
 arguments=()
 while (($#)); do
   case "$1" in
     -a|--all) all=1 ;;
+    --push) push_after_rebase=1 ;;
     -h|--help) usage; exit 0 ;;
     --) shift; arguments+=("$@"); break ;;
-    *) arguments+=("$1") ;;
+    *)
+      if [[ $1 =~ ^(feature/)?ZBX-[0-9]+(-[0-9]+\.[0-9]+)?$ ]]; then
+        [[ -z $selector ]] || die 'supply only one ticket or branch selector'
+        selector=$1
+      else
+        arguments+=("$1")
+      fi
+      ;;
   esac
   shift
 done
 
+if (( push_after_rebase )) && [[ $operation != rebase ]]; then
+  die '--push is only supported with rebase'
+fi
+
 root=$(git rev-parse --show-toplevel 2>/dev/null) \
   || die 'run this command from inside a Git checkout'
 branch=$(git -C "$root" branch --show-current)
-[[ -n "$branch" ]] || die 'cannot operate on a detached HEAD'
+[[ -n "$branch" || -n "$selector" ]] || die 'cannot operate on a detached HEAD'
 paths=("$root")
 branches=("$branch")
 
-if (( all )); then
-  normalized=${branch#feature/}
-  [[ $normalized =~ ^(ZBX-[0-9]+)-[0-9]+\.[0-9]+$ ]] \
-    || die "current branch must include a ticket and version: $branch"
+if (( all )) || [[ -n $selector ]]; then
+  normalized=${selector:-$branch}
+  normalized=${normalized#feature/}
+  [[ $normalized =~ ^(ZBX-[0-9]+)(-[0-9]+\.[0-9]+)?$ ]] \
+    || die "branch must include a ticket and version: $branch"
   ticket=${BASH_REMATCH[1]}
+  selected_branch=''
+  if (( ! all )) && [[ $normalized != "$ticket" ]]; then
+    selected_branch=$normalized
+  fi
   paths=()
   branches=()
   path=''
@@ -62,13 +84,14 @@ if (( all )); then
         candidate=${entry#branch refs/heads/}
         normalized=${candidate#feature/}
         if [[ $normalized =~ ^(ZBX-[0-9]+)-[0-9]+\.[0-9]+$ && ${BASH_REMATCH[1]} == "$ticket" ]]; then
+          [[ -z $selected_branch || $normalized == "$selected_branch" ]] || continue
           paths+=("$path")
           branches+=("$candidate")
         fi
         ;;
     esac
   done < <(git -C "$root" worktree list --porcelain -z)
-  ((${#paths[@]})) || die "no checked-out version branches found for $ticket"
+  ((${#paths[@]})) || die "no checked-out version branches found for ${selector:-$ticket}"
 fi
 
 # Validate every default rebase target before changing any worktree.
@@ -106,5 +129,9 @@ for ((index = 0; index < ${#paths[@]}; index++)); do
     target=${targets[$index]}
     git -C "$path" fetch origin "+refs/heads/$target:refs/remotes/origin/$target"
     git -C "$path" rebase "refs/remotes/origin/$target"
+  fi
+  if (( push_after_rebase )); then
+    source_ref="feature/${branch#feature/}"
+    git -C "$path" push --force-with-lease --set-upstream origin "$branch:refs/heads/$source_ref"
   fi
 done

@@ -13,8 +13,8 @@ Commands:
   j --all            Run Jenkins tests for all version worktrees of this ticket
   j --failures       Print the failure context of the branch's latest builds
   pr [options]        Create pull requests and run Jenkins tests
-  git push [-a]       Push this ticket's current or all version worktrees
-  git rebase [-a]     Rebase onto the version's latest release branch or master
+  git push [branch] [-a]           Push current, named branch, or ticket worktrees
+  git rebase [branch] [-a] [--push] Rebase worktrees and optionally push with lease
   i, jira             Open the current branch's Jira issue
   -h, --help          Show this help
 EOF
