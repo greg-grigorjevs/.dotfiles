@@ -1,0 +1,77 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Run on macOS; compilation and the server run inside the development container.
+ROOT=$(git rev-parse --show-toplevel)
+cd "$ROOT"
+CONTAINER=docker-server-1
+
+case "$ROOT" in
+    "$HOME/work/zbx/"*) CONTAINER_ROOT="/var/zabbix/${ROOT#"$HOME/work/zbx/"}" ;;
+    *) echo "Expected this checkout under $HOME/work/zbx/." >&2; exit 1 ;;
+esac
+
+command -v php >/dev/null
+command -v server >/dev/null
+server test -f "$CONTAINER_ROOT/bootstrap.sh"
+test -f "$ROOT/ui/conf/zabbix.conf.php"
+
+echo "Building Zabbix in $CONTAINER_ROOT..."
+if [ ! -f configure ]; then
+    server ./bootstrap.sh
+fi
+server ./configure --enable-server --enable-agent --enable-proxy \
+    --with-mysql --with-libcurl --with-libxml2 --with-openssl \
+    --prefix="$CONTAINER_ROOT"
+server make -j2 install
+
+RUNTIME_DIR="/tmp/zabbix-local-$(basename "$ROOT")"
+
+# Keep credentials out of command arguments and use a private container directory.
+docker exec "$CONTAINER" bash -eu -c '
+    install -d -m 700 -o zabbix -g zabbix "$1"
+    if [ -f "$1/server.pid" ] && kill -0 "$(cat "$1/server.pid")" 2>/dev/null; then
+        echo "This checkout already has a server running." >&2
+        exit 1
+    fi
+' bash "$RUNTIME_DIR"
+
+php -r '
+    define("IMAGE_FORMAT_PNG", 0);
+    require $argv[1]."/ui/conf/zabbix.conf.php";
+    if ($DB["TYPE"] !== "MYSQL") {
+        fwrite(STDERR, "This script requires a MySQL/MariaDB database.\n");
+        exit(1);
+    }
+    $settings = [
+        "DBHost" => $DB["SERVER"],
+        "DBName" => $DB["DATABASE"],
+        "DBUser" => $DB["USER"],
+        "DBPassword" => $DB["PASSWORD"],
+        "DBPort" => $DB["PORT"] ?: 3306,
+        "NodeAddress" => "server:10051",
+        "LogFile" => $argv[2]."/server.log",
+        "PidFile" => $argv[2]."/server.pid",
+        "SocketDir" => $argv[2]
+    ];
+    foreach ($settings as $key => $value) {
+        if (strpbrk((string) $value, "\r\n") !== false) {
+            fwrite(STDERR, "Unsupported newline in configuration.\n");
+            exit(1);
+        }
+        echo $key."=".$value.PHP_EOL;
+    }
+' "$ROOT" "$RUNTIME_DIR" | docker exec -i "$CONTAINER" bash -eu -c '
+    umask 077
+    cat > "$1/server.conf.new"
+    chown zabbix:zabbix "$1/server.conf.new"
+    mv "$1/server.conf.new" "$1/server.conf"
+' bash "$RUNTIME_DIR"
+
+echo "Starting this branch server using the frontend database settings..."
+server -u zabbix "$CONTAINER" \
+    ./sbin/zabbix_server -c "$RUNTIME_DIR/server.conf"
+
+echo "Startup requested. Check the log for successful startup or errors:"
+echo "server tail -n 50 $RUNTIME_DIR/server.log"
