@@ -22,7 +22,7 @@ auto_switch = false
 [ui]
 confirm_close = false
 prompt_new_tab_name = false
-pane_borders = "off"
+pane_borders = "auto"
 pane_outer_borders = false
 pane_gaps = false
 
