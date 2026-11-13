@@ -1,12 +1,15 @@
 vim.api.nvim_create_autocmd({ "VimEnter" }, {
 	callback = function(data)
 		local directory = vim.fn.isdirectory(data.file) == 1
-		if not directory then
+		if not directory and (vim.fn.argc() > 0 or vim.api.nvim_buf_get_name(0) ~= "" or vim.bo.modified) then
 			return
 		end
-		vim.api.nvim_set_current_dir(data.file)
-		require("nvim-tree.api").tree.open()
-		-- require("oil").open()
+		if directory then
+			vim.api.nvim_set_current_dir(data.file)
+		end
+		vim.schedule(function()
+			require("fff").find_files()
+		end)
 	end
 })
 
