@@ -806,13 +806,6 @@ for ((index = 0; index < ${#selected_paths[@]}; index++)); do
   if ! git -C "$path" remote get-url origin >/dev/null 2>&1; then
     die "Git remote 'origin' is not configured in $path"
   fi
-  if ! dirty=$(git -C "$path" status --porcelain); then
-    die "could not check Git status in $path"
-  fi
-  if [[ -n "$dirty" ]]; then
-    printf 'Uncommitted changes in %s:\n%s\n' "$path" "$dirty" >&2
-    die 'commit or stash changes in every selected worktree before opening pull requests'
-  fi
 
 target_was_fetched=0
 case ":$fetched_targets:" in
