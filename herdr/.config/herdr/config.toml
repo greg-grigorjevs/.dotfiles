@@ -148,6 +148,24 @@ last_pane = ""
 # ---------------------------------------------------------------------------
 
 [[keys.command]]
+key = "ctrl+alt+v"
+type = "shell"
+command = '/bin/bash "$HOME/.local/bin/herdr-focus-app" nvim'
+description = "switch to Neovim or open it in a new tab"
+
+[[keys.command]]
+key = "ctrl+alt+o"
+type = "shell"
+command = '/bin/bash "$HOME/.local/bin/herdr-focus-app" opencode'
+description = "switch to OpenCode or open it in a new tab"
+
+[[keys.command]]
+key = "ctrl+alt+l"
+type = "shell"
+command = '/bin/bash "$HOME/.local/bin/herdr-focus-app" lazygit'
+description = "switch to lazygit or open it in a new tab"
+
+[[keys.command]]
 key = "ctrl+left"
 type = "shell"
 command = '/usr/bin/python3 "$HOME/.local/bin/herdr-navigate" left'

@@ -160,3 +160,9 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # herdr tab auto-naming (see ~/.dotfiles/herdr/plugins/tab-autoname).
 # Names the current tab after the running command, tmux-style.
 [[ -n ${HERDR_PANE_ID:-} ]] && source "$HOME/.dotfiles/herdr/plugins/tab-autoname/hook.zsh"
+
+case ${HERDR_START_APP:-} in
+  nvim) unset HERDR_START_APP; nvim ;;
+  opencode) unset HERDR_START_APP; opencode ;;
+  lazygit) unset HERDR_START_APP; lazygit ;;
+esac

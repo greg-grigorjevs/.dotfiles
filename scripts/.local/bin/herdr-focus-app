@@ -1,0 +1,85 @@
+#!/bin/bash
+set -euo pipefail
+
+app=${1:-}
+case "$app" in
+    nvim|opencode|lazygit) ;;
+    *) printf 'Usage: %s {nvim|opencode|lazygit}\n' "$0" >&2; exit 2 ;;
+esac
+
+herdr=${HERDR_BIN_PATH:-herdr}
+[[ -x "$herdr" ]] || herdr=$(command -v herdr)
+
+socket=${HERDR_SOCKET_PATH:-$HOME/.config/herdr/herdr.sock}
+socket=${socket//%/%25}
+socket=${socket//\//%2F}
+cache_dir=${XDG_STATE_HOME:-$HOME/.local/state}/herdr-focus-app/$socket/$app
+
+# Keybindings supply the workspace, so cached checks can run concurrently.
+if [[ -n ${HERDR_ACTIVE_WORKSPACE_ID:-} ]]; then
+    cache=$cache_dir/$HERDR_ACTIVE_WORKSPACE_ID
+    cached_pane= cached_tab=
+    if [[ -r "$cache" ]]; then
+        IFS=$'\t' read -r cached_pane cached_tab < "$cache" || true
+    fi
+    if [[ -n "$cached_pane" && -n "$cached_tab" ]] &&
+        jq -ne --arg workspace "$HERDR_ACTIVE_WORKSPACE_ID" --arg tab "$cached_tab" --arg app "$app" \
+            --slurpfile pane <("$herdr" pane get "$cached_pane" 2>/dev/null) \
+            --slurpfile processes <("$herdr" pane process-info --pane "$cached_pane" 2>/dev/null) '
+                $pane[0].result.pane as $pane
+                | $pane.workspace_id == $workspace and $pane.tab_id == $tab
+                and any($processes[0].result.process_info.foreground_processes[]?;
+                    (.name, .argv0) | select(. != null)
+                    | split("/")[-1] | . == $app or ($app == "nvim" and . == "nvimdiff"))
+            ' >/dev/null; then
+        exec "$herdr" tab focus "$cached_tab"
+    fi
+fi
+
+panes=$("$herdr" pane list)
+selection=$(jq -er --arg active "${HERDR_ACTIVE_PANE_ID:-}" '
+    .result.panes as $panes
+    | ($panes | map(select(.pane_id == $active))[0]
+        // map(select(.focused))[0]) as $current
+    | [$current.workspace_id, ($current.foreground_cwd // $current.cwd)],
+      ($panes | map(select(.workspace_id == $current.workspace_id))
+        | sort_by(.tab_id != $current.tab_id)[] | [.pane_id, .tab_id])
+    | @tsv
+' <<< "$panes")
+IFS=$'\t' read -r workspace cwd <<< "$selection"
+# Decode jq's TSV escaping for directory names containing tabs or backslashes.
+printf -v cwd '%b' "$cwd"
+candidates=${selection#*$'\n'}
+
+cache=$cache_dir/$workspace
+cached_pane= cached_tab=
+if [[ -r "$cache" ]]; then
+    IFS=$'\t' read -r cached_pane cached_tab < "$cache" || true
+fi
+
+is_app() {
+    "$herdr" pane process-info --pane "$1" | jq -e --arg app "$app" '
+        any(.result.process_info.foreground_processes[];
+            (.name, .argv0) | select(. != null)
+            | split("/")[-1] | . == $app or ($app == "nvim" and . == "nvimdiff"))
+    ' >/dev/null
+}
+
+if [[ -n "$cached_pane" && -n "$cached_tab" &&
+      $'\n'$candidates$'\n' == *$'\n'"$cached_pane"$'\t'"$cached_tab"$'\n'* ]] &&
+    is_app "$cached_pane"; then
+    exec "$herdr" tab focus "$cached_tab"
+fi
+
+while IFS=$'\t' read -r pane candidate_tab; do
+    if is_app "$pane"; then
+        mkdir -p "$cache_dir"
+        temporary=$(mktemp "$cache.XXXXXX")
+        printf '%s\t%s\n' "$pane" "$candidate_tab" > "$temporary"
+        mv "$temporary" "$cache"
+        exec "$herdr" tab focus "$candidate_tab"
+    fi
+done <<< "$candidates"
+
+exec "$herdr" tab create --workspace "$workspace" --cwd "$cwd" \
+    --env "HERDR_START_APP=$app" --focus
